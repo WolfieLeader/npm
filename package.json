@@ -13,7 +13,9 @@
     "lint:eslint": "eslint .",
     "lint:prettier": "prettier --check .",
     "format": "prettier --write .",
-    "test": "jest"
+    "pretest": "npm run lint",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
   },
   "authors": [
     "WolfieLeader",

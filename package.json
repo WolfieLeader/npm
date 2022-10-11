@@ -3,11 +3,11 @@
   "version": "0.0.2",
   "description": "Get Client IP Address",
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rimraf dist",
     "prebuild": "npm run lint && npm run clean",
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.esm.json",
-    "build:cjs": "tsc -p tsconfig.cjs.json && mv ./dist/esm/index.js ./dist/esm/index.mjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
     "lint": "npm run lint:eslint && npm run lint:prettier",
     "lint:eslint": "eslint .",
     "lint:prettier": "prettier --check .",
@@ -41,7 +41,7 @@
   "exports": {
     ".": {
       "import": {
-        "default": "./dist/esm/index.mjs",
+        "default": "./dist/esm/index.js",
         "types": "./dist/esm/types/index.d.ts"
       },
       "require": {

@@ -1,10 +1,5 @@
-const add = (a: number, b: number): number => {
-  return a + b;
-};
+import { add, subtract } from './functions';
 
-export const subtract = (a: number, b: number): number => {
-  return a - b;
-};
+const result = subtract(add(1, 2), add(5, 6));
 
-const number = add(1, 2);
-console.log(number);
+export default result;

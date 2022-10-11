@@ -4,11 +4,10 @@
   "description": "Get Client IP Address",
   "scripts": {
     "clean": "rm -rf dist",
-    "clean:packages": "rm -rf node_modules package-lock.json",
     "prebuild": "npm run lint && npm run clean",
     "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc -p tsconfig.esm.json && mv ./dist/esm/index.js ./dist/esm/index.mjs",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && mv ./dist/esm/index.js ./dist/esm/index.mjs",
     "lint": "npm run lint:eslint && npm run lint:prettier",
     "lint:eslint": "eslint .",
     "lint:prettier": "prettier --check .",

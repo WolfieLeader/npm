@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Get Client IP Address",
   "scripts": {
-    "clean": "rm -rf ./dist",
+    "clean": "rm -rf dist",
     "clean:packages": "rm -rf node_modules package-lock.json",
     "prebuild": "npm run lint && npm run clean",
     "build": "npm run build:esm && npm run build:cjs",

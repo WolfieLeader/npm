@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "checkJs": true,
+    "allowJs": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "removeComments": false
+  },
+  "files": ["src/index.ts"],
+  "exclude": ["node_modules", "lib"]
+}

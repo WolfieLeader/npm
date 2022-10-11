@@ -1,6 +1,6 @@
 {
   "name": "get-client-ip",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Get Client IP Address",
   "scripts": {
     "clean": "rimraf dist",

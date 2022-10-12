@@ -8,10 +8,13 @@
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.esm.json && touch dist/esm/package.json && echo {\"type\": \"module\"} > dist/esm/package.json",
     "build:cjs": "tsc -p tsconfig.cjs.json && touch dist/cjs/package.json && echo {\"type\": \"commonjs\"} > dist/cjs/package.json",
-    "lint": "eslint . && prettier --check .",
-    "format": "prettier --write .",
-    "pretest": "npm run lint",
+    "lint": "eslint --ext .ts src/",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:all": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,json}\"",
+    "check": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "pretest": "npm run lint && npm run check",
     "test": "jest",
+    "test:watch": "jest --watch",
     "prepublishOnly": "npm run build"
   },
   "authors": [

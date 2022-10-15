@@ -1,6 +1,6 @@
 {
   "name": "get-client-ip",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Get Client IP Address",
   "scripts": {
     "dev": "nodemon ./api/index.ts",

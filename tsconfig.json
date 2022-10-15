@@ -3,13 +3,11 @@
     "strict": true,
     "removeComments": false,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "rootDir": "./src"
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["./src/**/*"],
   "exclude": ["node_modules", "dist"]

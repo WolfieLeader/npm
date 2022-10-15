@@ -1,4 +1,4 @@
-import { getIp } from "./functions";
+import { getIp } from "./functions.js";
 const getClientIp = {
   getIp,
 };

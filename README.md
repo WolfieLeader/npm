@@ -1,15 +1,15 @@
-# Get Client Ip
+# Ip Master
 
 ## Description
 
-This is a simple library that allows you to get the client ip address.
+A simple tool that allows you to manage IPs easily.
 
 ## Installation
 
 npm:
 
 ```bash
-npm install get-client-ip
+npm install ip-master
 ```
 
 ## Usage
@@ -18,17 +18,17 @@ npm install get-client-ip
 
 ```javascript
 // CommonJs
-const getClientIp = require("get-client-ip");
+const ipMaster = require("ip-master");
 
 // ES6
-import getClientIp from "get-client-ip";
+import ipMaster from "ip-master";
 ```
 
 ### Getting The Client Ip:
 
 ```javascript
 app.get("/", (req, res) => {
-  const ip = getClientIp.getIp(req);
+  const ip = ipMaster.getClientIp(req);
   res.send(ip);
 });
 ```
@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 ### Getting The Client Ip Using Middleware:
 
 ```javascript
-app.use(getClientIp.middleware());
+app.use(ipMaster.middleware());
 
 app.get("/", (req, res) => {
   const ip = req.clientIp;

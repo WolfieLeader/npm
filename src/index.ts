@@ -1,5 +1,5 @@
-import { getIp } from "./functions.js";
-const getClientIp = {
-  getIp,
+import { getClientIp } from "./functions.js";
+const ipMaster = {
+  getClientIp,
 };
-export default getClientIp;
+export default ipMaster;

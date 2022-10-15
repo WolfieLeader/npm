@@ -1,6 +1,6 @@
 import { Request } from "express";
 
-export const getIp = (req: Request) => {
+export const getClientIp = (req: Request) => {
   if (!req) throw new Error("Request is undefined");
   let res = {};
   if (req.headers) {

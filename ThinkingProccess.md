@@ -2,7 +2,7 @@
 
 ## Function getIp:
 
-1. The function `getIp` will receive a request object as a parameter.
+1. The function `getClientIp` will receive a request object as a parameter.
 2. Firstly we gonna check if the request is an instance of Request from express.
 3. Then we gonna check for headers.
 4. If there are headers we are going to check the following headers:

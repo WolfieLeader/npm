@@ -1,13 +1,13 @@
 {
-  "name": "get-client-ip",
-  "version": "0.1.4",
-  "description": "Get Client IP Address",
+  "name": "ip-master",
+  "version": "0.0.1",
+  "description": "Ip Master",
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "npm run lint && npm run clean",
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.esm.json && touch dist/esm/package.json && echo {\"type\": \"module\"} > dist/esm/package.json",
-    "build:cjs": "tsc -p tsconfig.cjs.json && touch dist/cjs/package.json && echo {\"type\": \"commonjs\"} > dist/cjs/package.json && sed -i 's/exports.default = getClientIp;/module.exports = getClientIp;/g' dist/cjs/index.js",
+    "build:cjs": "tsc -p tsconfig.cjs.json && touch dist/cjs/package.json && echo {\"type\": \"commonjs\"} > dist/cjs/package.json && sed -i 's/exports.default = ipMaster;/module.exports = ipMaster;/g' dist/cjs/index.js",
     "lint": "eslint --ext .ts src/",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "format:all": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,json}\"",
@@ -51,6 +51,10 @@
   },
   "keywords": [
     "IP",
-    "Express"
+    "Express",
+    "Middleware",
+    "Client",
+    "Validation",
+    "Backend"
   ]
 }

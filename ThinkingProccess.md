@@ -15,7 +15,7 @@
      > Unknown
    - `req.headers["x-forwarded"]`
      > Unknown
-   - `headers.forwarded`
+   - `req.headers.forwarded`
      > Unknown
    - `req.headers["x-real-ip"]`
      > Nginx proxy/FastCGI, alternative to X-Forwarded-For, used by some proxies.

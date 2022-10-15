@@ -1,1 +1,5 @@
-export * from "./functions";
+import { getIp } from "./functions";
+const getClientIp = {
+  getIp,
+};
+export default getClientIp;

@@ -3,12 +3,14 @@
     "strict": true,
     "removeComments": false,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "rootDir": "./src"
   },
-  "files": ["src/index.ts"],
+  "include": ["./src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

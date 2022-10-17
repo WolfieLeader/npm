@@ -1,4 +1,4 @@
-# Ip Master
+# Get Client IP
 
 ## Description
 
@@ -9,7 +9,7 @@ A simple tool that allows you to manage IPs easily.
 npm:
 
 ```bash
-npm install ip-master
+npm install get-client-ip
 ```
 
 ## Usage
@@ -18,28 +18,17 @@ npm install ip-master
 
 ```javascript
 // CommonJs
-const ipMaster = require("ip-master");
+const getClientIp = require("get-client-ip");
 
 // ES6
-import ipMaster from "ip-master";
+import getClientIp from "get-client-ip";
 ```
 
 ### Getting The Client Ip:
 
 ```javascript
 app.get("/", (req, res) => {
-  const ip = ipMaster.getClientIp(req);
-  res.send(ip);
-});
-```
-
-### Getting The Client Ip Using Middleware:
-
-```javascript
-app.use(ipMaster.middleware());
-
-app.get("/", (req, res) => {
-  const ip = req.clientIp;
+  const ip = getClientIp(req);
   res.send(ip);
 });
 ```

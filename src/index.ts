@@ -49,7 +49,7 @@ function $extractIpFromHeaders(req: Request): [string, ...string[]] | null {
  * It sets `req.clientIp` to the first valid IP address found and `req.clientIps` to an array of all valid IPs.
  * If no valid IP is found, these properties will not be set.
  */
-export function getClientIp(req: Request, response: Response, next?: NextFunction) {
+export function getClientIp(req: Request, response?: Response, next?: NextFunction) {
   if (!req) throw new Error('Request is undefined');
 
   const ips = $extractIpFromHeaders(req);

@@ -1,54 +1,59 @@
 {
   "name": "get-client-ip",
-  "version": "0.1.5",
-  "description": "Get the client IP",
+  "version": "2.0.0",
+  "description": "👾 Get the client IP Easily",
+  "homepage": "https://github.com/WolfieLeader/get-client-ip",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WolfieLeader/get-client-ip.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "scripts": {
-    "clean": "rimraf dist",
-    "prebuild": "npm run lint && npm run clean",
-    "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc -p tsconfig.esm.json && touch dist/esm/package.json && echo {\"type\": \"module\"} > dist/esm/package.json",
-    "build:cjs": "tsc -p tsconfig.cjs.json && touch dist/cjs/package.json && echo {\"type\": \"commonjs\"} > dist/cjs/package.json && sed -i 's/exports.default/module.exports/g' dist/cjs/index.js",
-    "lint": "eslint --ext .ts src/",
-    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "format:all": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,json}\"",
-    "check": "prettier --check \"src/**/*.{ts,tsx}\"",
-    "pretest": "npm run lint && npm run check",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "prepublishOnly": "npm run build"
+    "build": "tsup",
+    "prepublishOnly": "npm run build",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "format": "pnpm biome format --write .",
+    "lint": "pnpm biome lint --write .",
+    "check": "pnpm biome check --write ."
   },
-  "authors": [
-    "WolfieLeader",
-    "Ben Halverson"
-  ],
-  "license": "ISC",
+  "authors": ["WolfieLeader", "Ben Halverson"],
   "devDependencies": {
-    "@types/express": "^4.17.14",
-    "@types/node": "^18.8.4",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
-    "eslint": "^8.25.0",
-    "express": "^4.18.2",
-    "prettier": "^2.7.1",
-    "typescript": "^4.8.4"
+    "@biomejs/biome": "1.9.4",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
   },
-  "files": [
-    "dist"
-  ],
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/types/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "types": "./dist/types/index.d.ts"
+  "peerDependencies": {
+    "express": ">=4.21.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
     }
   },
-  "keywords": [
-    "IP",
-    "Express",
-    "Client",
-    "Backend"
-  ]
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": ["./dist/index.d.ts"]
+    }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "keywords": ["IP", "Express", "NestJS", "Client", "Backend"]
 }

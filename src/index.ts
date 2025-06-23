@@ -14,7 +14,7 @@ const headers = [
   'x-cluster-client-ip',
   'fastly-client-ip',
   'x-appengine-user-ip',
-  'Cf-Pseudo-IPv4',
+  'cf-pseudo-ipv4',
 ];
 
 function $extractIpFromHeaders(req: Request): [string, ...string[]] | null {

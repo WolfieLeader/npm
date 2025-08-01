@@ -44,6 +44,5 @@
   },
   "[vue]": {
     "editor.defaultFormatter": "biomejs.biome"
-  },
-
+  }
 }

@@ -43,13 +43,15 @@ function $extractIpFromHeaders(req: Request): [string, ...string[]] | null {
   return null;
 }
 
+// biome-ignore-start lint/correctness/noUnusedFunctionParameters: Needed for Express middleware signature
+
 /**
  * Middleware to extract the client IP address from the request.
  * This function checks various headers and the request socket to find the client's IP address.
  * It sets `req.clientIp` to the first valid IP address found and `req.clientIps` to an array of all valid IPs.
  * If no valid IP is found, these properties will not be set.
  */
-export function getClientIp(req: Request, response?: Response, next?: NextFunction) {
+export function getClientIp(req: Request, res?: Response, next?: NextFunction) {
   if (!req) throw new Error('Request is undefined');
 
   const ips = $extractIpFromHeaders(req);
@@ -74,6 +76,8 @@ export function getClientIp(req: Request, response?: Response, next?: NextFuncti
     return;
   }
 }
+
+// biome-ignore-end lint/correctness/noUnusedFunctionParameters: Needed for Express middleware signature
 
 declare global {
   namespace Express {

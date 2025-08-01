@@ -1,59 +1,24 @@
 {
-  "name": "get-client-ip",
-  "version": "2.0.0",
-  "description": "👾 The Easiest Way to Get Your Clients IP",
-  "homepage": "https://github.com/WolfieLeader/get-client-ip",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/WolfieLeader/get-client-ip.git"
-  },
-  "license": "MIT",
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "name": "npm-packages",
+  "private": true,
   "scripts": {
-    "build": "tsup",
-    "prepublishOnly": "npm run build",
-    "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit",
-    "format": "pnpm biome format --write .",
-    "lint": "pnpm biome lint --write .",
-    "check": "pnpm biome check --write ."
+    "start": "turbo run start",
+    "build": "turbo run build",
+    "dev": "turbo run dev --filter=./examples/*",
+    "format": "pnpm biome format",
+    "lint": "pnpm biome lint",
+    "check": "pnpm biome check",
+    "check:fix": "pnpm biome check --fix",
+    "typecheck": "turbo run typecheck",
+    "prepare": "husky"
   },
-  "authors": ["WolfieLeader", "Ben Halverson"],
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.0.3",
-    "tsup": "^8.5.0",
-    "typescript": "^5.8.3"
+    "@biomejs/biome": "2.1.3",
+    "husky": "^9.1.7",
+    "turbo": "^2.5.5"
   },
-  "peerDependencies": {
-    "express": ">=4.21.0"
-  },
-  "peerDependenciesMeta": {
-    "express": {
-      "optional": true
-    }
-  },
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "*": ["./dist/index.d.ts"]
-    }
-  },
-  "files": ["dist", "README.md"],
-  "sideEffects": false,
-  "keywords": ["IP", "Express", "NestJS", "Client", "Backend"]
+  "packageManager": "pnpm@10.14.0",
+  "engines": {
+    "node": ">=22"
+  }
 }

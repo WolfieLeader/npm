@@ -1,92 +1,104 @@
-# 🔐 Generate Local SSL Certificates 🔐
+<p align="center">
+  <img src="https://github.com/WolfieLeader/npm/blob/main/assets/generate-certs-banner.svg" align="center" alt="banner" />
 
-## Overview 🪟
+  <h1 align="center" style="font-weight:900;">generate-certs</h1>
 
-This package helps you generate self-signed SSL certificates for local development, making it easy to set up secure HTTPS servers in development environments. By providing a streamlined way to create certificates, it allows developers to test and deploy HTTPS configurations locally without external dependencies.
+  <p align="center">
+    Effortless HTTPS certificate generation<br/>
+    for local development environments.
+  </p>
+</p>
+
+<p align="center">
+<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
+<a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/v/generate-certs?color=0078D4" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/dy/generate-certs.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
+
+</p>
+
+## About 📖
+
+`generate-certs` is a simple and developer-friendly utility for generating self-signed HTTPS certificates during local development.
+
+It streamlines the process of creating `key.pem` and `cert.pem` files, supports both CommonJS and ES Modules, and integrates seamlessly into frameworks like Express and NestJS.
 
 ## Features 💡
 
-- **Generates Certs** - Automatically generates `key.pem` and `cert.pem` files.
-- **Reusable** - Checks for existing certificates and reuses them if available.
-- **Simple Integration** - Seamlessly integrates with Express and NestJS applications.
-- **Development-Ready** - Perfect for setting up HTTPS servers during development, allowing you to test secure features.
-- **Easy Production Transition** - Keep the same code for production, simply replace the certificates with those from a trusted certificate authority.
+- 🔐 **Automatic Certificate Generation** – Creates valid self-signed certificates for `localhost`.
+- 🔁 **Reusability** – Automatically detects and reuses existing certs if they exist.
+- ⚙️ **Cross-Compatible** – Works in both ESM and CommonJS runtimes.
+- 🧪 **Development-Ready** – Ideal for testing HTTPS locally without browser complaints.
+- 💡 **Minimal Setup** – No OpenSSL or third-party installations required.
+- 🧩 **Framework Friendly** – Easily integrates with Express, NestJS, and other Node.js frameworks.
 
-## Getting Started 🚀
-
-Ensure [Node.js](https://nodejs.org/) is installed on your machine.
-
-Install the package by running:
+## Installation 🔥
 
 ```bash
 npm install -D generate-certs
 ```
 
-- **Tip**: We recommend using [PNPM](https://pnpm.io/) for package management.
+> 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.
 
 ## Usage 🪛
 
-### _Generating Certificates_ 🔑
+### Basic Example 🐣
+
+```typescript
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { generateCerts } from 'generate-certs';
+
+// If you are using ESM do the following, otherwise you can skip this part
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
+```
+
+### Express 📫
 
 Import the `generateCerts` function and specify the path to store your certificates:
 
 ```typescript
-import generateCerts from 'generate-certs';
-import path from 'node:path';
-
-const CERTIFICATES_PATH = path.resolve(__dirname, '../certs');
-const certs = generateCerts({ certsPath: CERTIFICATES_PATH });
-```
-
-### _Integration with Express_ 📫
-
-Set up HTTPS in an Express app using the generated certificates:
-
-```typescript
-import express from 'express';
-import generateCerts from 'generate-certs';
-import path from 'node:path';
 import https from 'node:https';
-import { env } from './config/env';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { generateCerts } from 'generate-certs';
+import express from 'express';
+import { env } from './env';
 
-const certs = generateCerts({ certsDir: path.resolve(__dirname, '../certs'), log: true });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
 
 function bootstrap() {
   const app = express();
-  // Other configurations...
-  const server = https.createServer(certs, app);
-  const port = Number(env.PORT) || 3443;
 
-  server.listen(port, () => {
-    console.log(`🚀 Express server running on: https://localhost:${port}`);
+  https.createServer(certs, app).listen(env.PORT || 3443, () => {
+    console.log(`🚀 Express server running on: https://localhost:${env.PORT || 3443}`);
   });
 }
 
 bootstrap();
 ```
 
-### _Integration with NestJS_ 🪺
-
-Set up HTTPS in a NestJS app using the generated certificates:
+### NestJS 🪺
 
 ```typescript
-import { NestFactory } from '@nestjs/core';
-import generateCerts from 'generate-certs';
-import { AppModule } from './app.module';
 import path from 'node:path';
-import { env } from './config/env';
+import { NestFactory } from '@nestjs/core';
+import { generateCerts } from 'generate-certs';
+import { AppModule } from './app.module';
+import { env } from './env';
 
-const certs = generateCerts({ certsDir: path.resolve(__dirname, '../certs'), log: true });
+// NestJS commonly uses CommonJS, so you can skip the ESM import part
+const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     httpsOptions: certs,
   });
-  // Other configurations...
-  const port = Number(env.PORT) || 3000;
 
-  await app.listen(port);
-  console.log(`🚀 NestJS server running on: https://localhost:${port}`);
+  await app.listen(env.SERVER_PORT || 3443);
+  console.log(`🚀 NestJS server running on: https://localhost:${env.SERVER_PORT || 3443}`);
 }
 
 bootstrap();
@@ -94,11 +106,17 @@ bootstrap();
 
 ## Notes❗
 
-- **First-Time Run**: The package generates self-signed certificates and stores them in the specified `certs` directory.
-- **Browser Warning**: When accessing `https://localhost:<PORT>`, you may see a browser warning for an untrusted certificate. This is expected with self-signed certificates; proceed by selecting "Advanced" and "Proceed to localhost (unsafe)".
-- **Do Not Use in Production**: These certificates are for local development only. Use a trusted certificate authority for production.
-- **Permissions**: Ensure the `certs` directory has appropriate read permissions.
+- **🧪 First-Time Run**: The certs are created automatically and stored in the provided folder.
+- **⚠️ Browser Warnings**: You may see “Not Secure” warnings with self-signed certs — click “Advanced” → “Proceed to localhost (unsafe)” to continue.
+- **🔒 Not for Production**: These are local dev certificates. For production, use certs from a trusted CA (like Let's Encrypt).
+- **📁 Permissions**: Ensure the target folder is writable and readable by your application.
 
 ## Contributing 🤝
 
 Contributions are welcome! Feel free to open an issue or submit a pull request if you have any improvements or bug fixes to the project.
+
+## License 📜
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+Thank you!

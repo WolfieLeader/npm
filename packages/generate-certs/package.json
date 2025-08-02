@@ -1,7 +1,7 @@
 {
   "name": "generate-certs",
   "version": "1.1.0",
-  "description": "🗝️ Easy SSL Certificates for Local Development",
+  "description": "🗝️ Effortless HTTPS Certificate Generation for Local Development",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WolfieLeader/npm.git",

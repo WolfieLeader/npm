@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import forge from 'node-forge';
 
-export function generateCertificates(certificatesPath: string) {
+export function $generateCerts(certificatesPath: string) {
   if (fs.existsSync(certificatesPath)) fs.rmSync(certificatesPath, { recursive: true });
 
   fs.mkdirSync(certificatesPath, { recursive: true });

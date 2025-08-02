@@ -9,9 +9,8 @@ const zStr = z.string().trim().min(1);
 
 export const zEnv = z.object({
   NODE_ENV: z.enum(['development', 'production']).default('development'),
-  EXPRESS_URL: z.url().default('https://localhost:3001'),
+  HTTPS: z.stringbool().default(false),
   EXPRESS_PORT: zStr.regex(/^\d+$/).transform(Number).default(3001),
-  NESTJS_URL: z.url().default('https://localhost:3002'),
   NESTJS_PORT: zStr.regex(/^\d+$/).transform(Number).default(3002),
 });
 
@@ -24,6 +23,5 @@ if (envError) {
 
 export const env = {
   ...parsedEnv,
-  SERVER_URL: parsedEnv.NESTJS_URL,
   SERVER_PORT: parsedEnv.NESTJS_PORT,
 };

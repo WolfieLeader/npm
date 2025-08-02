@@ -29,7 +29,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "removeComments": true,
+    "removeComments": false,
     "preserveWatchOutput": true,
     "inlineSources": false,
 

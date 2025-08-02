@@ -8,8 +8,8 @@ export function $generateCerts(certificatesPath: string) {
   fs.mkdirSync(certificatesPath, { recursive: true });
 
   const keys = forge.pki.rsa.generateKeyPair(2048);
-  const privateKeyPem = forge.pki.privateKeyToPem(keys.privateKey);
-  fs.writeFileSync(path.join(certificatesPath, 'key.pem'), privateKeyPem);
+  const privateKey = forge.pki.privateKeyToPem(keys.privateKey);
+  fs.writeFileSync(path.join(certificatesPath, 'key.pem'), privateKey);
 
   const cert = forge.pki.createCertificate();
   cert.publicKey = keys.publicKey;

@@ -5,7 +5,8 @@
   "homepage": "https://github.com/WolfieLeader/get-client-ip",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/WolfieLeader/get-client-ip.git"
+    "url": "git+https://github.com/WolfieLeader/npm.git",
+    "directory": "packages/get-client-ip"
   },
   "type": "module",
   "main": "./dist/index.cjs",

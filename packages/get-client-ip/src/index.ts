@@ -58,21 +58,21 @@ export function getClientIp(req: Request, res?: Response, next?: NextFunction) {
   if (ips && ips.length > 0) {
     req.clientIp = ips[0];
     req.clientIps = ips;
-    if (next) next();
+    next?.();
     return;
   }
 
   if ($isIP(req.socket.remoteAddress)) {
     req.clientIp = req.socket.remoteAddress;
     req.clientIps = [req.socket.remoteAddress];
-    if (next) next();
+    next?.();
     return;
   }
 
   if ($isIP(req.connection.remoteAddress)) {
     req.clientIp = req.connection.remoteAddress;
     req.clientIps = [req.connection.remoteAddress];
-    if (next) next();
+    next?.();
     return;
   }
 }

@@ -4,7 +4,8 @@
   "description": "🗝️ Easy SSL Certificates for Local Development",
   "repository": {
     "type": "git",
-    "url": "https://github.com/WolfieLeader/generate-certs"
+    "url": "git+https://github.com/WolfieLeader/npm.git",
+    "directory": "packages/generate-certs"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

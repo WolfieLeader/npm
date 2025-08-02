@@ -1,0 +1,70 @@
+{
+  "name": "get-client-ip",
+  "version": "2.0.0",
+  "description": "👾 The Easiest Way to Get Your Clients IP",
+  "homepage": "https://github.com/WolfieLeader/get-client-ip",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WolfieLeader/npm.git",
+    "directory": "packages/get-client-ip"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/index.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "prepare": "npm run build",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "peerDependencies": {
+    "express": ">=4.21.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.1.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "author": "WolfieLeader",
+  "license": "MIT",
+  "keywords": [
+    "ip",
+    "express",
+    "nestjs",
+    "server",
+    "backend",
+    "middleware"
+  ]
+}

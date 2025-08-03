@@ -1,7 +1,7 @@
 {
   "name": "encrypt-it",
   "version": "0.0.1",
-  "description": "🔐 Encrypt it",
+  "description": "🔐 Secure and Cross-platform Encryption Toolkit",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/encrypt-it#readme",
   "repository": {
     "type": "git",

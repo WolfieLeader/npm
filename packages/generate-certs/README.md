@@ -29,7 +29,7 @@ It streamlines the process of creating `key.pem` and `cert.pem` files, supports 
 - 🧪 **Development-Ready** – Ideal for testing HTTPS locally without browser complaints.
 - 💡 **Minimal Setup** – No OpenSSL or third-party installations required.
 - 🧩 **Framework Friendly** – Easily integrates with Express, NestJS, and other Node.js frameworks.
-- ⚙️ **Cross-Compatible** – Works in both ESM and CommonJS runtimes.
+- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 ## Installation 🔥
 

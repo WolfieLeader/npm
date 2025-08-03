@@ -16,9 +16,9 @@
 
 ## About 📖
 
-This monorepo contains a collection of high-quality, modern NPM packages designed to improve the developer experience in Node.js applications.
+This monorepo contains a collection of high-quality, modern NPM packages built to improve the developer experience in JavaScript and TypeScript Ecosystems.
 
-Each package focuses on being fast, highly usable, and production-friendly, while offering seamless support for both **ESM** and **CommonJS** runtimes.
+Each package is fast, type-safe, and production-ready — written in TypeScript with native typings — and works seamlessly in both **ESM** and **CommonJS** runtimes.
 
 ## Packages 📦
 
@@ -30,7 +30,7 @@ Each package focuses on being fast, highly usable, and production-friendly, whil
 - 🧠 **Smart Parsing** – Handles multiple IPs, comma-separated values, and arrays.
 - 🧩 **Middleware-Compatible** – Use as drop-in Express/NestJS middleware.
 - 💪🏽 **Works in Standalone Mode** – Can be used as a simple function.
-- ⚙️ **Cross-Compatible** – Works in both ESM and CommonJS runtimes.
+- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 📖 [View README →](./packages/get-client-ip/README.md)
 
@@ -43,7 +43,7 @@ Each package focuses on being fast, highly usable, and production-friendly, whil
 - 🧪 **Development-Ready** – Ideal for testing HTTPS locally without browser complaints.
 - 💡 **Minimal Setup** – No OpenSSL or third-party installations required.
 - 🧩 **Framework Friendly** – Easily integrates with Express, NestJS, and other Node.js frameworks.
-- ⚙️ **Cross-Compatible** – Works in both ESM and CommonJS runtimes.
+- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 📖 [View README →](./packages/generate-certs/README.md)
 

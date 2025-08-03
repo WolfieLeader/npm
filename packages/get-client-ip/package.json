@@ -1,7 +1,7 @@
 {
   "name": "get-client-ip",
   "version": "2.0.0",
-  "description": "👾 The Easiest Way to Get Your Clients IP",
+  "description": "📍 A Lightweight Utility for Extracting the Real Client IP Address from Incoming HTTP Requests",
   "homepage": "https://github.com/WolfieLeader/get-client-ip",
   "repository": {
     "type": "git",

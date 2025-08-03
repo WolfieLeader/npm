@@ -4,8 +4,9 @@
   <h1 align="center" style="font-weight:900;">get-client-ip</h1>
 
   <p align="center">
-    The Easiest Way to Get<br/>
-    Your Client IP Address.
+    A Lightweight Utility for Extracting <br/> 
+    the Real Client IP Address from <br/> 
+    Incoming HTTP Requests
   </p>
 </p>
 
@@ -14,7 +15,6 @@
 <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/v/get-client-ip?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dy/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
-
 </p>
 
 ## About 📖
@@ -33,8 +33,8 @@ It adds `req.clientIp` and `req.clientIps` to the request object when used as mi
 - 🌐 **Header-Aware Detection** – Parses standard and cloud-specific proxy headers.
 - 🧠 **Smart Parsing** – Handles multiple IPs, comma-separated values, and arrays.
 - 🧩 **Middleware-Compatible** – Use as drop-in Express/NestJS middleware.
-- ⚙️ **Works in Any Node.js Environment** – No dependencies on frameworks.
 - 💪🏽 **Works in Standalone Mode** – Can be used as a simple function.
+- ⚙️ **Cross-Compatible** – Works in both ESM and CommonJS runtimes.
 
 ## Installation 🔥
 
@@ -128,9 +128,13 @@ req.connection.remoteAddress;
 
 We want to thank [Petar Bojinov](https://github.com/pbojinov) for the inspiration.
 
-## Contributing 🤝
+## Contributions 🤝
 
-Contributions are welcome! Feel free to open an issue or submit a pull request if you have any improvements or bug fixes to the project.
+Want to contribute or suggest a feature?
+
+- Open an issue or feature request
+- Submit a PR to improve the packages or add new ones
+- Star ⭐ the repo if you like what you see
 
 ## License 📜
 

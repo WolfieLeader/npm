@@ -1,18 +1,17 @@
+<div align="center">
+<img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner.svg" align="center" alt="banner" />
+
+<h1 align="center" style="font-weight:900;">NPM Packages</h1>
+
 <p align="center">
-  <img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner.svg" align="center" alt="banner" />
-
-  <h1 align="center" style="font-weight:900;">NPM Packages</h1>
-
-  <p align="center">
-    A monorepo for developer-focused <br/>
-    NPM packages built for performance, security, and simplicity.
-  </p>
+  A monorepo for developer-focused <br/>
+  NPM packages built for performance, security, and simplicity.
 </p>
 
-<p align="center">
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
-</p>
+
+</div>
 
 ## About 📖
 

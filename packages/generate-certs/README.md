@@ -1,20 +1,19 @@
+<div align="center">
+<img src="https://github.com/WolfieLeader/npm/blob/main/assets/generate-certs-banner.svg" align="center" alt="banner" />
+
+<h1 align="center" style="font-weight:900;">generate-certs</h1>
+
 <p align="center">
-  <img src="https://github.com/WolfieLeader/npm/blob/main/assets/generate-certs-banner.svg" align="center" alt="banner" />
-
-  <h1 align="center" style="font-weight:900;">generate-certs</h1>
-
-  <p align="center">
-    Effortless HTTPS certificate generation<br/>
-    for local development environments.
-  </p>
+  Effortless HTTPS certificate generation<br/>
+  for local development environments.
 </p>
 
-<p align="center">
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
 <a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/v/generate-certs?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/dy/generate-certs.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
-</p>
+
+</div>
 
 ## About 📖
 

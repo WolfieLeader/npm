@@ -1,21 +1,20 @@
+<div align="center">
+<img src="https://github.com/WolfieLeader/npm/blob/main/assets/get-client-ip-banner.svg" align="center" alt="banner" />
+
+<h1 align="center" style="font-weight:900;">get-client-ip</h1>
+
 <p align="center">
-  <img src="https://github.com/WolfieLeader/npm/blob/main/assets/get-client-ip-banner.svg" align="center" alt="banner" />
-
-  <h1 align="center" style="font-weight:900;">get-client-ip</h1>
-
-  <p align="center">
-    A Lightweight Utility for Extracting <br/> 
-    the Real Client IP Address from <br/> 
-    Incoming HTTP Requests
-  </p>
+  A Lightweight Utility for Extracting <br/> 
+  the Real Client IP Address from <br/> 
+  Incoming HTTP Requests
 </p>
 
-<p align="center">
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
 <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/v/get-client-ip?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dy/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
-</p>
+
+</div>
 
 ## About 📖
 

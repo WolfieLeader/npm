@@ -14,7 +14,6 @@
 <a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/v/generate-certs?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/dy/generate-certs.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
-
 </p>
 
 ## About 📖
@@ -27,10 +26,10 @@ It streamlines the process of creating `key.pem` and `cert.pem` files, supports 
 
 - 🔐 **Automatic Certificate Generation** – Creates valid self-signed certificates for `localhost`.
 - 🔁 **Reusability** – Automatically detects and reuses existing certs if they exist.
-- ⚙️ **Cross-Compatible** – Works in both ESM and CommonJS runtimes.
 - 🧪 **Development-Ready** – Ideal for testing HTTPS locally without browser complaints.
 - 💡 **Minimal Setup** – No OpenSSL or third-party installations required.
 - 🧩 **Framework Friendly** – Easily integrates with Express, NestJS, and other Node.js frameworks.
+- ⚙️ **Cross-Compatible** – Works in both ESM and CommonJS runtimes.
 
 ## Installation 🔥
 
@@ -109,9 +108,13 @@ bootstrap();
 - **🔒 Not for Production**: These are local dev certificates. For production, use certs from a trusted CA (like Let's Encrypt).
 - **📁 Permissions**: Ensure the target folder is writable and readable by your application.
 
-## Contributing 🤝
+## Contributions 🤝
 
-Contributions are welcome! Feel free to open an issue or submit a pull request if you have any improvements or bug fixes to the project.
+Want to contribute or suggest a feature?
+
+- Open an issue or feature request
+- Submit a PR to improve the packages or add new ones
+- Star ⭐ the repo if you like what you see
 
 ## License 📜
 

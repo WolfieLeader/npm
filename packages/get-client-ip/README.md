@@ -1,21 +1,40 @@
 <p align="center">
-  <img src="https://github.com/WolfieLeader/get-client-ip/blob/main/assets/banner.svg" align="center" alt="banner" />
+  <img src="https://github.com/WolfieLeader/npm/blob/main/assets/get-client-ip-banner.svg" align="center" alt="banner" />
 
   <h1 align="center" style="font-weight:900;">get-client-ip</h1>
 
   <p align="center">
-    The Easiest Way to <br/>
-    Get Your Clients IP
+    The Easiest Way to Get<br/>
+    Your Client IP Address.
   </p>
 </p>
 
 <p align="center">
-<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/get-client-ip?color=DC343B" alt="License"></a>
+<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
 <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/v/get-client-ip?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dy/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
-<a href="https://github.com/WolfieLeader/get-client-ip" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/get-client-ip" alt="stars"></a>
+<a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
 
 </p>
+
+## About 📖
+
+`get-client-ip` is a lightweight utility that extracts the real client IP address from an incoming HTTP request in Node.js.
+
+It supports common proxy headers (`x-forwarded-for`, `x-real-ip`, etc.) and works seamlessly as both:
+
+- a **standalone utility function**, and
+- **Express-compatible middleware**.
+
+It adds `req.clientIp` and `req.clientIps` to the request object when used as middleware — no setup required.
+
+## Features 🌟
+
+- 🌐 **Header-Aware Detection** – Parses standard and cloud-specific proxy headers.
+- 🧠 **Smart Parsing** – Handles multiple IPs, comma-separated values, and arrays.
+- 🧩 **Middleware-Compatible** – Use as drop-in Express/NestJS middleware.
+- ⚙️ **Works in Any Node.js Environment** – No dependencies on frameworks.
+- 💪🏽 **Works in Standalone Mode** – Can be used as a simple function.
 
 ## Installation 🔥
 
@@ -23,54 +42,98 @@
 npm install get-client-ip
 ```
 
-## Usage 🎯
+> 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.
 
-This is how you can use the `get-client-ip` package in your Express application to get the client's IP address,
-this package also works on NestJS
+## Usage 🪛
+
+### Express 📫
 
 ```typescript
+import http from 'node:http';
+import { generateCerts } from 'generate-certs';
+import express from 'express';
+import { getClientIp } from 'get-client-ip';
+import { env } from './env';
+
+function bootstrap() {
+  const app = express();
+
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // Standalone usage:
+  app.get('/standalone-ip', (req, res) => {
+    const ip = getClientIp(req);
+    res.status(200).json({ ip });
+  });
+
+  // Middleware usage:
+  app.get('/middleware-ip', getClientIp, (req, res) => {
+    res.status(200).json({ ip: req.clientIp, ips: req.clientIps });
+  });
+
+  http.createServer(app).listen(env.PORT || 3000, () => {
+    console.log(`🚀 Express server running on: http://localhost:${env.PORT || 3000}`);
+  });
+}
+
+bootstrap();
+```
+
+### NestJS 🪺
+
+```typescript
+import { Controller, Get, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { getClientIp } from 'get-client-ip';
 
-app.get('/', getClientIp, (req, res) => {
-  res.send(`Your IP is: ${req.clientIp}`);
-});
+@Controller('')
+export class PublicController {
+  @Get('ip')
+  getIp(@Req() req: Request) {
+    const ip = getClientIp(req);
+    return { ip };
+  }
+}
 ```
 
 ## Headers ⛑️
 
+The following headers are checked in order of precedence:
+
 ```typescript
-//Standard headers used by Amazon EC2, Heroku, and many others.
-req.headers['x-client-ip'];
-//Load balancers (AWS ELB) or proxies (may return multiple IP addresses in the format: "client IP, proxy 1 IP, proxy 2 IP" so we need to pay attention).
-req.headers['x-forwarded-for'];
+x-client-ip
+x-forwarded-for
+forwarded-for
+x-forwarded
+forwarded
+x-real-ip
+cf-connecting-ip
+true-client-ip
+x-cluster-client-ip
+fastly-client-ip
+x-appengine-user-ip
+cf-pseudo-ipv4
+```
 
-req.headers['forwarded-for'];
+It also falls back to:
 
-req.headers['x-forwarded'];
-
-req.headers.forwarded;
-// Nginx proxy/FastCGI, alternative to X-Forwarded-For, used by some proxies.
-req.headers['x-real-ip'];
-// Cloudflare, applied to every request to the origin.
-req.headers['cf-connecting-ip'];
-// Fastly and Firebase hosting header (When forwarded to cloud function).
-req.headers['fastly-client-ip'];
-// Akamai and Cloudflare: True-Client-IP.
-req.headers['true-client-ip'];
-
-req.headers['x-cluster-client-ip'];
-// Google App Engine app identity.
-req.headers['x-appengine-user-ip'];
-// Cloudflare fallback header.
-req.headers['Cf-Pseudo-IPv4'];
-
-req.connection.remoteAddress;
-
-req.connection.socket.remoteAddress;
-
+```typescript
+req.ip;
 req.socket.remoteAddress;
+req.connection.remoteAddress;
 ```
 
 ## Credit 💪🏽
 
 We want to thank [Petar Bojinov](https://github.com/pbojinov) for the inspiration.
+
+## Contributing 🤝
+
+Contributions are welcome! Feel free to open an issue or submit a pull request if you have any improvements or bug fixes to the project.
+
+## License 📜
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+Thank you!

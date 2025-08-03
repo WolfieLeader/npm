@@ -56,8 +56,6 @@ const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
 
 ### Express 📫
 
-Import the `generateCerts` function and specify the path to store your certificates:
-
 ```typescript
 import https from 'node:https';
 import path from 'node:path';

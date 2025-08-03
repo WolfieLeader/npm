@@ -50,10 +50,38 @@ function $extractIpFromHeaders(req: Request): NoneEmptyArray<string> | null {
 // biome-ignore-start lint/correctness/noUnusedFunctionParameters: Needed for Express middleware signature
 
 /**
- * Middleware to extract the client IP address from the request.
- * This function checks various headers and the request socket to find the client's IP address.
- * It sets `req.clientIp` to the first valid IP address found and `req.clientIps` to an array of all valid IPs.
- * If no valid IP is found, these properties will not be set.
+ * Extracts the client's IP address from an incoming Express request.
+ *
+ * This function works both as a standalone utility and as Express middleware.
+ * It attempts to detect the IP by inspecting common proxy-related headers
+ * such as `x-forwarded-for`, `x-real-ip`, and others. If no valid IP is found
+ * in the headers, it falls back to `req.socket.remoteAddress` or `req.connection.remoteAddress`.
+ *
+ * When used as middleware, it populates:
+ * - `req.clientIp`: The first valid IP address found.
+ * - `req.clientIps`: A non-empty array of all valid IPs found.
+ *
+ * @param req - The Express request object.
+ * @param res - (Optional) The Express response object. Included to support middleware signature.
+ * @param next - (Optional) The next function in the Express middleware chain.
+ *
+ * @returns The first detected client IP address as a string, or `undefined` if none is found.
+ *
+ * @throws Will throw an error if the `req` argument is not defined.
+ *
+ * @example
+ * // Standalone usage:
+ * app.get('/standalone-ip', (req, res) => {
+ *   const ip = getClientIp(req);
+ *   res.status(200).json({ ip });
+ * });
+ *
+ * @example
+ * // Middleware usage:
+ * app.use(getClientIp);
+ * app.get('/middleware-ip', (req, res) => {
+ *   res.status(200).json({ ip: req.clientIp, ips: req.clientIps });
+ * });
  */
 export function getClientIp(req: Request, res?: Response, next?: NextFunction): string | undefined {
   if (!req) throw new Error('Request is undefined');

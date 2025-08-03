@@ -1,5 +1,6 @@
 import type { Application, NextFunction, Request, Response } from 'express';
 import express from 'express';
+import { getClientIp } from 'get-client-ip';
 import morgan from 'morgan';
 import { HttpException } from './error/HttpException';
 
@@ -17,6 +18,15 @@ export default function createApp(): Application {
 
   app.get('/health', (_req, res) => {
     res.status(200).send('OK');
+  });
+
+  app.get('/standalone-ip', (req, res) => {
+    const ip = getClientIp(req);
+    res.status(200).json({ ip });
+  });
+
+  app.get('/middleware-ip', getClientIp, (req, res) => {
+    res.status(200).json({ ip: req.clientIp, ips: req.clientIps });
   });
 
   app.use((_req: Request, _res: Response, _next: NextFunction) => {

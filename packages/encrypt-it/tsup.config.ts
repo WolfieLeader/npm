@@ -3,9 +3,9 @@ import { defineConfig, type Options } from 'tsup';
 export default defineConfig((options: Options) => ({
   name: 'encrypt-it',
   entry: {
-    index: 'src/exports/index.ts',
-    node: 'src/exports/node.ts',
-    'web-api': 'src/exports/web-api.ts',
+    index: 'src/index.ts',
+    node: 'src/node/index.ts',
+    'web-api': 'src/web/index.ts',
   },
   outDir: 'dist',
   format: ['cjs', 'esm'],

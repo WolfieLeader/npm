@@ -1,7 +1,7 @@
 {
   "name": "encrypt-it",
   "version": "0.0.1",
-  "description": "🔐 Secure and Cross-platform Encryption Toolkit",
+  "description": "🔐 A Secure, Lightweight, and Cross-platform Package for Encryption and Decryption Built for Web, Node.js, Deno, and Bun environments",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/encrypt-it#readme",
   "repository": {
     "type": "git",
@@ -79,10 +79,12 @@
   "keywords": [
     "encrypt",
     "crypto",
-    "aes",
-    "web crypto",
-    "node crypto",
     "security",
-    "hash"
+    "hash",
+    "aes",
+    "web",
+    "node",
+    "deno",
+    "bun"
   ]
 }

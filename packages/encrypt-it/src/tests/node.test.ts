@@ -7,10 +7,12 @@ describe('Node Crypto - AES-256-GCM', () => {
   let secretKey: NodeKey;
 
   test('Encode and decode data', () => {
-    const encoded = encode(data, 'utf8');
+    const { bytes: encoded, error: encodeError } = encode(data, 'utf8');
+    expect(encodeError).toBeUndefined();
     expect(encoded).toBeInstanceOf(Buffer);
 
-    const decoded = decode(encoded, 'utf8');
+    const { result: decoded, error: decodeError } = decode(encoded as Buffer, 'utf8');
+    expect(decodeError).toBeUndefined();
     expect(decoded).toBe(data);
   });
 

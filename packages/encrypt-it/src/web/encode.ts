@@ -1,37 +1,51 @@
+import { $err, $ok, $stringifyError, type Result } from '~/error';
+import type { EncodingFormat } from '~/types';
+
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-export function encode(data: string, format: 'base64' | 'base64url' | 'hex' | 'utf8' = 'base64url'): Uint8Array {
-  switch (format) {
-    case 'base64':
-      return $fromBase64(data);
-    case 'base64url':
-      return $fromBase64Url(data);
-    case 'hex':
-      return $fromHex(data);
-    case 'utf8':
-      return textEncoder.encode(data);
-    default:
-      throw new Error(`Unsupported encode format: ${format}`);
+export function encode(data: string, format: EncodingFormat = 'utf8'): Result<{ bytes: Uint8Array }> {
+  try {
+    switch (format) {
+      case 'base64':
+        return $ok({ bytes: $fromBase64(data) });
+      case 'base64url':
+        return $ok({ bytes: $fromBase64Url(data) });
+      case 'hex':
+        return $ok({ bytes: $fromHex(data) });
+      case 'utf8':
+        return $ok({ bytes: textEncoder.encode(data) });
+      default:
+        return $err({
+          message: `Unsupported encode format: ${format}`,
+          description: 'Use base64, base64url, hex, or utf8',
+        });
+    }
+  } catch (error) {
+    return $err({ message: 'Failed to encode data', description: $stringifyError(error) });
   }
 }
 
-export function decode(
-  data: ArrayBuffer | Uint8Array,
-  format: 'base64' | 'base64url' | 'hex' | 'utf8' = 'base64url',
-): string {
-  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-  switch (format) {
-    case 'base64':
-      return $toBase64(bytes);
-    case 'base64url':
-      return $toBase64Url(bytes);
-    case 'hex':
-      return $toHex(bytes);
-    case 'utf8':
-      return textDecoder.decode(bytes);
-    default:
-      throw new Error(`Unsupported decode format: ${format}`);
+export function decode(data: ArrayBuffer | Uint8Array, format: EncodingFormat = 'utf8'): Result<string> {
+  try {
+    const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+    switch (format) {
+      case 'base64':
+        return $ok($toBase64(bytes));
+      case 'base64url':
+        return $ok($toBase64Url(bytes));
+      case 'hex':
+        return $ok($toHex(bytes));
+      case 'utf8':
+        return $ok(textDecoder.decode(bytes));
+      default:
+        return $err({
+          message: `Unsupported decode format: ${format}`,
+          description: 'Use base64, base64url, hex, or utf8',
+        });
+    }
+  } catch (error) {
+    return $err({ message: 'Failed to decode data', description: $stringifyError(error) });
   }
 }
 

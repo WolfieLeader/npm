@@ -3,3 +3,4 @@ import type { webcrypto } from 'node:crypto';
 
 export type WebApiKey = webcrypto.CryptoKey;
 export type NodeKey = nodeCrypto.KeyObject;
+export type EncodingFormat = 'base64' | 'base64url' | 'hex' | 'utf8';

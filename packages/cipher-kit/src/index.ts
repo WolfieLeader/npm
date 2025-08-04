@@ -1,4 +1,22 @@
-export * from './node';
+export {
+  decode,
+  decode as nodeDecode,
+  decrypt,
+  decrypt as nodeDecrypt,
+  ENCRYPTED_NODE_REGEX,
+  encode,
+  encode as nodeEncode,
+  encrypt,
+  encrypt as nodeEncrypt,
+  hash,
+  hash as nodeHash,
+  NODE_ALGORITHM,
+  type NodeKey,
+  newSecretKey,
+  newSecretKey as newNodeSecretKey,
+  newUuid,
+  newUuid as newNodeUuid,
+} from './node';
 export {
   decode as webDecode,
   decrypt as webDecrypt,

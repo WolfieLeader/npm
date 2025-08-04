@@ -4,8 +4,8 @@
 <h1 align="center" style="font-weight:900;">compress-kit</h1>
 
 <p align="center">
-  A Secure, Lightweight, and Cross-platform Package<br/> 
-  for Encryption and Decryption<br/> 
+  A Secure, Reliable, and Cross-platform Package<br/> 
+  for Compression and Decompression<br/> 
   Built for Web, Node.js, Deno, and Bun environments
 </p>
 
@@ -18,22 +18,21 @@
 
 ## About 📖
 
-`compress-kit` is a versatile encryption toolkit designed to work seamlessly across multiple environments, including:
+`compress-kit` is a versatile compression toolkit designed to work seamlessly across multiple environments, including:
 
 - **Web** (using the Web Crypto API)
 - **Node.js**
 - **Deno**
 - **Bun**
 
-It provides a simple and secure way to encrypt and decrypt data, ensuring that your sensitive information remains protected regardless of the platform you are using, with error handling and type safety in mind.
+It provides a simple and secure way to compress and decompress data, ensuring that your sensitive information remains protected regardless of the platform you are using, with error handling and type safety in mind.
 
 ## Features 🌟
 
-- ✅ **AES-GCM** – Uses AES-GCM for secure and authenticated encryption and decryption.
+- 🧠 **Efficiency** – Detects whether the output should be compressed or not, optimizing performance.
 - 🌐 **Cross-Platform Support** – Works seamlessly in Web, Node.js, Deno, and Bun environments.
-- 🚫 **No External Dependencies** – Does not rely on any external libraries or modules.
-- 🔒 **Key Derivation via SHA256** – Derives encryption keys from passwords using SHA256.
 - 🧪 **Strict Input Validation and `Result` Typing** - Using unified `Result<T>` type and strict input validation to ensure type safety and prevent errors.
+- 🔁 **Lossless Compression** – Ensures that the original data can be perfectly reconstructed from the compressed data via `pako` algorithms.
 
 ## Installation 🔥
 
@@ -42,6 +41,10 @@ npm install compress-kit
 ```
 
 > 💡 Works with `npm`, `pnpm`, `yarn`, `bun`, and `deno`. You can use it in dev dependencies since it's typically used only for local HTTPS.
+
+## Credit 💪🏽
+
+We want to thank [Pako](https://github.com/nodeca/pako) for the inflate and deflate algorithms used in this package.
 
 ## Contributions 🤝
 

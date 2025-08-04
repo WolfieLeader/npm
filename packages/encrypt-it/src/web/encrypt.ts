@@ -1,21 +1,12 @@
-import { Buffer } from 'node:buffer';
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import { $isString, type WebApiKey } from '~/types';
-import { ENCODE_FORMAT, WEB_API_ALGORITHM } from './index';
+import { $decode, $encode } from './encode';
+import { $isWebApiKey, WEB_API_REGEX } from './utils';
 
-export type { WebApiKey } from '~/types';
+export const WEB_API_ALGORITHM = 'AES-GCM';
 
-const encoder = new TextEncoder();
-const decoder = new TextDecoder();
-
-const webApiRegex = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.$/;
-
-export function newUuid(): Result<string> {
-  try {
-    return $ok(crypto.randomUUID());
-  } catch (error) {
-    return $err({ message: 'Failed to generate UUID with Crypto Web API', description: $stringifyError(error) });
-  }
+async function $hash(data: string) {
+  return await crypto.subtle.digest('SHA-256', $encode(data, 'utf8'));
 }
 
 export async function hash(data: string): Promise<Result<string>> {
@@ -24,8 +15,8 @@ export async function hash(data: string): Promise<Result<string>> {
   }
 
   try {
-    const hashed = await crypto.subtle.digest('SHA-256', encoder.encode(data));
-    return $ok(Buffer.from(hashed).toString(ENCODE_FORMAT));
+    const hashed = await $hash(data);
+    return $ok($decode(hashed));
   } catch (error) {
     return $err({ message: 'Failed to hash data with Crypto Web API', description: $stringifyError(error) });
   }
@@ -36,7 +27,7 @@ export async function newSecretKey(key: string | WebApiKey): Promise<Result<{ se
     if (!$isString(key)) return $err({ message: 'Empty key for Crypto Web API', description: 'Invalid secret key' });
 
     try {
-      const hashedKey = await crypto.subtle.digest('SHA-256', encoder.encode(key));
+      const hashedKey = await $hash(key);
       const secretKey = await crypto.subtle.importKey('raw', hashedKey, { name: WEB_API_ALGORITHM }, true, [
         'encrypt',
         'decrypt',
@@ -65,17 +56,17 @@ export async function encrypt(data: string, secretKey: WebApiKey): Promise<Resul
     const encryptedWithTag = await crypto.subtle.encrypt(
       { name: WEB_API_ALGORITHM, iv: iv },
       secretKey,
-      encoder.encode(data),
+      $encode(data, 'utf8'),
     );
 
-    return $ok(`${Buffer.from(iv).toString(ENCODE_FORMAT)}.${Buffer.from(encryptedWithTag).toString(ENCODE_FORMAT)}.`);
+    return $ok(`${$decode(iv)}.${$decode(encryptedWithTag)}.`);
   } catch (error) {
     return $err({ message: 'Failed to encrypt data with Crypto Web API', description: $stringifyError(error) });
   }
 }
 
 export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<Result<string>> {
-  if (webApiRegex.test(encrypted) === false) {
+  if (WEB_API_REGEX.test(encrypted) === false) {
     return $err({
       message: 'Invalid encrypted data format',
       description: 'Data must be in the format "iv.encryptedWithTag."',
@@ -96,30 +87,13 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
 
   try {
     const decrypted = await crypto.subtle.decrypt(
-      { name: WEB_API_ALGORITHM, iv: Buffer.from(iv, ENCODE_FORMAT) },
+      { name: WEB_API_ALGORITHM, iv: $encode(iv) },
       secretKey,
-      Buffer.from(encryptedWithTag, ENCODE_FORMAT),
+      $encode(encryptedWithTag),
     );
 
-    return $ok(decoder.decode(decrypted));
+    return $ok($decode(decrypted, 'utf8'));
   } catch (error) {
     return $err({ message: 'Failed to decrypt data with Crypto Web API', description: $stringifyError(error) });
   }
-}
-
-function $isWebApiKey(key: unknown): key is WebApiKey {
-  return (
-    key !== null &&
-    key !== undefined &&
-    typeof key === 'object' &&
-    'type' in key &&
-    typeof key.type === 'string' &&
-    'algorithm' in key &&
-    typeof key.algorithm === 'object' &&
-    'extractable' in key &&
-    typeof key.extractable === 'boolean' &&
-    'usages' in key &&
-    Array.isArray(key.usages) &&
-    key.usages.every((usage) => typeof usage === 'string')
-  );
 }

@@ -39,8 +39,7 @@
     "build": "tsup",
     "prepare": "npm run build",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "express": ">=4.21.0"
@@ -54,8 +53,7 @@
     "@types/express": "^5.0.3",
     "@types/node": "^24.1.0",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.2"
   },
   "author": "WolfieLeader",
   "license": "MIT",

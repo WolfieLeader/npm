@@ -1,0 +1,91 @@
+{
+  "name": "cipher-kit",
+  "version": "0.0.1",
+  "description": "🔐 A Secure, Lightweight, and Cross-platform Package for Encryption and Decryption Built for Web, Node.js, Deno, and Bun environments",
+  "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/cipher-kit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WolfieLeader/npm.git",
+    "directory": "packages/cipher-kit"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./node": {
+      "import": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      },
+      "require": {
+        "types": "./dist/node.d.cts",
+        "default": "./dist/node.cjs"
+      }
+    },
+    "./web-api": {
+      "import": {
+        "types": "./dist/web-api.d.ts",
+        "default": "./dist/web-api.js"
+      },
+      "require": {
+        "types": "./dist/web-api.d.cts",
+        "default": "./dist/web-api.cjs"
+      }
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/index.d.ts"
+      ],
+      "node": [
+        "./dist/node.d.ts"
+      ],
+      "web-api": [
+        "./dist/web-api.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "prepare": "npm run build",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "author": "WolfieLeader",
+  "license": "MIT",
+  "keywords": [
+    "encrypt",
+    "crypto",
+    "cipher",
+    "security",
+    "hash",
+    "aes",
+    "web",
+    "node",
+    "deno",
+    "bun"
+  ]
+}

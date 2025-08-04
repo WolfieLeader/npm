@@ -128,7 +128,7 @@ importers:
         specifier: ^5.8.3
         version: 5.9.2
 
-  packages/encrypt-it:
+  packages/cipher-kit:
     devDependencies:
       '@types/node':
         specifier: ^24.1.0

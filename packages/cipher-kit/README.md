@@ -1,7 +1,7 @@
 <div align="center">
-<img src="https://github.com/WolfieLeader/npm/blob/main/assets/encrypt-it-banner.svg" align="center" alt="banner" />
+<img src="https://github.com/WolfieLeader/npm/blob/main/assets/cipher-kit-banner.svg" align="center" alt="banner" />
 
-<h1 align="center" style="font-weight:900;">encrypt-it</h1>
+<h1 align="center" style="font-weight:900;">cipher-kit</h1>
 
 <p align="center">
   A Secure, Lightweight, and Cross-platform Package<br/> 
@@ -10,15 +10,15 @@
 </p>
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
-<a href="https://www.npmjs.com/package/encrypt-it" rel="nofollow"><img src="https://img.shields.io/npm/v/encrypt-it?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/encrypt-it" rel="nofollow"><img src="https://img.shields.io/npm/dy/encrypt-it.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/v/cipher-kit?color=0078D4" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/dy/cipher-kit.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
 
 </div>
 
 ## About 📖
 
-`encrypt-it` is a versatile encryption toolkit designed to work seamlessly across multiple environments, including:
+`cipher-kit` is a versatile encryption toolkit designed to work seamlessly across multiple environments, including:
 
 - **Web** (using the Web Crypto API)
 - **Node.js**
@@ -38,7 +38,7 @@ It provides a simple and secure way to encrypt and decrypt data, ensuring that y
 ## Installation 🔥
 
 ```bash
-npm install encrypt-it
+npm install cipher-kit
 ```
 
 > 💡 Works with `npm`, `pnpm`, `yarn`, `bun`, and `deno`. You can use it in dev dependencies since it's typically used only for local HTTPS.

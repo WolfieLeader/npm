@@ -1,12 +1,12 @@
 {
-  "name": "encrypt-it",
+  "name": "cipher-kit",
   "version": "0.0.1",
   "description": "🔐 A Secure, Lightweight, and Cross-platform Package for Encryption and Decryption Built for Web, Node.js, Deno, and Bun environments",
-  "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/encrypt-it#readme",
+  "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/cipher-kit#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WolfieLeader/npm.git",
-    "directory": "packages/encrypt-it"
+    "directory": "packages/cipher-kit"
   },
   "type": "module",
   "main": "./dist/index.cjs",
@@ -79,6 +79,7 @@
   "keywords": [
     "encrypt",
     "crypto",
+    "cipher",
     "security",
     "hash",
     "aes",

@@ -1,7 +1,7 @@
 import { defineConfig, type Options } from 'tsup';
 
 export default defineConfig((options: Options) => ({
-  name: 'encrypt-it',
+  name: 'cipher-kit',
   entry: {
     index: 'src/index.ts',
     node: 'src/node/index.ts',

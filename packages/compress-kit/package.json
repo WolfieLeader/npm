@@ -1,0 +1,58 @@
+{
+  "name": "compress-kit",
+  "version": "0.0.1",
+  "description": "🗜️ Compression Package",
+  "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/compress-kit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WolfieLeader/npm.git",
+    "directory": "packages/compress-kit"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/index.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "prepare": "npm run build",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "pako": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "@types/pako": "^2.0.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "author": "WolfieLeader",
+  "license": "MIT",
+  "keywords": []
+}

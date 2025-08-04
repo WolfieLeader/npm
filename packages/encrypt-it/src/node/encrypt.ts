@@ -1,9 +1,10 @@
 import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
 import { $err, $ok, $stringifyError, type Result } from '~/error';
-import { $isString, type NodeKey } from '~/types';
-import { $decode, $encode } from './encode';
-import { $isNodeKey, NODE_REGEX } from './utils';
+import type { NodeKey } from '~/types';
+import { $isStr } from '~/utils';
+import { decode, encode } from './encode';
+import { $isNodeKey, ENCRYPTED_NODE_REGEX } from './utils';
 
 export const NODE_ALGORITHM = 'aes-256-gcm';
 
@@ -12,13 +13,13 @@ function $hash(data: string) {
 }
 
 export function hash(data: string): Result<string> {
-  if (!$isString(data)) {
+  if (!$isStr(data)) {
     return $err({ message: 'Empty data for hashing', description: 'Data must be a non-empty string' });
   }
 
   try {
     const hashed = $hash(data);
-    return $ok($decode(hashed));
+    return $ok(decode(hashed));
   } catch (error) {
     return $err({ message: 'Failed to hash data with Crypto NodeJS', description: $stringifyError(error) });
   }
@@ -26,7 +27,7 @@ export function hash(data: string): Result<string> {
 
 export function newSecretKey(key: string | NodeKey): Result<{ secretKey: NodeKey }> {
   if (typeof key === 'string') {
-    if (!$isString(key)) return $err({ message: 'Empty key for Crypto NodeJS', description: 'Invalid secret key' });
+    if (!$isStr(key)) return $err({ message: 'Empty key for Crypto NodeJS', description: 'Invalid secret key' });
 
     try {
       const hashedKey = $hash(key);
@@ -42,7 +43,7 @@ export function newSecretKey(key: string | NodeKey): Result<{ secretKey: NodeKey
 }
 
 export function encrypt(data: string, secretKey: NodeKey): Result<string> {
-  if (!$isString(data)) {
+  if (!$isStr(data)) {
     return $err({ message: 'Empty data for encryption', description: 'Data must be a non-empty string' });
   }
 
@@ -56,14 +57,14 @@ export function encrypt(data: string, secretKey: NodeKey): Result<string> {
     const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
     const tag = cipher.getAuthTag();
 
-    return $ok(`${$decode(iv)}.${$decode(encrypted)}.${$decode(tag)}.`);
+    return $ok(`${decode(iv)}.${decode(encrypted)}.${decode(tag)}.`);
   } catch (error) {
     return $err({ message: 'Failed to encrypt data with Crypto NodeJS', description: $stringifyError(error) });
   }
 }
 
 export function decrypt(encrypted: string, secretKey: NodeKey): Result<string> {
-  if (NODE_REGEX.test(encrypted) === false) {
+  if (ENCRYPTED_NODE_REGEX.test(encrypted) === false) {
     return $err({
       message: 'Invalid encrypted data format',
       description: 'Encrypted data must be in the format "iv.encrypted.tag."',
@@ -71,7 +72,7 @@ export function decrypt(encrypted: string, secretKey: NodeKey): Result<string> {
   }
 
   const [iv, encryptedData, tag] = encrypted.split('.', 4);
-  if (!$isString(iv) || !$isString(encryptedData) || !$isString(tag)) {
+  if (!$isStr(iv) || !$isStr(encryptedData) || !$isStr(tag)) {
     return $err({
       message: 'Invalid parameters for decryption',
       description: 'IV, encrypted data, and tag must be non-empty strings',
@@ -83,11 +84,11 @@ export function decrypt(encrypted: string, secretKey: NodeKey): Result<string> {
   }
 
   try {
-    const decipher = nodeCrypto.createDecipheriv(NODE_ALGORITHM, secretKey, $encode(iv));
-    decipher.setAuthTag($encode(tag));
+    const decipher = nodeCrypto.createDecipheriv(NODE_ALGORITHM, secretKey, encode(iv));
+    decipher.setAuthTag(encode(tag));
 
-    const decrypted = Buffer.concat([decipher.update($encode(encryptedData)), decipher.final()]);
-    return $ok($decode(decrypted, 'utf8'));
+    const decrypted = Buffer.concat([decipher.update(encode(encryptedData)), decipher.final()]);
+    return $ok(decode(decrypted, 'utf8'));
   } catch (error) {
     return $err({ message: 'Failed to decrypt data with Crypto NodeJS', description: $stringifyError(error) });
   }

@@ -1,4 +1,4 @@
-import { $isPlainObject } from './types';
+import { $isObj } from './utils';
 
 export interface ResultErr {
   readonly message: string;
@@ -14,7 +14,7 @@ export type Result<T, E = ResultErr> = T extends object
       | { readonly success: false; readonly error: E; readonly result?: undefined };
 
 export function $ok<T>(result?: T): Result<T> {
-  if ($isPlainObject(result)) return { success: true, ...(result as T & object) } as Result<T>;
+  if ($isObj(result)) return { success: true, ...(result as T & object) } as Result<T>;
   return { success: true, result } as Result<T>;
 }
 

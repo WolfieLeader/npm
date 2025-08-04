@@ -1,7 +1,7 @@
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import type { WebApiKey } from '~/types';
 
-export const WEB_API_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.$/;
+export const ENCRYPTED_WEB_API_REGEX = /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/;
 
 export function newUuid(): Result<string> {
   try {

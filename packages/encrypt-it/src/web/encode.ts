@@ -1,7 +1,7 @@
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-export function $encode(data: string, format: 'base64' | 'base64url' | 'hex' | 'utf8' = 'base64url'): Uint8Array {
+export function encode(data: string, format: 'base64' | 'base64url' | 'hex' | 'utf8' = 'base64url'): Uint8Array {
   switch (format) {
     case 'base64':
       return $fromBase64(data);
@@ -16,7 +16,7 @@ export function $encode(data: string, format: 'base64' | 'base64url' | 'hex' | '
   }
 }
 
-export function $decode(
+export function decode(
   data: ArrayBuffer | Uint8Array,
   format: 'base64' | 'base64url' | 'hex' | 'utf8' = 'base64url',
 ): string {

@@ -1,0 +1,73 @@
+{
+  "name": "modern-cookies",
+  "version": "0.0.1",
+  "description": "🍪 A Lightweight and Modern Cookie Utility for Express and Nest.js",
+  "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/modern-cookies#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WolfieLeader/npm.git",
+    "directory": "packages/modern-cookies"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/index.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "prepare": "npm run build",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "express": ">=4.21.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "cookie": "^1.0.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.1.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  },
+  "author": "WolfieLeader",
+  "license": "MIT",
+  "keywords": [
+    "ip",
+    "express",
+    "nestjs",
+    "server",
+    "backend",
+    "cookies",
+    "http",
+    "cookie-parser"
+  ]
+}

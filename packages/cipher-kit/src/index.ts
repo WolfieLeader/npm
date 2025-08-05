@@ -5,7 +5,6 @@ export {
   decrypt as nodeDecrypt,
   decryptObj,
   decryptObj as nodeDecryptObj,
-  ENCRYPTED_NODE_REGEX,
   encode,
   encode as nodeEncode,
   encrypt,
@@ -21,10 +20,10 @@ export {
   newUuid,
   newUuid as newNodeUuid,
 } from './node';
+export { ENCRYPTED_NODE_REGEX, ENCRYPTED_REGEX, ENCRYPTED_WEB_REGEX } from './utils';
 export {
   decode as webDecode,
   decrypt as webDecrypt,
-  ENCRYPTED_WEB_API_REGEX,
   encode as webEncode,
   encrypt as webEncrypt,
   hash as webHash,

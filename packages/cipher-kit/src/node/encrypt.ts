@@ -2,9 +2,9 @@ import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import type { NodeKey } from '~/types';
-import { $isStr, $parseToObj, $stringifyObj } from '~/utils';
+import { $isStr, $parseToObj, $stringifyObj, ENCRYPTED_NODE_REGEX } from '~/utils';
 import { decode, encode } from './encode';
-import { $isNodeKey, ENCRYPTED_NODE_REGEX } from './utils';
+import { $isNodeKey } from './utils';
 
 export const NODE_ALGORITHM = 'aes-256-gcm';
 

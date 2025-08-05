@@ -1,8 +1,8 @@
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import type { WebApiKey } from '~/types';
-import { $isStr, $parseToObj, $stringifyObj } from '~/utils';
+import { $isStr, $parseToObj, $stringifyObj, ENCRYPTED_WEB_REGEX } from '~/utils';
 import { decode, encode } from './encode';
-import { $isWebApiKey, ENCRYPTED_WEB_API_REGEX } from './utils';
+import { $isWebApiKey } from './utils';
 
 export const WEB_API_ALGORITHM = 'AES-GCM';
 
@@ -75,7 +75,7 @@ export async function encrypt(data: string, secretKey: WebApiKey): Promise<Resul
 }
 
 export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<Result<string>> {
-  if (ENCRYPTED_WEB_API_REGEX.test(encrypted) === false) {
+  if (ENCRYPTED_WEB_REGEX.test(encrypted) === false) {
     return $err({
       message: 'Invalid encrypted data format',
       description: 'Data must be in the format "iv.encryptedWithTag."',

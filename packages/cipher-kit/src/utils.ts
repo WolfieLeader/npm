@@ -1,5 +1,9 @@
 import { $err, $ok, $stringifyError, type Result } from './error';
 
+export const ENCRYPTED_REGEX = /^(?:[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?\.)$/;
+export const ENCRYPTED_NODE_REGEX = /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/;
+export const ENCRYPTED_WEB_REGEX = /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/;
+
 export function $isStr(value: unknown, min = 0): value is string {
   return (value !== null || value !== undefined) && typeof value === 'string' && value.trim().length >= min;
 }

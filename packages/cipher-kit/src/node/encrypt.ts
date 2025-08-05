@@ -2,11 +2,22 @@ import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import type { NodeKey } from '~/types';
-import { $isStr, $parseToObj, $stringifyObj, ENCRYPTED_NODE_REGEX } from '~/utils';
+import { $isStr, ENCRYPTED_NODE_REGEX, parseToObj, stringifyObj } from '~/utils';
 import { decode, encode } from './encode';
-import { $isNodeKey } from './utils';
 
 export const NODE_ALGORITHM = 'aes-256-gcm';
+
+export function newUuid(): Result<string> {
+  try {
+    return $ok(nodeCrypto.randomUUID());
+  } catch (error) {
+    return $err({ message: 'Failed to generate UUID with Crypto NodeJS', description: $stringifyError(error) });
+  }
+}
+
+export function isNodeKey(key: unknown): key is nodeCrypto.KeyObject {
+  return key instanceof nodeCrypto.KeyObject;
+}
 
 export function hash(data: string): Result<string> {
   if (!$isStr(data)) {
@@ -34,7 +45,7 @@ export function newSecretKey(key: string | NodeKey): Result<{ secretKey: NodeKey
     }
   }
 
-  if (!$isNodeKey(key)) return $err({ message: 'Invalid secret key', description: 'Expected a crypto.KeyObject' });
+  if (!isNodeKey(key)) return $err({ message: 'Invalid secret key', description: 'Expected a crypto.KeyObject' });
   return $ok({ secretKey: key });
 }
 
@@ -43,7 +54,7 @@ export function encrypt(data: string, secretKey: NodeKey): Result<string> {
     return $err({ message: 'Empty data for encryption', description: 'Data must be a non-empty string' });
   }
 
-  if (!$isNodeKey(secretKey)) {
+  if (!isNodeKey(secretKey)) {
     return $err({ message: 'Invalid encryption key', description: 'Expected a crypto.KeyObject' });
   }
 
@@ -82,7 +93,7 @@ export function decrypt(encrypted: string, secretKey: NodeKey): Result<string> {
     });
   }
 
-  if (!$isNodeKey(secretKey)) {
+  if (!isNodeKey(secretKey)) {
     return $err({ message: 'Invalid decryption key', description: 'Expected a crypto.KeyObject' });
   }
 
@@ -105,7 +116,7 @@ export function decrypt(encrypted: string, secretKey: NodeKey): Result<string> {
 }
 
 export function encryptObj(data: Record<string, unknown>, secretKey: NodeKey): Result<string> {
-  const { result, error } = $stringifyObj(data);
+  const { result, error } = stringifyObj(data);
   if (error) return $err(error);
   return encrypt(result, secretKey);
 }
@@ -113,5 +124,5 @@ export function encryptObj(data: Record<string, unknown>, secretKey: NodeKey): R
 export function decryptObj(encrypted: string, secretKey: NodeKey): Result<{ result: Record<string, unknown> }> {
   const { result, error } = decrypt(encrypted, secretKey);
   if (error) return $err(error);
-  return $parseToObj(result);
+  return parseToObj(result);
 }

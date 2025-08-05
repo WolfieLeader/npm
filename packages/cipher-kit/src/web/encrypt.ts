@@ -1,10 +1,34 @@
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import type { WebApiKey } from '~/types';
-import { $isStr, $parseToObj, $stringifyObj, ENCRYPTED_WEB_REGEX } from '~/utils';
+import { $isStr, ENCRYPTED_WEB_REGEX, parseToObj, stringifyObj } from '~/utils';
 import { decode, encode } from './encode';
-import { $isWebApiKey } from './utils';
 
 export const WEB_API_ALGORITHM = 'AES-GCM';
+
+export function newUuid(): Result<string> {
+  try {
+    return $ok(crypto.randomUUID());
+  } catch (error) {
+    return $err({ message: 'Failed to generate UUID with Crypto Web API', description: $stringifyError(error) });
+  }
+}
+
+export function isWebApiKey(key: unknown): key is WebApiKey {
+  return (
+    key !== null &&
+    key !== undefined &&
+    typeof key === 'object' &&
+    'type' in key &&
+    typeof key.type === 'string' &&
+    'algorithm' in key &&
+    typeof key.algorithm === 'object' &&
+    'extractable' in key &&
+    typeof key.extractable === 'boolean' &&
+    'usages' in key &&
+    Array.isArray(key.usages) &&
+    key.usages.every((usage) => typeof usage === 'string')
+  );
+}
 
 export async function hash(data: string): Promise<Result<string>> {
   if (!$isStr(data)) {
@@ -41,7 +65,7 @@ export async function newSecretKey(key: string | WebApiKey): Promise<Result<{ se
     }
   }
 
-  if (!$isWebApiKey(key)) return $err({ message: 'Invalid secret key', description: 'Expected a webcrypto.CryptoKey' });
+  if (!isWebApiKey(key)) return $err({ message: 'Invalid secret key', description: 'Expected a webcrypto.CryptoKey' });
   return $ok({ secretKey: key });
 }
 
@@ -50,7 +74,7 @@ export async function encrypt(data: string, secretKey: WebApiKey): Promise<Resul
     return $err({ message: 'Empty data for encryption', description: 'Data must be a non-empty string' });
   }
 
-  if (!$isWebApiKey(secretKey)) {
+  if (!isWebApiKey(secretKey)) {
     return $err({ message: 'Invalid encryption key', description: 'Expected a webcrypto.CryptoKey' });
   }
 
@@ -90,7 +114,7 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
     });
   }
 
-  if (!$isWebApiKey(secretKey)) {
+  if (!isWebApiKey(secretKey)) {
     return $err({ message: 'Invalid decryption key', description: 'Expected a webcrypto.CryptoKey' });
   }
 
@@ -110,7 +134,7 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
 }
 
 export async function encryptObj(data: Record<string, unknown>, secretKey: WebApiKey): Promise<Result<string>> {
-  const { result, error } = $stringifyObj(data);
+  const { result, error } = stringifyObj(data);
   if (error) return $err(error);
   return await encrypt(result, secretKey);
 }
@@ -121,5 +145,5 @@ export async function decryptObj(
 ): Promise<Result<{ result: Record<string, unknown> }>> {
   const { result, error } = await decrypt(encrypted, secretKey);
   if (error) return $err(error);
-  return $parseToObj(result);
+  return parseToObj(result);
 }

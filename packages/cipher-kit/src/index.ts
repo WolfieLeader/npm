@@ -13,6 +13,7 @@ export {
   encryptObj as nodeEncryptObj,
   hash,
   hash as nodeHash,
+  isNodeKey,
   NODE_ALGORITHM,
   type NodeKey,
   newSecretKey,
@@ -20,13 +21,14 @@ export {
   newUuid,
   newUuid as newNodeUuid,
 } from './node';
-export { ENCRYPTED_NODE_REGEX, ENCRYPTED_REGEX, ENCRYPTED_WEB_REGEX } from './utils';
+export { ENCRYPTED_NODE_REGEX, ENCRYPTED_REGEX, ENCRYPTED_WEB_REGEX, parseToObj, stringifyObj } from './utils';
 export {
   decode as webDecode,
   decrypt as webDecrypt,
   encode as webEncode,
   encrypt as webEncrypt,
   hash as webHash,
+  isWebApiKey,
   newSecretKey as newWebSecretKey,
   newUuid as newWebUuid,
   WEB_API_ALGORITHM,

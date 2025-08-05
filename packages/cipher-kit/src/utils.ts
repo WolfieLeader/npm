@@ -17,7 +17,7 @@ export function $isObj(value: unknown): value is Record<string, unknown> {
   );
 }
 
-export function $stringifyObj(obj: Record<string, unknown>): Result<string> {
+export function stringifyObj(obj: Record<string, unknown>): Result<string> {
   if (!$isObj(obj)) return $err({ message: 'Invalid object', description: 'Input is not a plain object' });
 
   try {
@@ -27,7 +27,7 @@ export function $stringifyObj(obj: Record<string, unknown>): Result<string> {
   }
 }
 
-export function $parseToObj(str: string): Result<{ result: Record<string, unknown> }> {
+export function parseToObj(str: string): Result<{ result: Record<string, unknown> }> {
   if (!$isStr(str)) return $err({ message: 'Invalid input', description: 'Input is not a valid string' });
 
   try {

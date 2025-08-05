@@ -17,14 +17,16 @@
 
 ## About 📖
 
-`modern-cookies` is a lightweight and modern cookie utility designed for Express and Nest.js applications. It simplifies cookie management with a focus on security, ease of use, and compatibility with modern web standards.
-It provides a set of functions to set, get, and delete cookies with minimal configuration, while ensuring best practices for security and performance.
+`modern-cookies` is a simple, type-safe, and secure cookie management utility for Express and Nest.js applications.  
+It provides a minimal API for setting, getting, and deleting cookies — with security best practices built in.
 
 ## Features 🌟
 
-- ✅ **Simple API** - Easy-to-use functions `setCookie`, `getCookie`, and `deleteCookie` for managing cookies.
-- 🔨 **Reliable** - Built on top of the `cookie` package for robust cookie parsing and serialization, with security in mind.
-- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
+- 💡 **Simple API** — Intuitive functions `setCookie`, `getCookie`, and `deleteCookie` for effortless cookie management.
+- 🔨 **Built on Reliability** — Uses the proven [cookie](https://www.npmjs.com/package/cookie) library for RFC-compliant parsing and serialization.
+- ❌ **Graceful Error Handling** — Returns `false` on failures and provides a `logError` flag for optional console logging.
+- 🛡️ **Security-Aware Defaults** — Automatically enforces rules for special prefixes: `__Secure-` and `__Host-`.
+- ⚙️ **Type-Safe & Cross-Compatible** — Fully written in TypeScript with complete type definitions. Works in both ESM and CommonJS runtimes.
 
 ## Installation 🔥
 
@@ -33,6 +35,81 @@ npm install modern-cookies
 ```
 
 > 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.
+
+## Usage 🪛
+
+### Express 📫
+
+```typescript
+import express from 'express';
+import { getCookie, setCookie, deleteCookie } from 'modern-cookies';
+import { env } from './env';
+
+function bootstrap() {
+  const app = express();
+
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  app.get('/get-cookie', (req, res) => {
+    const cookieValue = getCookie(req, 'myCookie');
+    res.json({ cookieValue });
+  });
+
+  app.get('/set-cookie', (req, res) => {
+    const isSet = setCookie(res, 'myCookie', 'SomeValue123', {
+      httpOnly: true,
+      maxAge: 60, // 1 minute
+    });
+
+    res.json({ message: isSet ? 'Cookie set successfully' : 'Failed to set cookie' });
+  });
+
+  app.get('/delete-cookie', (req, res) => {
+    const isDeleted = deleteCookie(res, 'myCookie');
+    res.json({ message: isDeleted ? 'Cookie deleted successfully' : 'Failed to delete cookie' });
+  });
+
+  app.listen(env.PORT || 3000, () => {
+    console.log(`🚀 Express server running on: http://localhost:${env.PORT || 3000}`);
+  });
+}
+
+bootstrap();
+```
+
+### NestJS 🪺
+
+```typescript
+import { Controller, Get, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { getCookie, setCookie, deleteCookie } from 'modern-cookies';
+
+@Controller('')
+export class PublicController {
+  @Get('get-cookie')
+  getCookie(@Req() req: Request) {
+    const cookieValue = getCookie(req, 'myCookie');
+    return { cookieValue };
+  }
+
+  @Get('set-cookie')
+  setCookie(@Res() res: Response) {
+    const isSet = setCookie(res, 'myCookie', 'SomeValue123', {
+      httpOnly: true,
+      maxAge: 60, // 1 minute
+    });
+    // Since we used the `Res` we need to send the response manually
+    res.json({ message: isSet ? 'Cookie set successfully' : 'Failed to set cookie' });
+  }
+
+  @Get('delete-cookie')
+  deleteCookie(@Res() res: Response) {
+    const isDeleted = deleteCookie(res, 'myCookie');
+    res.json({ message: isDeleted ? 'Cookie deleted successfully' : 'Failed to delete cookie' });
+  }
+}
+```
 
 ## Credit 💪🏽
 

@@ -1,6 +1,6 @@
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import type { WebApiKey } from '~/types';
-import { $isStr } from '~/utils';
+import { $isStr, $parseToObj, $stringifyObj } from '~/utils';
 import { decode, encode } from './encode';
 import { $isWebApiKey, ENCRYPTED_WEB_API_REGEX } from './utils';
 
@@ -107,4 +107,19 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
   } catch (error) {
     return $err({ message: 'Failed to decrypt data with Crypto Web API', description: $stringifyError(error) });
   }
+}
+
+export async function encryptObj(data: Record<string, unknown>, secretKey: WebApiKey): Promise<Result<string>> {
+  const { result, error } = $stringifyObj(data);
+  if (error) return $err(error);
+  return await encrypt(result, secretKey);
+}
+
+export async function decryptObj(
+  encrypted: string,
+  secretKey: WebApiKey,
+): Promise<Result<{ result: Record<string, unknown> }>> {
+  const { result, error } = await decrypt(encrypted, secretKey);
+  if (error) return $err(error);
+  return $parseToObj(result);
 }

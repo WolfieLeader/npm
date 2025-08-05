@@ -49,7 +49,6 @@ npm install get-client-ip
 
 ```typescript
 import http from 'node:http';
-import { generateCerts } from 'generate-certs';
 import express from 'express';
 import { getClientIp } from 'get-client-ip';
 import { env } from './env';

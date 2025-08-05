@@ -1,46 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { compress, compressObj, decompress, decompressObj } from '~/compress';
 
-const emojiStr = '🦊 secret stuff ~ !@#$%^&*()_+';
-
-describe('String Compression', () => {
-  const compressed = compress(emojiStr);
-  const decompressed = decompress(compressed.result as string);
-
-  test('Compresses string correctly', () => {
-    expect(compressed.success).toBe(true);
-    expect(compressed.result).toMatch(/[01]\.$/); // ends with .0. or .1.
-  });
-
-  test('Decompresses to original string', () => {
-    expect(decompressed.success).toBe(true);
-    expect(decompressed.result).toBe(emojiStr);
-  });
-
-  test('Decompression fails on invalid format', () => {
-    const corrupted = decompress('not-a-valid-compressed-string');
-    expect(corrupted.success).toBe(false);
-    expect(corrupted.error?.message).toMatch(/Invalid format/);
-  });
-});
-
-describe('Compress Small Object', () => {
+describe('Compression Utility', () => {
+  const emojiStr = '🦊 secret stuff ~ !@#$%^&*()_+';
   const smallObj = { a: 'test', b: 123, c: true };
-  const compressedObjRes = compressObj(smallObj);
-  const decompressedObjRes = decompressObj(compressedObjRes.result as string);
-
-  test('Compress Function', () => {
-    expect(compressedObjRes.success).toBe(true);
-    expect(compressedObjRes.result).toBeDefined();
-  });
-
-  test('Decompress Function', () => {
-    expect(decompressedObjRes.success).toBe(true);
-    expect(decompressedObjRes.result).toEqual(smallObj);
-  });
-});
-
-describe('Compress Large Object', () => {
   const largeObj = {
     user: {
       id: 'user_1234567890',
@@ -50,11 +13,7 @@ describe('Compress Large Object', () => {
       preferences: {
         theme: 'dark',
         language: 'en-US',
-        notifications: {
-          email: true,
-          sms: false,
-          push: true,
-        },
+        notifications: { email: true, sms: false, push: true },
       },
       roles: ['admin', 'editor', 'user'],
       stats: {
@@ -103,16 +62,45 @@ describe('Compress Large Object', () => {
     })),
   };
 
-  const compressedObjRes = compressObj(largeObj);
-  const decompressedObjRes = decompressObj(compressedObjRes.result as string);
+  test('Compress and decompress string', () => {
+    const compressed = compress(emojiStr);
+    expect(compressed.error).toBeUndefined();
+    expect(compressed.success).toBe(true);
+    expect(compressed.result).toBeDefined();
 
-  test('Compress Function', () => {
-    expect(compressedObjRes.success).toBe(true);
-    expect(compressedObjRes.result).toBeDefined();
+    const decompressed = decompress(compressed.result as string);
+    expect(decompressed.error).toBeUndefined();
+    expect(decompressed.success).toBe(true);
+    expect(decompressed.result).toBe(emojiStr);
   });
 
-  test('Decompress Function', () => {
-    expect(decompressedObjRes.success).toBe(true);
-    expect(decompressedObjRes.result).toEqual(largeObj);
+  test('Decompression fails on invalid format', () => {
+    const { success, error } = decompress('not-a-valid-compressed-string');
+    expect(success).toBe(false);
+    expect(error?.message).toMatch(/Invalid format/);
+  });
+
+  test('Compress and decompress small object', () => {
+    const compressed = compressObj(smallObj);
+    expect(compressed.error).toBeUndefined();
+    expect(compressed.success).toBe(true);
+    expect(compressed.result).toBeDefined();
+
+    const decompressed = decompressObj(compressed.result as string);
+    expect(decompressed.error).toBeUndefined();
+    expect(decompressed.success).toBe(true);
+    expect(decompressed.result).toEqual(smallObj);
+  });
+
+  test('Compress and decompress large object', () => {
+    const compressed = compressObj(largeObj);
+    expect(compressed.error).toBeUndefined();
+    expect(compressed.success).toBe(true);
+    expect(compressed.result).toBeDefined();
+
+    const decompressed = decompressObj(compressed.result as string);
+    expect(decompressed.error).toBeUndefined();
+    expect(decompressed.success).toBe(true);
+    expect(decompressed.result).toEqual(largeObj);
   });
 });

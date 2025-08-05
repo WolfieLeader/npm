@@ -57,7 +57,7 @@ export function decompress(data: string): Result<string> {
   }
 }
 
-export function compressObj(data: Record<string, unknown> | null | undefined): Result<string> {
+export function compressObj(data: Record<string, unknown>): Result<string> {
   const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
   return compress(result);
@@ -66,9 +66,5 @@ export function compressObj(data: Record<string, unknown> | null | undefined): R
 export function decompressObj(data: string): Result<{ result: Record<string, unknown> }> {
   const { result, error } = decompress(data);
   if (error) return $err(error);
-
-  const obj = $parseToObj(result);
-  if (obj.error) return $err(obj.error);
-
-  return $ok({ result: obj.result });
+  return $parseToObj(result);
 }

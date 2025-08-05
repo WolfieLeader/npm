@@ -4,9 +4,8 @@
 <h1 align="center" style="font-weight:900;">cipher-kit</h1>
 
 <p align="center">
-  A Secure, Lightweight, and Cross-platform Package<br/> 
-  for Encryption and Decryption<br/> 
-  Built for Web, Node.js, Deno, and Bun environments
+  Secure, Lightweight, and Cross-Platform <br/>
+  Encryption & Decryption for Web, Node.js, Deno, and Bun
 </p>
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
@@ -18,22 +17,16 @@
 
 ## About 📖
 
-`cipher-kit` is a versatile encryption toolkit designed to work seamlessly across multiple environments, including:
-
-- **Web** (using the Web Crypto API)
-- **Node.js**
-- **Deno**
-- **Bun**
-
-It provides a simple and secure way to encrypt and decrypt data, ensuring that your sensitive information remains protected regardless of the platform you are using, with error handling and type safety in mind.
+`cipher-kit` is a modern encryption toolkit designed to work seamlessly across **Web**, **Node.js**, **Deno**, and **Bun** environments.  
+It provides a simple, secure, and dependency-free API for encrypting and decrypting data with **AES-GCM**, ensuring strong security, predictable behavior, and type safety.
 
 ## Features 🌟
 
-- ✅ **AES-GCM** – Uses AES-GCM for secure and authenticated encryption and decryption.
-- 🌐 **Cross-Platform Support** – Works seamlessly in Web, Node.js, Deno, and Bun environments.
-- 🚫 **No External Dependencies** – Does not rely on any external libraries or modules.
-- 🔒 **Key Derivation via SHA256** – Derives encryption keys from passwords using SHA256.
-- 🧪 **Strict Input Validation and `Result` Typing** - Using unified `Result<T>` type and strict input validation to ensure type safety and prevent errors.
+- 🛡️ **AES-GCM Encryption** – Secure and authenticated encryption with built-in integrity checks.
+- 🌐 **Cross-Platform** – Works in Web, Node.js, Deno, and Bun without code changes.
+- 🚫 **Zero Dependencies** – Fully self-contained, no external libraries required.
+- 🔒 **SHA-256 Key Derivation** – Derives strong encryption keys from passwords.
+- 🧪 **Strict Validation & `Result<T>` Typing** – Unified return type with robust input validation.
 
 ## Installation 🔥
 

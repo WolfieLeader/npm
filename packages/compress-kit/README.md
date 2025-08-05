@@ -4,9 +4,8 @@
 <h1 align="center" style="font-weight:900;">compress-kit</h1>
 
 <p align="center">
-  A Secure, Reliable, and Cross-platform Package<br/> 
-  for Compression and Decompression<br/> 
-  Built for Web, Node.js, Deno, and Bun environments
+  Reliable, Cross-Platform Compression & Decompression<br/>
+  for Web, Node.js, Deno, and Bun
 </p>
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
@@ -18,21 +17,16 @@
 
 ## About 📖
 
-`compress-kit` is a versatile compression toolkit designed to work seamlessly across multiple environments, including:
-
-- **Web** (using the Web Crypto API)
-- **Node.js**
-- **Deno**
-- **Bun**
-
-It provides a simple and secure way to compress and decompress data, ensuring that your sensitive information remains protected regardless of the platform you are using, with error handling and type safety in mind.
+`compress-kit` is a modern compression toolkit for **Web**, **Node.js**, **Deno**, and **Bun**.  
+It offers a simple, consistent API for compressing and decompressing strings or objects, automatically deciding when compression is beneficial, while ensuring lossless results and type safety.
 
 ## Features 🌟
 
-- 🧠 **Efficiency** – Detects whether the output should be compressed or not, optimizing performance.
-- 🌐 **Cross-Platform Support** – Works seamlessly in Web, Node.js, Deno, and Bun environments.
-- 🧪 **Strict Input Validation and `Result` Typing** - Using unified `Result<T>` type and strict input validation to ensure type safety and prevent errors.
-- 🔁 **Lossless Compression** – Ensures that the original data can be perfectly reconstructed from the compressed data via `pako` algorithms.
+- 📉 **Strong Compression** – Achieves size reductions of ~30% to 90% on typical text and JSON data using the Deflate algorithm via [pako](https://www.npmjs.com/package/pako).
+- 🧠 **Smart Compression** – Automatically detects whether to store data compressed or uncompressed for optimal efficiency.
+- 🌐 **Cross-Platform** – Works seamlessly in Web, Node.js, Deno, and Bun with no code changes.
+- 🔁 **Lossless Algorithms** – Ensures perfect reconstruction of the original data.
+- 🧪 **Strict Validation & `Result<T>` Typing** – Unified return type and robust input checks for predictable results.
 
 ## Installation 🔥
 

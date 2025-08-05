@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EnvModule } from './modules/env.module';
-import { PublicModule } from './modules/public/public.module';
+import { RoutesModule } from './modules/routes/routes.module';
 
-@Module({ imports: [EnvModule, PublicModule] })
+@Module({ imports: [EnvModule, RoutesModule] })
 export class AppModule {}

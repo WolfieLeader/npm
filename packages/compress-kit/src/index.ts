@@ -1,2 +1,7 @@
 export { compress, compressObj, decompress, decompressObj } from './compress';
-export { COMPRESSED_REGEX } from './utils';
+export {
+  COMPRESSION_REGEX,
+  isInCompressedFormat,
+  isInCompressionFormat,
+  isInUncompressedFormat,
+} from './utils';

@@ -18,10 +18,16 @@ export function $ok<T>(result?: T): Result<T> {
   return { success: true, result } as Result<T>;
 }
 
-export function $err(typeOrErr: { message: string; description: string }): Result<never, ResultErr>;
+export function $err(typeOrErr: { msg: string; desc: string }): Result<never, ResultErr>;
 export function $err(typeOrErr: ResultErr): Result<never, ResultErr>;
-export function $err(typeOrErr: { message: string; description: string } | ResultErr): Result<never, ResultErr> {
-  return { success: false, error: typeOrErr } as Result<never, ResultErr>;
+export function $err(typeOrErr: { msg: string; desc: string } | ResultErr): Result<never, ResultErr> {
+  return {
+    success: false,
+    error:
+      'msg' in typeOrErr && 'desc' in typeOrErr
+        ? { message: typeOrErr.msg, description: typeOrErr.desc }
+        : { message: typeOrErr.message, description: typeOrErr.description },
+  } as Result<never, ResultErr>;
 }
 
 export function $stringifyError(error: unknown): string {

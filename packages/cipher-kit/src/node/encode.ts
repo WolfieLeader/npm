@@ -6,7 +6,7 @@ export function encode(data: string, format: EncodingFormat = 'utf8'): Result<{ 
   try {
     return $ok({ bytes: Buffer.from(data, format) });
   } catch (error) {
-    return $err({ message: 'Failed to encode data', description: $stringifyError(error) });
+    return $err({ msg: 'Failed to encode data', desc: $stringifyError(error) });
   }
 }
 
@@ -14,6 +14,6 @@ export function decode(data: Buffer, format: EncodingFormat = 'utf8'): Result<st
   try {
     return $ok(Buffer.from(data).toString(format));
   } catch (error) {
-    return $err({ message: 'Failed to decode data', description: $stringifyError(error) });
+    return $err({ msg: 'Failed to decode data', desc: $stringifyError(error) });
   }
 }

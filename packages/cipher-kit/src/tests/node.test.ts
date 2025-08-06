@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { decode, decrypt, decryptObj, encode, encrypt, encryptObj, type NodeKey, newSecretKey } from '~/node';
+import { createSecretKey, decode, decrypt, decryptObj, encode, encrypt, encryptObj, type NodeKey } from '~/node';
 
 describe('Node Crypto - AES-256-GCM', () => {
   const secret = 'Secret0123456789Secret0123456789';
@@ -17,7 +17,7 @@ describe('Node Crypto - AES-256-GCM', () => {
   });
 
   test('Create secret key from string', () => {
-    const res = newSecretKey(secret);
+    const res = createSecretKey(secret);
     expect(res.success).toBe(true);
     expect(res.secretKey).toBeDefined();
     secretKey = res.secretKey as NodeKey;

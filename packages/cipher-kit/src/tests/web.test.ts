@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { decode, decrypt, decryptObj, encode, encrypt, encryptObj, newSecretKey, type WebApiKey } from '~/web';
+import { createSecretKey, decode, decrypt, decryptObj, encode, encrypt, encryptObj, type WebApiKey } from '~/web';
 
 describe('Web API Crypto - AES-256-GCM', () => {
   const secret = 'Secret0123456789Secret0123456789';
@@ -17,7 +17,7 @@ describe('Web API Crypto - AES-256-GCM', () => {
   });
 
   test('Create secret key from string', async () => {
-    const res = await newSecretKey(secret);
+    const res = await createSecretKey(secret);
     expect(res.success).toBe(true);
     expect(res.secretKey).toBeDefined();
     secretKey = res.secretKey as WebApiKey;

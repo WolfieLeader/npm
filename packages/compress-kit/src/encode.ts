@@ -17,13 +17,10 @@ export function $encode(data: string, format: EncodingFormat = 'utf8'): Result<{
       case 'utf8':
         return $ok({ bytes: textEncoder.encode(data) });
       default:
-        return $err({
-          message: `Unsupported encode format: ${format}`,
-          description: 'Use base64, base64url, hex, or utf8',
-        });
+        return $err({ msg: `Unsupported encode format: ${format}`, desc: 'Use base64, base64url, hex, or utf8' });
     }
   } catch (error) {
-    return $err({ message: 'Failed to encode data', description: $stringifyError(error) });
+    return $err({ msg: 'Failed to encode data', desc: $stringifyError(error) });
   }
 }
 
@@ -40,13 +37,10 @@ export function $decode(data: ArrayBuffer | Uint8Array, format: EncodingFormat =
       case 'utf8':
         return $ok(textDecoder.decode(bytes));
       default:
-        return $err({
-          message: `Unsupported decode format: ${format}`,
-          description: 'Use base64, base64url, hex, or utf8',
-        });
+        return $err({ msg: `Unsupported decode format: ${format}`, desc: 'Use base64, base64url, hex, or utf8' });
     }
   } catch (error) {
-    return $err({ message: 'Failed to decode data', description: $stringifyError(error) });
+    return $err({ msg: 'Failed to decode data', desc: $stringifyError(error) });
   }
 }
 

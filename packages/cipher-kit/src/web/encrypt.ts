@@ -1,6 +1,6 @@
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import type { WebApiKey } from '~/types';
-import { $isStr, isInWebApiEncryptionFormat, parseToObj, stringifyObj, WEB_API_ALGORITHM } from '~/utils';
+import { $isStr, isInWebApiEncryptionFormat, isWebApiKey, parseToObj, stringifyObj, WEB_API_ALGORITHM } from '~/utils';
 import { decode, encode } from './encode';
 
 export function generateUuid(): Result<string> {
@@ -9,23 +9,6 @@ export function generateUuid(): Result<string> {
   } catch (error) {
     return $err({ msg: 'Failed to generate UUID with Crypto Web API', desc: $stringifyError(error) });
   }
-}
-
-export function isWebApiKey(key: unknown): key is WebApiKey {
-  return (
-    key !== null &&
-    key !== undefined &&
-    typeof key === 'object' &&
-    'type' in key &&
-    typeof key.type === 'string' &&
-    'algorithm' in key &&
-    typeof key.algorithm === 'object' &&
-    'extractable' in key &&
-    typeof key.extractable === 'boolean' &&
-    'usages' in key &&
-    Array.isArray(key.usages) &&
-    key.usages.every((usage) => typeof usage === 'string')
-  );
 }
 
 export async function hash(data: string): Promise<Result<string>> {

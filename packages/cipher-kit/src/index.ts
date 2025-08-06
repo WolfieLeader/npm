@@ -3,6 +3,8 @@ export {
   isInEncryptionFormat,
   isInNodeEncryptionFormat,
   isInWebApiEncryptionFormat,
+  isNodeKey,
+  isWebApiKey,
   NODE_ALGORITHM,
   parseToObj,
   stringifyObj,

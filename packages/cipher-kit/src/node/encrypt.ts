@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
 import { $err, $ok, $stringifyError, type Result } from '~/error';
 import type { NodeKey } from '~/types';
-import { $isStr, isInNodeEncryptionFormat, NODE_ALGORITHM, parseToObj, stringifyObj } from '~/utils';
+import { $isStr, isInNodeEncryptionFormat, isNodeKey, NODE_ALGORITHM, parseToObj, stringifyObj } from '~/utils';
 import { decode, encode } from './encode';
 
 export function generateUuid(): Result<string> {
@@ -11,10 +11,6 @@ export function generateUuid(): Result<string> {
   } catch (error) {
     return $err({ msg: 'Failed to generate UUID with Crypto NodeJS', desc: $stringifyError(error) });
   }
-}
-
-export function isNodeKey(key: unknown): key is nodeCrypto.KeyObject {
-  return key instanceof nodeCrypto.KeyObject;
 }
 
 export function hash(data: string): Result<string> {

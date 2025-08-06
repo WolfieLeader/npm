@@ -1,3 +1,5 @@
+import nodeCrypto from 'node:crypto';
+import type { WebApiKey } from '~/types';
 import { $err, $ok, $stringifyError, type Result } from './error';
 
 export const NODE_ALGORITHM = 'aes-256-gcm';
@@ -32,6 +34,27 @@ export function $isObj(value: unknown): value is Record<string, unknown> {
     value !== undefined &&
     (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
   );
+}
+
+export function isWebApiKey(key: unknown): key is WebApiKey {
+  return (
+    key !== null &&
+    key !== undefined &&
+    typeof key === 'object' &&
+    'type' in key &&
+    typeof key.type === 'string' &&
+    'algorithm' in key &&
+    typeof key.algorithm === 'object' &&
+    'extractable' in key &&
+    typeof key.extractable === 'boolean' &&
+    'usages' in key &&
+    Array.isArray(key.usages) &&
+    key.usages.every((usage) => typeof usage === 'string')
+  );
+}
+
+export function isNodeKey(key: unknown): key is nodeCrypto.KeyObject {
+  return key instanceof nodeCrypto.KeyObject;
 }
 
 export function stringifyObj(obj: Record<string, unknown>): Result<string> {

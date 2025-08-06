@@ -3,6 +3,7 @@ export {
   ENCRYPTION_REGEX,
   isInEncryptionFormat,
   isInNodeEncryptionFormat,
+  isNodeKey,
   NODE_ALGORITHM,
   parseToObj,
   stringifyObj,

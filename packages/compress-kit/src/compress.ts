@@ -1,7 +1,7 @@
 import pako, { type DeflateFunctionOptions } from 'pako';
 import { $decode, $encode } from './encode';
 import { $err, $ok, $stringifyError, type Result } from './error';
-import { $isStr, $parseToObj, $stringifyObj, isInCompressionFormat } from './utils';
+import { $isStr, isInCompressionFormat, parseToObj, stringifyObj } from './utils';
 
 const COMPRESSION_OPTIONS: DeflateFunctionOptions = {
   level: 6,
@@ -55,7 +55,7 @@ export function decompress(data: string): Result<string> {
 }
 
 export function compressObj(data: Record<string, unknown>): Result<string> {
-  const { result, error } = $stringifyObj(data);
+  const { result, error } = stringifyObj(data);
   if (error) return $err(error);
   return compress(result);
 }
@@ -63,5 +63,5 @@ export function compressObj(data: Record<string, unknown>): Result<string> {
 export function decompressObj(data: string): Result<{ result: Record<string, unknown> }> {
   const { result, error } = decompress(data);
   if (error) return $err(error);
-  return $parseToObj(result);
+  return parseToObj(result);
 }

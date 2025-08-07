@@ -1,6 +1,6 @@
 {
   "name": "compress-kit",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "🔬 Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, and Bun",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/compress-kit#readme",
   "repository": {

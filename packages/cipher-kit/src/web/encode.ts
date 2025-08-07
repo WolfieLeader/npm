@@ -16,10 +16,13 @@ export function encode(data: string, format: EncodingFormat = 'utf8'): Result<{ 
       case 'utf8':
         return $ok({ bytes: textEncoder.encode(data) });
       default:
-        return $err({ msg: `Unsupported encode format: ${format}`, desc: 'Use base64, base64url, hex, or utf8' });
+        return $err({
+          msg: `Crypto Web API: Unsupported encode format: ${format}`,
+          desc: 'Use base64, base64url, hex, or utf8',
+        });
     }
   } catch (error) {
-    return $err({ msg: 'Failed to encode data', desc: $stringifyError(error) });
+    return $err({ msg: 'Crypto Web API: Failed to encode data', desc: $stringifyError(error) });
   }
 }
 
@@ -36,10 +39,13 @@ export function decode(data: ArrayBuffer | Uint8Array, format: EncodingFormat = 
       case 'utf8':
         return $ok(textDecoder.decode(bytes));
       default:
-        return $err({ msg: `Unsupported decode format: ${format}`, desc: 'Use base64, base64url, hex, or utf8' });
+        return $err({
+          msg: `Crypto Web API: Unsupported decode format: ${format}`,
+          desc: 'Use base64, base64url, hex, or utf8',
+        });
     }
   } catch (error) {
-    return $err({ msg: 'Failed to decode data', desc: $stringifyError(error) });
+    return $err({ msg: 'Crypto Web API: Failed to decode data', desc: $stringifyError(error) });
   }
 }
 

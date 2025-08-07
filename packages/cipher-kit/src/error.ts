@@ -18,15 +18,15 @@ export function $ok<T>(result?: T): Result<T> {
   return { success: true, result } as Result<T>;
 }
 
-export function $err(typeOrErr: { msg: string; desc: string }): Result<never, ResultErr>;
-export function $err(typeOrErr: ResultErr): Result<never, ResultErr>;
-export function $err(typeOrErr: { msg: string; desc: string } | ResultErr): Result<never, ResultErr> {
+export function $err(err: { msg: string; desc: string }): Result<never, ResultErr>;
+export function $err(err: ResultErr): Result<never, ResultErr>;
+export function $err(err: { msg: string; desc: string } | ResultErr): Result<never, ResultErr> {
   return {
     success: false,
-    error:
-      'msg' in typeOrErr && 'desc' in typeOrErr
-        ? { message: typeOrErr.msg, description: typeOrErr.desc }
-        : { message: typeOrErr.message, description: typeOrErr.description },
+    error: {
+      message: 'msg' in err ? err.msg : err.message,
+      description: 'desc' in err ? err.desc : err.description,
+    },
   } as Result<never, ResultErr>;
 }
 

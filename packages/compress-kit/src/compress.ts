@@ -1,7 +1,7 @@
+import { decode, encode, parseToObj, stringifyObj } from 'cipher-kit/web-api';
 import pako, { type DeflateFunctionOptions } from 'pako';
-import { $decode, $encode } from './encode';
 import { $err, $ok, $stringifyError, type Result } from './error';
-import { $isStr, isInCompressionFormat, parseToObj, stringifyObj } from './utils';
+import { $isStr, isInCompressionFormat } from './utils';
 
 const COMPRESSION_OPTIONS: DeflateFunctionOptions = {
   level: 6,
@@ -12,19 +12,17 @@ const COMPRESSION_OPTIONS: DeflateFunctionOptions = {
 };
 
 export function compress(data: string): Result<string> {
-  if (!$isStr(data, 1)) {
-    return $err({ msg: 'Empty string', desc: 'Cannot compress null or undefined string' });
-  }
-
-  const { bytes, error } = $encode(data, 'utf8');
-  if (error) return $err(error);
-
-  const decoded = $decode(bytes, 'base64url');
-  if (decoded.error) return $err(decoded.error);
-
   try {
-    const compressed = $decode(pako.deflate(bytes, COMPRESSION_OPTIONS), 'base64url');
-    if (compressed.error) return $err(compressed.error);
+    if (!$isStr(data)) return $err({ msg: 'Empty string', desc: 'Cannot compress null or undefined string' });
+
+    const encoded = encode(data, 'utf8');
+    if (encoded.error) return $err({ msg: encoded.error.message, desc: encoded.error.description });
+
+    const decoded = decode(encoded.bytes, 'base64url');
+    if (decoded.error) return $err({ msg: decoded.error.message, desc: decoded.error.description });
+
+    const compressed = decode(pako.deflate(encoded.bytes, COMPRESSION_OPTIONS), 'base64url');
+    if (compressed.error) return $err({ msg: compressed.error.message, desc: compressed.error.description });
 
     if (decoded.result.length <= compressed.result.length) return $ok(`${decoded.result}.0.`);
     return $ok(`${compressed.result}.1.`);
@@ -34,19 +32,26 @@ export function compress(data: string): Result<string> {
 }
 
 export function decompress(data: string): Result<string> {
-  if (isInCompressionFormat(data) === false) {
-    return $err({ msg: 'Invalid format', desc: 'String does not match expected compressed format' });
-  }
-
-  const str = data.slice(0, -3);
-  if (!$isStr(str, 1)) return $err({ msg: 'Invalid input', desc: 'Input is not a valid string' });
-
-  const { bytes, error } = $encode(str, 'base64url');
-  if (error) return $err(error);
-
   try {
-    if (data.endsWith('.1.')) return $ok(pako.inflate(bytes, { to: 'string' }));
-    if (data.endsWith('.0.')) return $decode(bytes, 'utf8');
+    if (isInCompressionFormat(data) === false) {
+      return $err({ msg: 'Invalid format', desc: 'String does not match expected compressed format' });
+    }
+
+    const str = data.slice(0, -3);
+    if (!$isStr(str, 1)) return $err({ msg: 'Invalid input', desc: 'Input is not a valid string' });
+
+    const encoded = encode(str, 'base64url');
+    if (encoded.error) return $err({ msg: encoded.error.message, desc: encoded.error.description });
+
+    if (data.endsWith('.1.')) {
+      return $ok(pako.inflate(encoded.bytes, { to: 'string' }));
+    }
+
+    if (data.endsWith('.0.')) {
+      const decoded = decode(encoded.bytes, 'utf8');
+      if (decoded.error) return $err({ msg: decoded.error.message, desc: decoded.error.description });
+      return $ok(decoded.result);
+    }
 
     return $err({ msg: 'Invalid compression type', desc: 'Expected .0. or .1. at the end of the string' });
   } catch (error) {

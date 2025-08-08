@@ -38,7 +38,7 @@ It adds `req.clientIp` and `req.clientIps` to the request object when used as mi
 ## Installation 🔥
 
 ```bash
-npm install get-client-ip
+npm install get-client-ip@latest
 ```
 
 > 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.

@@ -31,7 +31,7 @@ It provides a minimal API for setting, getting, and deleting cookies — with se
 ## Installation 🔥
 
 ```bash
-npm install modern-cookies
+npm install modern-cookies@latest
 ```
 
 > 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.

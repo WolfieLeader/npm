@@ -65,8 +65,8 @@ export function encrypt(data: string, secretKey: NodeKey): Result<string> {
     const { result: decodedTag, error: tagError } = decode(tag, 'base64url');
     if (ivError || encryptedError || tagError) {
       return $err({
-        msg: 'Crypto NodeJS: Failed to encode IV or encrypted data',
-        desc: `Decoding error: ${ivError || encryptedError || tagError}`,
+        msg: 'Crypto NodeJS: Failed to convert IV or encrypted data or tag',
+        desc: `Conversion error: ${ivError || encryptedError || tagError}`,
       });
     }
 
@@ -101,8 +101,8 @@ export function decrypt(encrypted: string, secretKey: NodeKey): Result<string> {
   const { bytes: tagBytes, error: tagError } = encode(tag, 'base64url');
   if (ivError || encryptedError || tagError) {
     return $err({
-      msg: 'Crypto NodeJS: Failed to decode IV or encrypted data',
-      desc: `Encoding error: ${ivError || encryptedError || tagError}`,
+      msg: 'Crypto NodeJS: Failed to convert IV or encrypted data or tag',
+      desc: `Conversion error: ${ivError || encryptedError || tagError}`,
     });
   }
 

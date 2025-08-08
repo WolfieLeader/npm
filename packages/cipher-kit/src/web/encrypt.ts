@@ -59,7 +59,7 @@ export async function encrypt(data: string, secretKey: WebApiKey): Promise<Resul
     }
 
     if (!isWebApiKey(secretKey)) {
-      return $err({ msg: 'Crypto Web API: Invalid encryption key', desc: 'Expected a NodeKey(crypto.KeyObject)' });
+      return $err({ msg: 'Crypto Web API: Invalid encryption key', desc: 'Expected a WebApiKey(webcrypto.CryptoKey)' });
     }
 
     const { bytes, error } = encode(data, 'utf8');
@@ -73,8 +73,8 @@ export async function encrypt(data: string, secretKey: WebApiKey): Promise<Resul
 
     if (ivError || encryptedError) {
       return $err({
-        msg: 'Crypto Web API: Failed to encode IV or encrypted data',
-        desc: `Decoding error: ${ivError || encryptedError}`,
+        msg: 'Crypto Web API: Failed to convert IV or encrypted data',
+        desc: `Conversion error: ${ivError || encryptedError}`,
       });
     }
 
@@ -88,7 +88,7 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
   if (isInWebApiEncryptionFormat(encrypted) === false) {
     return $err({
       msg: 'Crypto Web API: Invalid encrypted data format',
-      desc: 'Encrypted data must be in the format "iv.encryptedData.tag."',
+      desc: 'Encrypted data must be in the format "iv.encryptedData."',
     });
   }
 
@@ -108,8 +108,8 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
   const { bytes: encryptedBytes, error: encryptedError } = encode(encryptedWithTag, 'base64url');
   if (ivError || encryptedError) {
     return $err({
-      msg: 'Crypto Web API: Failed to decode IV or encrypted data',
-      desc: `Encoding error: ${ivError || encryptedError}`,
+      msg: 'Crypto Web API: Failed to convert IV or encrypted data',
+      desc: `Conversion error: ${ivError || encryptedError}`,
     });
   }
 

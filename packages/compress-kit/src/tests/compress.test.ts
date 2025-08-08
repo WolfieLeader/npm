@@ -103,4 +103,10 @@ describe('Compression Utility', () => {
     expect(decompressed.success).toBe(true);
     expect(decompressed.result).toEqual(largeObj);
   });
+
+  test('Decompress invalid data', () => {
+    const decompressed = decompressObj('invalid-compressed-data');
+    expect(decompressed.success).toBe(false);
+    expect(decompressed.error?.message).toMatch(/Invalid format/);
+  });
 });

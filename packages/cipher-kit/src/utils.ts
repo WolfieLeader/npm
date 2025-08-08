@@ -24,7 +24,7 @@ export function isInWebApiEncryptionFormat(data: string): boolean {
 }
 
 export function $isStr(value: unknown, min = 1): value is string {
-  return (value !== null || value !== undefined) && typeof value === 'string' && value.trim().length >= min;
+  return value !== null && value !== undefined && typeof value === 'string' && value.trim().length >= min;
 }
 
 export function $isObj(value: unknown): value is Record<string, unknown> {

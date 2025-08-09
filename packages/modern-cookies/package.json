@@ -1,6 +1,6 @@
 {
   "name": "modern-cookies",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "🍪 A Lightweight and Modern Cookie Utility for Express and Nest.js",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/modern-cookies#readme",
   "repository": {
@@ -31,8 +31,7 @@
     }
   },
   "files": [
-    "dist",
-    "README.md"
+    "dist"
   ],
   "sideEffects": false,
   "scripts": {
@@ -54,7 +53,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.2.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2"
   },

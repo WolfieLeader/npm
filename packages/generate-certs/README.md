@@ -33,7 +33,7 @@ It streamlines the process of creating `key.pem` and `cert.pem` files, supports 
 ## Installation 🔥
 
 ```bash
-npm install -D generate-certs
+npm install -D generate-certs@latest
 ```
 
 > 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.

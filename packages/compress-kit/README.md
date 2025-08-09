@@ -31,7 +31,7 @@ It offers a simple, consistent API for compressing and decompressing strings or 
 ## Installation 🔥
 
 ```bash
-npm install compress-kit
+npm install compress-kit@latest
 ```
 
 > 💡 Works with `npm`, `pnpm`, `yarn`, `bun`, and `deno`. You can use it in dev dependencies since it's typically used only for local HTTPS.

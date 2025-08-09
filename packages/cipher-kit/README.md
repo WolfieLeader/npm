@@ -31,7 +31,7 @@ It provides a simple, secure, and dependency-free API for encrypting and decrypt
 ## Installation 🔥
 
 ```bash
-npm install cipher-kit
+npm install cipher-kit@latest
 ```
 
 > 💡 Works with `npm`, `pnpm`, `yarn`, `bun`, and `deno`. You can use it in dev dependencies since it's typically used only for local HTTPS.

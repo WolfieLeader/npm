@@ -39,7 +39,7 @@ export function createSecretKey(key: string | NodeKey): Result<{ secretKey: Node
   }
 
   if (!isNodeKey(key)) {
-    return $err({ msg: 'Crypto NodeJS: Invalid secret key', desc: 'Expected a NodeKey(crypto.KeyObject)' });
+    return $err({ msg: 'Crypto NodeJS: Invalid secret key', desc: 'Expected a NodeKey (crypto.KeyObject)' });
   }
 
   return $ok({ secretKey: key });
@@ -52,7 +52,7 @@ export function encrypt(data: string, secretKey: NodeKey): Result<string> {
     }
 
     if (!isNodeKey(secretKey)) {
-      return $err({ msg: 'Crypto NodeJS: Invalid encryption key', desc: 'Expected a NodeKey(crypto.KeyObject)' });
+      return $err({ msg: 'Crypto NodeJS: Invalid encryption key', desc: 'Expected a NodeKey (crypto.KeyObject)' });
     }
 
     const iv = nodeCrypto.randomBytes(12);
@@ -93,7 +93,7 @@ export function decrypt(encrypted: string, secretKey: NodeKey): Result<string> {
   }
 
   if (!isNodeKey(secretKey)) {
-    return $err({ msg: 'Crypto NodeJS: Invalid decryption key', desc: 'Expected a crypto.KeyObject' });
+    return $err({ msg: 'Crypto NodeJS: Invalid decryption key', desc: 'Expected a NodeKey (crypto.KeyObject)' });
   }
 
   const { bytes: ivBytes, error: ivError } = encode(iv, 'base64url');

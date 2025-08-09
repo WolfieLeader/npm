@@ -46,7 +46,7 @@ export async function createSecretKey(key: string | WebApiKey): Promise<Result<{
   }
 
   if (!isWebApiKey(key)) {
-    return $err({ msg: 'Crypto Web API: Invalid secret key', desc: 'Expected a WebApiKey(webcrypto.CryptoKey)' });
+    return $err({ msg: 'Crypto Web API: Invalid secret key', desc: 'Expected a WebApiKey (webcrypto.CryptoKey)' });
   }
 
   return $ok({ secretKey: key });
@@ -59,7 +59,10 @@ export async function encrypt(data: string, secretKey: WebApiKey): Promise<Resul
     }
 
     if (!isWebApiKey(secretKey)) {
-      return $err({ msg: 'Crypto Web API: Invalid encryption key', desc: 'Expected a WebApiKey(webcrypto.CryptoKey)' });
+      return $err({
+        msg: 'Crypto Web API: Invalid encryption key',
+        desc: 'Expected a WebApiKey (webcrypto.CryptoKey)',
+      });
     }
 
     const { bytes, error } = encode(data, 'utf8');
@@ -101,7 +104,7 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
   }
 
   if (!isWebApiKey(secretKey)) {
-    return $err({ msg: 'Crypto Web API: Invalid decryption key', desc: 'Expected a crypto.KeyObject' });
+    return $err({ msg: 'Crypto Web API: Invalid decryption key', desc: 'Expected a WebApiKey (webcrypto.CryptoKey)' });
   }
 
   const { bytes: ivBytes, error: ivError } = encode(iv, 'base64url');

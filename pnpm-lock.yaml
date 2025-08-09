@@ -152,8 +152,8 @@ importers:
   packages/compress-kit:
     dependencies:
       cipher-kit:
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.1
+        version: 1.0.1
       pako:
         specifier: ^2.1.0
         version: 2.1.0
@@ -1184,8 +1184,8 @@ packages:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
     engines: {node: '>=6.0'}
 
-  cipher-kit@1.0.0:
-    resolution: {integrity: sha512-kgEumMZrLXz+qo7KbgDw/bpMyexoYZtIl2fu82aNJcwGRPDoGT4Tl7TfEEaLtZv7Q6ISM4LJViJLLewI6Mz34A==}
+  cipher-kit@1.0.1:
+    resolution: {integrity: sha512-0I+kJEppy+uRl2iNpl4Z4iN8eIGgIBoKsfYfZvjvRECx5dmpFLc7t2a5fXP1Tk/D7duSQWTaSdYvZUVk/ckjpg==}
 
   class-transformer@0.5.1:
     resolution: {integrity: sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw==}
@@ -3492,7 +3492,7 @@ snapshots:
 
   chrome-trace-event@1.0.4: {}
 
-  cipher-kit@1.0.0: {}
+  cipher-kit@1.0.1: {}
 
   class-transformer@0.5.1:
     optional: true

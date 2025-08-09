@@ -1,6 +1,6 @@
 {
   "name": "compress-kit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "🔬 Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, and Bun",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/compress-kit#readme",
   "repository": {
@@ -42,7 +42,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "cipher-kit": "^1.0.0",
+    "cipher-kit": "^1.0.1",
     "pako": "^2.1.0"
   },
   "devDependencies": {

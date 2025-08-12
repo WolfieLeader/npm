@@ -1,5 +1,9 @@
 <div align="center">
-<img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner-light.svg" align="center" alt="banner" />
+<picture>
+    <source srcset="./assets/repo-banner-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="./assets/repo-banner-light.svg" media="(prefers-color-scheme: light)">
+    <img src="./assets/repo-banner-dark.svg" alt="banner">
+  </picture>
 
 <h1 align="center" style="font-weight:900;">NPM Packages</h1>
 

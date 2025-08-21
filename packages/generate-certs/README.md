@@ -100,6 +100,61 @@ async function bootstrap() {
 bootstrap();
 ```
 
+### HonoJS 🔥
+
+```typescript
+import { createSecureServer } from 'node:http2';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { serve } from '@hono/node-server';
+import { generateCerts } from 'generate-certs';
+import { Hono } from 'hono';
+import { env } from './env';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
+
+function bootstrap() {
+  const app = new Hono();
+
+  serve(
+    {
+      fetch: app.fetch,
+      port: env.PORT || 3443,
+      createServer: createSecureServer,
+      serverOptions: certs,
+    },
+    (info) => {
+      console.log(`🚀 HonoJS server running on: https://localhost:${env.PORT || 3443}`);
+    },
+  );
+}
+
+bootstrap();
+```
+
+### Fastify ⚡
+
+```typescript
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import Fastify from 'fastify';
+import { generateCerts } from 'generate-certs';
+import { env } from './env';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
+
+async function bootstrap() {
+  const app = new Fastify({ https: certs });
+
+  await app.listen({ port: env.PORT || 3443, host: '0.0.0.0' });
+  console.log(`🚀 Fastify server running on: https://localhost:${env.PORT || 3443}`);
+}
+
+bootstrap();
+```
+
 ## Notes❗
 
 - **🧪 First-Time Run**: The certs are created automatically and stored in the provided folder.

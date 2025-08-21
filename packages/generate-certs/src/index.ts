@@ -21,6 +21,7 @@ export interface GenerateCertsOptions {
  *
  * If valid `key.pem` and `cert.pem` files already exist in the target path,
  * they will be reused. Otherwise, new certificates will be generated.
+ * Examples are provided for various frameworks and shown in the documentation.
  *
  * @param options - Options to control the certificate generation behavior.
  * @returns An object containing the PEM-formatted `key` and `cert` strings.
@@ -45,11 +46,11 @@ export function generateCerts({ certsPath, activateLogs = true }: GenerateCertsO
     $generateCerts(certsPath);
     if (activateLogs) {
       console.log('🔐 Certificates for HTTPS have been generated successfully!');
-      console.log(`🛑 Please visit the URL and click on 'Advanced' and 'Proceed to localhost(unsafe)' to continue.`);
+      console.log(`🛑 Please visit the URL, click on 'Advanced' -> 'Proceed to localhost(unsafe)' to continue.`);
     }
     return { key: $readFile(certsPath, 'key.pem'), cert: $readFile(certsPath, 'cert.pem') };
   } catch (err) {
-    throw new Error(`❌ Error in generating certificates: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    throw new Error(`❌ Error generating certificates: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 }
 
@@ -61,7 +62,7 @@ function $checkForCerts({ certsPath, activateLogs: log = true }: GenerateCertsOp
     }
   } catch (err) {
     throw new Error(
-      `❌ Error in checking for existing certificates: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      `❌ Error checking for existing certificates: ${err instanceof Error ? err.message : 'Unknown error'}`,
     );
   }
 }

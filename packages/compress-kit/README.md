@@ -36,6 +36,34 @@ npm install compress-kit@latest
 
 > 💡 Works with `npm`, `pnpm`, `yarn`, `bun`, and `deno`. You can use it in dev dependencies since it's typically used only for local HTTPS.
 
+## Usage 🪛
+
+```typescript
+import { compress, compressObj, decompress, decompressObj } from 'compress-kit';
+
+// Compressing data
+const compressed = compress('The brown fox (🦊) jumps over the lazy dog (🐶).');
+if (compressed.success === false) {
+  throw new Error(`Compression failed: ${compressed.error}`);
+}
+
+// Decompressing data
+const decompressed = decompress(compressed.result);
+console.log(decompressed.result);
+
+// Compressing an object
+const compressedObj = compressObj({ name: 'John Doe', age: 30, city: 'New York' });
+if (compressedObj.success === false) {
+  throw new Error(`Compression object failed: ${compressedObj.error}`);
+}
+
+// Decompressing an object
+const decompressedObj = decompressObj(compressedObj.result);
+console.log(decompressedObj.result);
+```
+
+NOTE: The compressed data follow the following format: `<base64url>.<0 or 1>.`. The first part is the base64url encoded compressed data, and the second part indicates whether the data is compressed (`1`) or not (`0`). The package hands the regex
+
 ## Credit 💪🏽
 
 We want to thank [Pako](https://github.com/nodeca/pako) for the inflate and deflate algorithms used in this package.

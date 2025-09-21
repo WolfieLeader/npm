@@ -30,8 +30,12 @@ export function $err(err: { msg: string; desc: string } | ResultErr): Result<nev
   } as Result<never, ResultErr>;
 }
 
-export function $stringifyError(error: unknown): string {
+export function $fmtError(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
   return String(error);
+}
+
+export function $fmtResultErr(err: ResultErr): string {
+  return `${err.message} - ${err.description}`;
 }

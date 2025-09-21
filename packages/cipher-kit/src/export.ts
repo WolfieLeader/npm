@@ -6,8 +6,8 @@ export {
   isNodeKey,
   isWebApiKey,
   NODE_ALGORITHM,
-  parseToObj,
-  stringifyObj,
+  tryParseToObj as parseToObj,
+  tryStringifyObj as stringifyObj,
   WEB_API_ALGORITHM,
 } from '~/utils';
 export * as nodeKit from './node/kit';

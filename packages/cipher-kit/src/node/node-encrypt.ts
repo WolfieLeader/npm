@@ -2,45 +2,104 @@ import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
 import { $err, $fmtError, $fmtResultErr, $ok, type Result } from '~/error';
 import type { NodeKey } from '~/types';
-import { $isStr, isInNodeEncryptedFormat, isNodeKey, NODE_ALGORITHM, parseToObj, stringifyObj } from '~/utils';
+import { $isStr, isInNodeEncryptedFormat, isNodeKey, NODE_ALGORITHM, tryParseToObj, tryStringifyObj } from '~/utils';
 import { tryBytesToString, tryStringToBytes } from './node-encode';
 
+/**
+ * Generates a UUID (v4).
+ *
+ * @returns A string representing the generated UUID.
+ * @throws {Error} If UUID generation fails.
+ */
 export function generateUuid(): string {
   const { result, error } = tryGenerateUuid();
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }
 
+/**
+ * Hashes the input string using SHA-256 and returns the hash in base64url format.
+ *
+ * @param data - The input string to hash.
+ * @returns A string representing the SHA-256 hash in base64url format.
+ * @throws {Error} If the input data is invalid or hashing fails.
+ */
 export function hash(data: string): string {
   const { result, error } = tryHash(data);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }
 
+/**
+ * Derives a secret key from the provided string for encryption/decryption.
+ * Internally, the key is hashed using SHA-256 to ensure it meets the required length.
+ *
+ * @param key - The input string to derive the secret key from.
+ * @returns A NodeKey object representing the derived secret key.
+ * @throws {Error} If the input key is invalid or key generation fails.
+ */
 export function createSecretKey(key: string): NodeKey {
   const { secretKey, error } = tryCreateSecretKey(key);
   if (error) throw new Error($fmtResultErr(error));
   return secretKey;
 }
 
+/**
+ * Encrypts the input string using the provided secret key.
+ * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ *
+ * @param data - The input string to encrypt.
+ * @param secretKey - The NodeKey object used for encryption.
+ * @returns A string representing the encrypted data in the specified format.
+ * @throws {Error} If the input data or key is invalid, or if encryption fails.
+ */
 export function encrypt(data: string, secretKey: NodeKey): string {
   const { result, error } = tryEncrypt(data, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }
 
+/**
+ * Decrypts the input string using the provided secret key.
+ * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ *
+ * @param encrypted - The input string to decrypt.
+ * @param secretKey - The NodeKey object used for decryption.
+ * @returns A string representing the decrypted data.
+ * @throws {Error} If the input data or key is invalid, or if decryption fails.
+ */
 export function decrypt(encrypted: string, secretKey: NodeKey): string {
   const { result, error } = tryDecrypt(encrypted, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }
 
+/**
+ * Encrypts the input object using the provided secret key.
+ * The object is first serialized to a JSON string before encryption.
+ * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ *
+ * @param data - The input object to encrypt.
+ * @param secretKey - The NodeKey object used for encryption.
+ * @returns A string representing the encrypted object in the specified format.
+ * @throws {Error} If the input data or key is invalid, or if encryption fails.
+ */
 export function encryptObj<T extends object = Record<string, unknown>>(data: T, secretKey: NodeKey): string {
   const { result, error } = tryEncryptObj(data, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }
 
+/**
+ * Decrypts the input string to an object using the provided secret key.
+ * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The decrypted string is parsed as JSON to reconstruct the original object.
+ *
+ * @param encrypted - The input string to decrypt.
+ * @param secretKey - The NodeKey object used for decryption.
+ * @returns An object representing the decrypted data.
+ * @throws {Error} If the input data or key is invalid, or if decryption fails.
+ */
 export function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
   secretKey: NodeKey,
@@ -52,6 +111,11 @@ export function decryptObj<T extends object = Record<string, unknown>>(
 
 // ----------------------------------------------------------------
 
+/**
+ * Generates a UUID (v4).
+ *
+ * @returns A Result containing a string representing the generated UUID or an error.
+ */
 export function tryGenerateUuid(): Result<string> {
   try {
     return $ok(nodeCrypto.randomUUID());
@@ -60,6 +124,12 @@ export function tryGenerateUuid(): Result<string> {
   }
 }
 
+/**
+ * Hashes the input string using SHA-256 and returns the hash in base64url format.
+ *
+ * @param data - The input string to hash.
+ * @returns A Result containing a string representing the SHA-256 hash in base64url format or an error.
+ */
 export function tryHash(data: string): Result<string> {
   if (!$isStr(data, 0)) {
     return $err({
@@ -76,6 +146,13 @@ export function tryHash(data: string): Result<string> {
   }
 }
 
+/**
+ * Derives a secret key from the provided string for encryption/decryption.
+ * Internally, the key is hashed using SHA-256 to ensure it meets the required length.
+ *
+ * @param key - The input string to derive the secret key from.
+ * @returns A Result containing a NodeKey object representing the derived secret key or an error.
+ */
 export function tryCreateSecretKey(key: string): Result<{ secretKey: NodeKey }> {
   if (!$isStr(key)) {
     return $err({ msg: 'Crypto NodeJS API - Key Generation: Empty key', desc: 'Key must be a non-empty string' });
@@ -90,6 +167,14 @@ export function tryCreateSecretKey(key: string): Result<{ secretKey: NodeKey }> 
   }
 }
 
+/**
+ * Encrypts the input string using the provided secret key.
+ * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ *
+ * @param data - The input string to encrypt.
+ * @param secretKey - The NodeKey object used for encryption.
+ * @returns A Result containing a string representing the encrypted data in the specified format or an error.
+ */
 export function tryEncrypt(data: string, secretKey: NodeKey): Result<string> {
   if (!$isStr(data)) {
     return $err({
@@ -128,6 +213,14 @@ export function tryEncrypt(data: string, secretKey: NodeKey): Result<string> {
   }
 }
 
+/**
+ * Decrypts the input string using the provided secret key.
+ * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ *
+ * @param encrypted - The input string to decrypt.
+ * @param secretKey - The NodeKey object used for decryption.
+ * @returns A Result containing a string representing the decrypted data or an error.
+ */
 export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string> {
   if (isInNodeEncryptedFormat(encrypted) === false) {
     return $err({
@@ -173,17 +266,35 @@ export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string
   }
 }
 
+/**
+ * Encrypts the input object using the provided secret key.
+ * The object is first serialized to a JSON string before encryption.
+ * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ *
+ * @param data - The input object to encrypt.
+ * @param secretKey - The NodeKey object used for encryption.
+ * @returns A Result containing a string representing the encrypted object in the specified format or an error.
+ */
 export function tryEncryptObj<T extends object = Record<string, unknown>>(data: T, secretKey: NodeKey): Result<string> {
-  const { result, error } = stringifyObj(data);
+  const { result, error } = tryStringifyObj(data);
   if (error) return $err(error);
   return tryEncrypt(result, secretKey);
 }
 
+/**
+ * Decrypts the input string to an object using the provided secret key.
+ * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The decrypted string is parsed as JSON to reconstruct the original object.
+ *
+ * @param encrypted - The input string to decrypt.
+ * @param secretKey - The NodeKey object used for decryption.
+ * @returns A Result containing an object representing the decrypted data or an error.
+ */
 export function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
   secretKey: NodeKey,
 ): Result<{ result: T }> {
   const { result, error } = tryDecrypt(encrypted, secretKey);
   if (error) return $err(error);
-  return parseToObj<T>(result);
+  return tryParseToObj<T>(result);
 }

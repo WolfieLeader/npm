@@ -5,8 +5,8 @@ export {
   isInNodeEncryptedFormat,
   isNodeKey,
   NODE_ALGORITHM,
-  parseToObj,
-  stringifyObj,
+  tryParseToObj as parseToObj,
+  tryStringifyObj as stringifyObj,
 } from '~/utils';
 export * from './node-encode';
 export * from './node-encrypt';

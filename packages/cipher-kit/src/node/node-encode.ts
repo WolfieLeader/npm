@@ -3,12 +3,30 @@ import { $err, $fmtError, $fmtResultErr, $ok, type Result } from '~/error';
 import type { EncodingFormat } from '~/types';
 import { $isStr } from '~/utils';
 
+/**
+ * Converts a string to a Buffer (byte array) using the specified encoding format.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8'.
+ *
+ * @param data - The input string to convert.
+ * @param format - The encoding format to use (default is 'utf8').
+ * @returns A Node.js Buffer containing the encoded data.
+ * @throws {Error} If the input data is invalid or conversion fails.
+ */
 export function stringToBytes(data: string, format: EncodingFormat = 'utf8'): Buffer {
   const { bytes, error } = tryStringToBytes(data, format);
   if (error) throw new Error($fmtResultErr(error));
   return bytes;
 }
 
+/**
+ * Converts a Buffer (byte array) to a string using the specified encoding format.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8'.
+ *
+ * @param data - The input Buffer to convert.
+ * @param format - The encoding format to use (default is 'utf8').
+ * @returns A string representation of the Buffer in the specified format.
+ * @throws {Error} If the input data is invalid or conversion fails.
+ */
 export function bytesToString(data: Buffer, format: EncodingFormat = 'utf8'): string {
   const { result, error } = tryBytesToString(data, format);
   if (error) throw new Error($fmtResultErr(error));
@@ -17,6 +35,14 @@ export function bytesToString(data: Buffer, format: EncodingFormat = 'utf8'): st
 
 // ----------------------------------------------------------------
 
+/**
+ * Converts a string to a Buffer (byte array) using the specified encoding format.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8'.
+ *
+ * @param data - The input string to convert.
+ * @param format - The encoding format to use (default is 'utf8').
+ * @returns A Result containing a Node.js Buffer with the encoded data or an error.
+ */
 export function tryStringToBytes(data: string, format: EncodingFormat = 'utf8'): Result<{ bytes: Buffer }> {
   if (!$isStr(data)) {
     return $err({
@@ -37,6 +63,14 @@ export function tryStringToBytes(data: string, format: EncodingFormat = 'utf8'):
   }
 }
 
+/**
+ * Converts a Buffer (byte array) to a string using the specified encoding format.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8'.
+ *
+ * @param data - The input Buffer to convert.
+ * @param format - The encoding format to use (default is 'utf8').
+ * @returns A Result containing the string representation of the Buffer or an error.
+ */
 export function tryBytesToString(data: Buffer, format: EncodingFormat = 'utf8'): Result<string> {
   if (!(data instanceof Buffer)) {
     return $err({

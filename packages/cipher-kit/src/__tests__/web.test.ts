@@ -20,7 +20,7 @@ describe('Web API Crypto - AES-256-GCM', () => {
     expect(encodeError).toBeUndefined();
     expect(encoded).toBeInstanceOf(Uint8Array);
 
-    const { result: decoded, error: decodeError } = tryBytesToString(encoded as Uint8Array, 'utf8');
+    const { result: decoded, error: decodeError } = tryBytesToString(encoded as Uint8Array<ArrayBuffer>, 'utf8');
     expect(decodeError).toBeUndefined();
     expect(decoded).toBe(data);
   });

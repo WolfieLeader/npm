@@ -46,7 +46,7 @@ export function createSecretKey(key: string): NodeKey {
 
 /**
  * Encrypts the input string using the provided secret key.
- * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The output is a string in the format "iv.cipher.tag." where each component is base64url encoded.
  *
  * @param data - The input string to encrypt.
  * @param secretKey - The NodeKey object used for encryption.
@@ -61,7 +61,7 @@ export function encrypt(data: string, secretKey: NodeKey): string {
 
 /**
  * Decrypts the input string using the provided secret key.
- * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The input must be in the format "iv.cipher.tag." where each component is base64url encoded.
  *
  * @param encrypted - The input string to decrypt.
  * @param secretKey - The NodeKey object used for decryption.
@@ -77,7 +77,7 @@ export function decrypt(encrypted: string, secretKey: NodeKey): string {
 /**
  * Encrypts the input object using the provided secret key.
  * The object is first serialized to a JSON string before encryption.
- * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The output is a string in the format "iv.cipher.tag." where each component is base64url encoded.
  *
  * @param data - The input object to encrypt.
  * @param secretKey - The NodeKey object used for encryption.
@@ -92,7 +92,7 @@ export function encryptObj<T extends object = Record<string, unknown>>(data: T, 
 
 /**
  * Decrypts the input string to an object using the provided secret key.
- * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The input must be in the format "iv.cipher.tag." where each component is base64url encoded.
  * The decrypted string is parsed as JSON to reconstruct the original object.
  *
  * @param encrypted - The input string to decrypt.
@@ -169,7 +169,7 @@ export function tryCreateSecretKey(key: string): Result<{ secretKey: NodeKey }> 
 
 /**
  * Encrypts the input string using the provided secret key.
- * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The output is a string in the format "iv.cipher.tag." where each component is base64url encoded.
  *
  * @param data - The input string to encrypt.
  * @param secretKey - The NodeKey object used for encryption.
@@ -197,17 +197,17 @@ export function tryEncrypt(data: string, secretKey: NodeKey): Result<string> {
     const tag = cipher.getAuthTag();
 
     const { result: ivString, error: ivError } = tryBytesToString(iv, 'base64url');
-    const { result: encryptedString, error: encryptedError } = tryBytesToString(encrypted, 'base64url');
+    const { result: cipherString, error: cipherError } = tryBytesToString(encrypted, 'base64url');
     const { result: tagString, error: tagError } = tryBytesToString(tag, 'base64url');
 
-    if (ivError || encryptedError || tagError) {
+    if (ivError || cipherError || tagError) {
       return $err({
         msg: 'Crypto NodeJS API - Encryption: Failed to convert IV or encrypted data or tag',
-        desc: `Conversion error: ${ivError || encryptedError || tagError}`,
+        desc: `Conversion error: ${ivError || cipherError || tagError}`,
       });
     }
 
-    return $ok(`${ivString}.${encryptedString}.${tagString}.`);
+    return $ok(`${ivString}.${cipherString}.${tagString}.`);
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Encryption: Failed to encrypt data', desc: $fmtError(error) });
   }
@@ -215,7 +215,7 @@ export function tryEncrypt(data: string, secretKey: NodeKey): Result<string> {
 
 /**
  * Decrypts the input string using the provided secret key.
- * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The input must be in the format "iv.cipher.tag." where each component is base64url encoded.
  *
  * @param encrypted - The input string to decrypt.
  * @param secretKey - The NodeKey object used for decryption.
@@ -225,12 +225,12 @@ export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string
   if (isInNodeEncryptedFormat(encrypted) === false) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Invalid encrypted data format',
-      desc: 'Encrypted data must be in the format "iv.encryptedData.tag."',
+      desc: 'Encrypted data must be in the format "iv.cipher.tag."',
     });
   }
 
-  const [iv, encryptedData, tag] = encrypted.split('.', 4);
-  if (!$isStr(iv) || !$isStr(encryptedData) || !$isStr(tag)) {
+  const [iv, cipher, tag] = encrypted.split('.', 4);
+  if (!$isStr(iv) || !$isStr(cipher) || !$isStr(tag)) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Invalid encrypted data',
       desc: 'Encrypted data must contain valid IV, encrypted data, and tag components',
@@ -245,13 +245,13 @@ export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string
   }
 
   const { bytes: ivBytes, error: ivError } = tryStringToBytes(iv, 'base64url');
-  const { bytes: encryptedBytes, error: encryptedError } = tryStringToBytes(encryptedData, 'base64url');
+  const { bytes: cipherBytes, error: cipherError } = tryStringToBytes(cipher, 'base64url');
   const { bytes: tagBytes, error: tagError } = tryStringToBytes(tag, 'base64url');
 
-  if (ivError || encryptedError || tagError) {
+  if (ivError || cipherError || tagError) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Failed to convert IV or encrypted data or tag',
-      desc: `Conversion error: ${ivError || encryptedError || tagError}`,
+      desc: `Conversion error: ${ivError || cipherError || tagError}`,
     });
   }
 
@@ -259,7 +259,7 @@ export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string
     const decipher = nodeCrypto.createDecipheriv(NODE_ALGORITHM, secretKey, ivBytes);
     decipher.setAuthTag(tagBytes);
 
-    const decrypted = Buffer.concat([decipher.update(encryptedBytes), decipher.final()]);
+    const decrypted = Buffer.concat([decipher.update(cipherBytes), decipher.final()]);
     return tryBytesToString(decrypted, 'utf8');
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Decryption: Failed to decrypt data', desc: $fmtError(error) });
@@ -269,7 +269,7 @@ export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string
 /**
  * Encrypts the input object using the provided secret key.
  * The object is first serialized to a JSON string before encryption.
- * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The output is a string in the format "iv.cipher.tag." where each component is base64url encoded.
  *
  * @param data - The input object to encrypt.
  * @param secretKey - The NodeKey object used for encryption.
@@ -283,7 +283,7 @@ export function tryEncryptObj<T extends object = Record<string, unknown>>(data: 
 
 /**
  * Decrypts the input string to an object using the provided secret key.
- * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The input must be in the format "iv.cipher.tag." where each component is base64url encoded.
  * The decrypted string is parsed as JSON to reconstruct the original object.
  *
  * @param encrypted - The input string to decrypt.

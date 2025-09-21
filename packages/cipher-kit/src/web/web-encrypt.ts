@@ -51,7 +51,7 @@ export async function createSecretKey(key: string): Promise<WebApiKey> {
 
 /**
  * Encrypts the input string using the provided secret key.
- * The output is a string in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The output is a string in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param data - The input string to encrypt.
  * @param secretKey - The WebApiKey object used for encryption.
@@ -66,7 +66,7 @@ export async function encrypt(data: string, secretKey: WebApiKey): Promise<strin
 
 /**
  * Decrypts the input string using the provided secret key.
- * The input must be in the format "iv.encryptedData.tag." where each component is base64url encoded.
+ * The input must be in the format "iv.cipherWithTag" where each component is base64url encoded.
  *
  * @param encrypted - The input string to decrypt.
  * @param secretKey - The WebApiKey object used for decryption.
@@ -82,7 +82,7 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
 /**
  * Encrypts the input object using the provided secret key.
  * The object is first serialized to a JSON string before encryption.
- * The output is a string in the format "iv.encryptedData." where each component is base64url encoded.
+ * The output is a string in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param data - The input object to encrypt.
  * @param secretKey - The WebApiKey object used for encryption.
@@ -100,7 +100,7 @@ export async function encryptObj<T extends object = Record<string, unknown>>(
 
 /**
  * Decrypts the input string to an object using the provided secret key.
- * The input must be in the format "iv.encryptedData." where each component is base64url encoded.
+ * The input must be in the format "iv.cipherWithTag." where each component is base64url encoded.
  * The decrypted string is parsed as JSON to reconstruct the original object.
  *
  * @param encrypted - The input string to decrypt.
@@ -187,7 +187,7 @@ export async function tryCreateSecretKey(key: string): Promise<Result<{ secretKe
 
 /**
  * Encrypts the input string using the provided secret key.
- * The output is a string in the format "iv.encryptedData." where each component is base64url encoded.
+ * The output is a string in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param data - The input string to encrypt.
  * @param secretKey - The WebApiKey object used for encryption.
@@ -213,19 +213,19 @@ export async function tryEncrypt(data: string, secretKey: WebApiKey): Promise<Re
 
   try {
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encrypted = await crypto.subtle.encrypt({ name: WEB_API_ALGORITHM, iv: iv }, secretKey, bytes);
+    const cipherWithTag = await crypto.subtle.encrypt({ name: WEB_API_ALGORITHM, iv: iv }, secretKey, bytes);
 
     const { result: ivString, error: ivError } = tryBytesToString(iv, 'base64url');
-    const { result: encryptedString, error: encryptedError } = tryBytesToString(encrypted, 'base64url');
+    const { result: cipherString, error: cipherError } = tryBytesToString(cipherWithTag, 'base64url');
 
-    if (ivError || encryptedError) {
+    if (ivError || cipherError) {
       return $err({
         msg: 'Crypto Web API - Encryption: Failed to convert IV or encrypted data',
-        desc: `Conversion error: ${ivError || encryptedError}`,
+        desc: `Conversion error: ${ivError || cipherError}`,
       });
     }
 
-    return $ok(`${ivString}.${encryptedString}.`);
+    return $ok(`${ivString}.${cipherString}.`);
   } catch (error) {
     return $err({ msg: 'Crypto Web API - Encryption: Failed to encrypt data', desc: $fmtError(error) });
   }
@@ -233,7 +233,7 @@ export async function tryEncrypt(data: string, secretKey: WebApiKey): Promise<Re
 
 /**
  * Decrypts the input string using the provided secret key.
- * The input must be in the format "iv.encryptedData." where each component is base64url encoded.
+ * The input must be in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param encrypted - The input string to decrypt.
  * @param secretKey - The WebApiKey object used for decryption.
@@ -243,7 +243,7 @@ export async function tryDecrypt(encrypted: string, secretKey: WebApiKey): Promi
   if (isInWebApiEncryptedFormat(encrypted) === false) {
     return $err({
       msg: 'Crypto Web API - Decryption: Invalid encrypted data format',
-      desc: 'Encrypted data must be in the format "iv.encryptedData."',
+      desc: 'Encrypted data must be in the format "iv.cipherWithTag."',
     });
   }
 
@@ -263,17 +263,21 @@ export async function tryDecrypt(encrypted: string, secretKey: WebApiKey): Promi
   }
 
   const { bytes: ivBytes, error: ivError } = tryStringToBytes(iv, 'base64url');
-  const { bytes: encryptedBytes, error: encryptedError } = tryStringToBytes(encryptedWithTag, 'base64url');
+  const { bytes: cipherWithTagBytes, error: cipherWithTagError } = tryStringToBytes(encryptedWithTag, 'base64url');
 
-  if (ivError || encryptedError) {
+  if (ivError || cipherWithTagError) {
     return $err({
       msg: 'Crypto Web API - Decryption: Failed to convert IV or encrypted data',
-      desc: `Conversion error: ${ivError || encryptedError}`,
+      desc: `Conversion error: ${ivError || cipherWithTagError}`,
     });
   }
 
   try {
-    const decrypted = await crypto.subtle.decrypt({ name: WEB_API_ALGORITHM, iv: ivBytes }, secretKey, encryptedBytes);
+    const decrypted = await crypto.subtle.decrypt(
+      { name: WEB_API_ALGORITHM, iv: ivBytes },
+      secretKey,
+      cipherWithTagBytes,
+    );
     return tryBytesToString(decrypted, 'utf8');
   } catch (error) {
     return $err({ msg: 'Crypto Web API - Decryption: Failed to decrypt data', desc: $fmtError(error) });
@@ -283,7 +287,7 @@ export async function tryDecrypt(encrypted: string, secretKey: WebApiKey): Promi
 /**
  * Encrypts the input object using the provided secret key.
  * The object is first serialized to a JSON string before encryption.
- * The output is a string in the format "iv.encryptedData." where each component is base64url encoded.
+ * The output is a string in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param data - The input object to encrypt.
  * @param secretKey - The WebApiKey object used for encryption.
@@ -300,7 +304,7 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
 
 /**
  * Decrypts the input string to an object using the provided secret key.
- * The input must be in the format "iv.encryptedData." where each component is base64url encoded.
+ * The input must be in the format "iv.cipherWithTag." where each component is base64url encoded.
  * The decrypted string is parsed as JSON to reconstruct the original object.
  *
  * @param encrypted - The input string to decrypt.

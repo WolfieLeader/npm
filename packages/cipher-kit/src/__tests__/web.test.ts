@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest';
-import { createSecretKey, decode, decrypt, decryptObj, encode, encrypt, encryptObj, type WebApiKey } from '~/web';
+import {
+  tryBytesToString,
+  tryCreateSecretKey,
+  tryDecrypt,
+  tryDecryptObj,
+  tryEncrypt,
+  tryEncryptObj,
+  tryStringToBytes,
+  type WebApiKey,
+} from '~/web/export';
 
 describe('Web API Crypto - AES-256-GCM', () => {
   const secret = 'Secret0123456789Secret0123456789';
@@ -7,28 +16,28 @@ describe('Web API Crypto - AES-256-GCM', () => {
   let secretKey: WebApiKey;
 
   test('Encode and decode data', () => {
-    const { bytes: encoded, error: encodeError } = encode(data, 'utf8');
+    const { bytes: encoded, error: encodeError } = tryStringToBytes(data, 'utf8');
     expect(encodeError).toBeUndefined();
     expect(encoded).toBeInstanceOf(Uint8Array);
 
-    const { result: decoded, error: decodeError } = decode(encoded as Uint8Array, 'utf8');
+    const { result: decoded, error: decodeError } = tryBytesToString(encoded as Uint8Array<ArrayBuffer>, 'utf8');
     expect(decodeError).toBeUndefined();
     expect(decoded).toBe(data);
   });
 
   test('Create secret key from string', async () => {
-    const res = await createSecretKey(secret);
+    const res = await tryCreateSecretKey(secret);
     expect(res.success).toBe(true);
     expect(res.secretKey).toBeDefined();
     secretKey = res.secretKey as WebApiKey;
   });
 
   test('Encrypt and decrypt data', async () => {
-    const encrypted = await encrypt(data, secretKey);
+    const encrypted = await tryEncrypt(data, secretKey);
     expect(encrypted.success).toBe(true);
     expect(encrypted.result).toBeDefined();
 
-    const decrypted = await decrypt(encrypted.result as string, secretKey);
+    const decrypted = await tryDecrypt(encrypted.result as string, secretKey);
     expect(decrypted.success).toBe(true);
     expect(decrypted.result).toBe(data);
   });
@@ -96,11 +105,11 @@ describe('Web API Crypto - AES-256-GCM', () => {
   };
 
   test('Encrypt and decrypt object', async () => {
-    const encrypted = await encryptObj(largeObj, secretKey);
+    const encrypted = await tryEncryptObj(largeObj, secretKey);
     expect(encrypted.success).toBe(true);
     expect(encrypted.result).toBeDefined();
 
-    const decrypted = await decryptObj(encrypted.result as string, secretKey);
+    const decrypted = await tryDecryptObj(encrypted.result as string, secretKey);
     expect(decrypted.success).toBe(true);
     expect(decrypted.result).toEqual(largeObj);
   });

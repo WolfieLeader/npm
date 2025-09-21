@@ -1,26 +1,33 @@
 import nodeCrypto from 'node:crypto';
-import type { WebApiKey } from '~/types';
-import { $err, $ok, $stringifyError, type Result } from './error';
+import type { NodeKey, WebApiKey } from '~/types';
+import { $err, $fmtError, $fmtResultErr, $ok, type Result } from './error';
 
+/** Node.js encryption algorithm */
 export const NODE_ALGORITHM = 'aes-256-gcm';
+
+/** Web API encryption algorithm */
 export const WEB_API_ALGORITHM = 'AES-GCM';
 
-export const ENCRYPTION_REGEX = Object.freeze({
+/** Regular expressions for encrypted data formats */
+export const ENCRYPTED_REGEX = Object.freeze({
   GENERAL: /^(?:[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?\.)$/,
   NODE: /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/,
   WEB_API: /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/,
 });
 
-export function isInEncryptionFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTION_REGEX.GENERAL.test(data);
+/** Checks if the input string is in a valid encrypted format. */
+export function isInEncryptedFormat(data: string): boolean {
+  return typeof data === 'string' && ENCRYPTED_REGEX.GENERAL.test(data);
 }
 
-export function isInNodeEncryptionFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTION_REGEX.NODE.test(data);
+/** Checks if the input string is in a valid Node.js encrypted format. */
+export function isInNodeEncryptedFormat(data: string): boolean {
+  return typeof data === 'string' && ENCRYPTED_REGEX.NODE.test(data);
 }
 
-export function isInWebApiEncryptionFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTION_REGEX.WEB_API.test(data);
+/** Checks if the input string is in a valid Web API encrypted format. */
+export function isInWebApiEncryptedFormat(data: string): boolean {
+  return typeof data === 'string' && ENCRYPTED_REGEX.WEB_API.test(data);
 }
 
 export function $isStr(value: unknown, min = 1): value is string {
@@ -36,6 +43,7 @@ export function $isObj(value: unknown): value is Record<string, unknown> {
   );
 }
 
+/** Checks if the input is a valid Web API key. */
 export function isWebApiKey(key: unknown): key is WebApiKey {
   return (
     key !== null &&
@@ -53,26 +61,66 @@ export function isWebApiKey(key: unknown): key is WebApiKey {
   );
 }
 
-export function isNodeKey(key: unknown): key is nodeCrypto.KeyObject {
+/** Checks if the input is a valid Node.js key. */
+export function isNodeKey(key: unknown): key is NodeKey {
   return key instanceof nodeCrypto.KeyObject;
 }
 
-export function stringifyObj(obj: Record<string, unknown>): Result<string> {
+/**
+ * Stringify an object.
+ *
+ * @param obj - The object to stringify.
+ * @returns An JSON string.
+ * @throws {Error} If the object cannot be stringified.
+ */
+export function stringifyObj<T extends object = Record<string, unknown>>(obj: T): string {
+  const { result, error } = tryStringifyObj(obj);
+  if (error) throw new Error($fmtResultErr(error));
+  return result;
+}
+
+/**
+ * Parse a string to an object.
+ *
+ * @param str - The JSON string to parse.
+ * @returns A parsed object.
+ * @throws {Error} If the string cannot be parsed or is not a valid object.
+ */
+export function parseToObj<T extends object = Record<string, unknown>>(str: string): T {
+  const { result, error } = tryParseToObj<T>(str);
+  if (error) throw new Error($fmtResultErr(error));
+  return result;
+}
+
+/**
+ * Stringify an object.
+ *
+ * @param obj - The object to stringify.
+ * @returns A Result containing the JSON string or an error.
+ */
+export function tryStringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
   try {
     if (!$isObj(obj)) return $err({ msg: 'Invalid object', desc: 'Input is not a plain object' });
     return $ok(JSON.stringify(obj));
   } catch (error) {
-    return $err({ msg: 'Stringify error', desc: $stringifyError(error) });
+    return $err({ msg: 'Utility: Stringify error', desc: $fmtError(error) });
   }
 }
 
-export function parseToObj(str: string): Result<{ result: Record<string, unknown> }> {
+/**
+ * Parse a string to an object.
+ *
+ * @param str - The JSON string to parse.
+ * @returns A Result containing the parsed object or an error.
+ */
+export function tryParseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
   try {
-    if (!$isStr(str)) return $err({ msg: 'Invalid input', desc: 'Input is not a valid string' });
+    if (!$isStr(str)) return $err({ msg: 'Utility: Invalid input', desc: 'Input is not a valid string' });
     const obj = JSON.parse(str);
-    if (!$isObj(obj)) return $err({ msg: 'Invalid object format', desc: 'Parsed data is not a plain object' });
-    return $ok({ result: obj });
+
+    if (!$isObj(obj)) return $err({ msg: 'Utility: Invalid object format', desc: 'Parsed data is not a plain object' });
+    return $ok({ result: obj as T });
   } catch (error) {
-    return $err({ msg: 'Invalid format', desc: $stringifyError(error) });
+    return $err({ msg: 'Utility: Invalid format', desc: $fmtError(error) });
   }
 }

@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest';
-import { createSecretKey, decode, decrypt, decryptObj, encode, encrypt, encryptObj, type NodeKey } from '~/node';
+import {
+  type NodeKey,
+  tryBytesToString,
+  tryCreateSecretKey,
+  tryDecrypt,
+  tryDecryptObj,
+  tryEncrypt,
+  tryEncryptObj,
+  tryStringToBytes,
+} from '~/node/export';
 
 describe('Node Crypto - AES-256-GCM', () => {
   const secret = 'Secret0123456789Secret0123456789';
@@ -7,28 +16,28 @@ describe('Node Crypto - AES-256-GCM', () => {
   let secretKey: NodeKey;
 
   test('Encode and decode data', () => {
-    const { bytes: encoded, error: encodeError } = encode(data, 'utf8');
+    const { bytes: encoded, error: encodeError } = tryStringToBytes(data, 'utf8');
     expect(encodeError).toBeUndefined();
     expect(encoded).toBeInstanceOf(Buffer);
 
-    const { result: decoded, error: decodeError } = decode(encoded as Buffer, 'utf8');
+    const { result: decoded, error: decodeError } = tryBytesToString(encoded as Buffer, 'utf8');
     expect(decodeError).toBeUndefined();
     expect(decoded).toBe(data);
   });
 
   test('Create secret key from string', () => {
-    const res = createSecretKey(secret);
+    const res = tryCreateSecretKey(secret);
     expect(res.success).toBe(true);
     expect(res.secretKey).toBeDefined();
     secretKey = res.secretKey as NodeKey;
   });
 
   test('Encrypt and decrypt data', () => {
-    const encrypted = encrypt(data, secretKey);
+    const encrypted = tryEncrypt(data, secretKey);
     expect(encrypted.success).toBe(true);
     expect(encrypted.result).toBeDefined();
 
-    const decrypted = decrypt(encrypted.result as string, secretKey);
+    const decrypted = tryDecrypt(encrypted.result as string, secretKey);
     expect(decrypted.success).toBe(true);
     expect(decrypted.result).toBe(data);
   });
@@ -96,11 +105,11 @@ describe('Node Crypto - AES-256-GCM', () => {
   };
 
   test('Encrypt and decrypt object', () => {
-    const encrypted = encryptObj(largeObj, secretKey);
+    const encrypted = tryEncryptObj(largeObj, secretKey);
     expect(encrypted.success).toBe(true);
     expect(encrypted.result).toBeDefined();
 
-    const decrypted = decryptObj(encrypted.result as string, secretKey);
+    const decrypted = tryDecryptObj(encrypted.result as string, secretKey);
     expect(decrypted.success).toBe(true);
     expect(decrypted.result).toEqual(largeObj);
   });

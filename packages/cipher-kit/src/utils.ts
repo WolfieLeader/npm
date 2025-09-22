@@ -35,19 +35,18 @@ export const ENCRYPTED_REGEX = Object.freeze({
   WEB_API: /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/,
 });
 
-/** Checks if the input string is in a valid encrypted format. */
-export function isInEncryptedFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTED_REGEX.GENERAL.test(data);
-}
-
-/** Checks if the input string is in a valid Node.js encrypted format. */
-export function isInNodeEncryptedFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTED_REGEX.NODE.test(data);
-}
-
-/** Checks if the input string is in a valid Web API encrypted format. */
-export function isInWebApiEncryptedFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTED_REGEX.WEB_API.test(data);
+export function checkFormat(data: string, format: 'general' | 'node' | 'web'): boolean {
+  if (typeof data !== 'string') return false;
+  switch (format) {
+    case 'general':
+      return ENCRYPTED_REGEX.GENERAL.test(data);
+    case 'node':
+      return ENCRYPTED_REGEX.NODE.test(data);
+    case 'web':
+      return ENCRYPTED_REGEX.WEB_API.test(data);
+    default:
+      throw new Error(`Unknown format: ${format}`);
+  }
 }
 
 /** Checks if the input is a valid Web API key. */

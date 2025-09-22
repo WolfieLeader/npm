@@ -1,9 +1,10 @@
 export type { NodeKey } from '~/types';
 export {
+  checkFormat,
   ENCRYPTED_REGEX,
-  isInEncryptedFormat,
-  isInNodeEncryptedFormat,
   isNodeKey,
+  parseToObj,
+  stringifyObj,
   tryParseToObj,
   tryStringifyObj,
 } from '~/utils';

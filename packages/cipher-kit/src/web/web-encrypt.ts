@@ -1,6 +1,6 @@
 import { $err, $fmtError, $fmtResultErr, $ok, type Result } from '~/error';
 import type { WebApiKey } from '~/types';
-import { $isStr, CONFIG, isInWebApiEncryptedFormat, isWebApiKey, tryParseToObj, tryStringifyObj } from '~/utils';
+import { $isStr, CONFIG, checkFormat, isWebApiKey, tryParseToObj, tryStringifyObj } from '~/utils';
 import { tryBytesToString, tryStringToBytes } from './web-encode';
 
 /**
@@ -102,7 +102,7 @@ export async function tryEncrypt(data: string, secretKey: WebApiKey): Promise<Re
  * @returns A Result containing a string representing the decrypted data or an error.
  */
 export async function tryDecrypt(encrypted: string, secretKey: WebApiKey): Promise<Result<string>> {
-  if (isInWebApiEncryptedFormat(encrypted) === false) {
+  if (checkFormat(encrypted, 'web') === false) {
     return $err({
       msg: 'Crypto Web API - Decryption: Invalid encrypted data format',
       desc: 'Encrypted data must be in the format "iv.cipherWithTag."',

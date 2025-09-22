@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
 import { $err, $fmtError, $fmtResultErr, $ok, type Result } from '~/error';
 import type { NodeKey } from '~/types';
-import { $isStr, CONFIG, isInNodeEncryptedFormat, isNodeKey, tryParseToObj, tryStringifyObj } from '~/utils';
+import { $isStr, CONFIG, checkFormat, isNodeKey, tryParseToObj, tryStringifyObj } from '~/utils';
 import { tryBytesToString, tryStringToBytes } from './node-encode';
 
 /**
@@ -94,7 +94,7 @@ export function tryEncrypt(data: string, secretKey: NodeKey): Result<string> {
  * @returns A Result containing a string representing the decrypted data or an error.
  */
 export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string> {
-  if (isInNodeEncryptedFormat(encrypted) === false) {
+  if (checkFormat(encrypted, 'node') === false) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Invalid encrypted data format',
       desc: 'Encrypted data must be in the format "iv.cipher.tag."',

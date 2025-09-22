@@ -1,9 +1,10 @@
 export type { WebApiKey } from '~/types';
 export {
+  checkFormat,
   ENCRYPTED_REGEX,
-  isInEncryptedFormat,
-  isInWebApiEncryptedFormat,
   isWebApiKey,
+  parseToObj,
+  stringifyObj,
   tryParseToObj,
   tryStringifyObj,
 } from '~/utils';

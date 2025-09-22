@@ -3,7 +3,7 @@ import { $err, $fmtError, $ok, type Result } from '~/error';
 import type { EncodingFormat } from '~/types';
 import { $isStr, encodingFormats } from '~/utils';
 
-export function $convertStrToBytes(data: string, format: EncodingFormat = 'utf8'): Result<{ bytes: Buffer }> {
+export function $convertStrToBytes(data: string, format: EncodingFormat = 'utf8'): Result<{ result: Buffer }> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto NodeJS API - String to Bytes: Empty data',
@@ -17,7 +17,7 @@ export function $convertStrToBytes(data: string, format: EncodingFormat = 'utf8'
     });
   }
   try {
-    return $ok({ bytes: Buffer.from(data, format) });
+    return $ok({ result: Buffer.from(data, format) });
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - String to Bytes: Failed to convert data', desc: $fmtError(error) });
   }
@@ -58,11 +58,11 @@ export function $convertFormat(data: string, from: EncodingFormat, to: EncodingF
     });
   }
 
-  const { bytes, error: toBytesError } = $convertStrToBytes(data, from);
-  if (toBytesError) return $err({ msg: toBytesError.message, desc: toBytesError.description });
+  const bytes = $convertStrToBytes(data, from);
+  if (bytes.error) return $err({ msg: bytes.error.message, desc: bytes.error.description });
 
-  const { result, error: toStringError } = $convertBytesToStr(bytes, to);
-  if (toStringError) return $err({ msg: toStringError.message, desc: toStringError.description });
+  const str = $convertBytesToStr(bytes.result, to);
+  if (str.error) return $err({ msg: str.error.message, desc: str.error.description });
 
-  return $ok({ result });
+  return $ok({ result: str.result });
 }

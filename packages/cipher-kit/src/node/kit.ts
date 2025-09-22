@@ -42,7 +42,7 @@ export function generateUuid(): string {
  * @param key - The input string to derive the secret key from.
  * @returns A Result containing a NodeKey object representing the derived secret key or an error.
  */
-export function tryCreateSecretKey(key: string): Result<{ secretKey: NodeKey }> {
+export function tryCreateSecretKey(key: string): Result<{ result: NodeKey }> {
   return $createSecretKey(key);
 }
 
@@ -55,9 +55,9 @@ export function tryCreateSecretKey(key: string): Result<{ secretKey: NodeKey }> 
  * @throws {Error} If the input key is invalid or key generation fails.
  */
 export function createSecretKey(key: string): NodeKey {
-  const { secretKey, error } = $createSecretKey(key);
+  const { result, error } = $createSecretKey(key);
   if (error) throw new Error($fmtResultErr(error));
-  return secretKey;
+  return result;
 }
 
 /**
@@ -244,7 +244,7 @@ export function verifyPassword(password: string, hashedPassword: string, salt: s
  * @param format - The encoding format to use (default is 'utf8').
  * @returns A Result containing a Node.js Buffer with the encoded data or an error.
  */
-export function tryConvertStrToBytes(data: string, format: EncodingFormat = 'utf8'): Result<{ bytes: Buffer }> {
+export function tryConvertStrToBytes(data: string, format: EncodingFormat = 'utf8'): Result<{ result: Buffer }> {
   return $convertStrToBytes(data, format);
 }
 
@@ -258,9 +258,9 @@ export function tryConvertStrToBytes(data: string, format: EncodingFormat = 'utf
  * @throws {Error} If the input data is invalid or conversion fails.
  */
 export function convertStrToBytes(data: string, format: EncodingFormat = 'utf8'): Buffer {
-  const { bytes, error } = $convertStrToBytes(data, format);
+  const { result, error } = $convertStrToBytes(data, format);
   if (error) throw new Error($fmtResultErr(error));
-  return bytes;
+  return result;
 }
 
 /**

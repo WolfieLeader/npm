@@ -13,7 +13,7 @@ export function $generateUuid(): Result<string> {
   }
 }
 
-export function $createSecretKey(key: string): Result<{ secretKey: NodeKey }> {
+export function $createSecretKey(key: string): Result<{ result: NodeKey }> {
   if (!$isStr(key)) {
     return $err({ msg: 'Crypto NodeJS API - Key Generation: Empty key', desc: 'Key must be a non-empty string' });
   }
@@ -21,7 +21,7 @@ export function $createSecretKey(key: string): Result<{ secretKey: NodeKey }> {
   try {
     const hashedKey = nodeCrypto.createHash(CONFIG.hash.sha256.node).update(key).digest();
     const secretKey = nodeCrypto.createSecretKey(hashedKey);
-    return $ok({ secretKey });
+    return $ok({ result: secretKey });
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Key Generation: Failed to create secret key', desc: $fmtError(error) });
   }
@@ -48,18 +48,18 @@ export function $encrypt(data: string, secretKey: NodeKey): Result<string> {
     const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
     const tag = cipher.getAuthTag();
 
-    const { result: ivString, error: ivError } = $convertBytesToStr(iv, 'base64url');
-    const { result: cipherString, error: cipherError } = $convertBytesToStr(encrypted, 'base64url');
-    const { result: tagString, error: tagError } = $convertBytesToStr(tag, 'base64url');
+    const ivStr = $convertBytesToStr(iv, 'base64url');
+    const cipherStr = $convertBytesToStr(encrypted, 'base64url');
+    const tagStr = $convertBytesToStr(tag, 'base64url');
 
-    if (ivError || cipherError || tagError) {
+    if (ivStr.error || cipherStr.error || tagStr.error) {
       return $err({
         msg: 'Crypto NodeJS API - Encryption: Failed to convert IV or encrypted data or tag',
-        desc: `Conversion error: ${ivError || cipherError || tagError}`,
+        desc: `Conversion error: ${ivStr.error || cipherStr.error || tagStr.error}`,
       });
     }
 
-    return $ok(`${ivString}.${cipherString}.${tagString}.`);
+    return $ok(`${ivStr.result}.${cipherStr.result}.${tagStr.result}.`);
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Encryption: Failed to encrypt data', desc: $fmtError(error) });
   }
@@ -88,22 +88,22 @@ export function $decrypt(encrypted: string, secretKey: NodeKey): Result<string> 
     });
   }
 
-  const { bytes: ivBytes, error: ivError } = $convertStrToBytes(iv, 'base64url');
-  const { bytes: cipherBytes, error: cipherError } = $convertStrToBytes(cipher, 'base64url');
-  const { bytes: tagBytes, error: tagError } = $convertStrToBytes(tag, 'base64url');
+  const ivBytes = $convertStrToBytes(iv, 'base64url');
+  const cipherBytes = $convertStrToBytes(cipher, 'base64url');
+  const tagBytes = $convertStrToBytes(tag, 'base64url');
 
-  if (ivError || cipherError || tagError) {
+  if (ivBytes.error || cipherBytes.error || tagBytes.error) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Failed to convert IV or encrypted data or tag',
-      desc: `Conversion error: ${ivError || cipherError || tagError}`,
+      desc: `Conversion error: ${ivBytes.error || cipherBytes.error || tagBytes.error}`,
     });
   }
 
   try {
-    const decipher = nodeCrypto.createDecipheriv(CONFIG.encrypt.aes256gcm.node, secretKey, ivBytes);
-    decipher.setAuthTag(tagBytes);
+    const decipher = nodeCrypto.createDecipheriv(CONFIG.encrypt.aes256gcm.node, secretKey, ivBytes.result);
+    decipher.setAuthTag(tagBytes.result);
+    const decrypted = Buffer.concat([decipher.update(cipherBytes.result), decipher.final()]);
 
-    const decrypted = Buffer.concat([decipher.update(cipherBytes), decipher.final()]);
     return $convertBytesToStr(decrypted, 'utf8');
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Decryption: Failed to decrypt data', desc: $fmtError(error) });
@@ -169,22 +169,22 @@ export function $hashPassword(password: string): Result<{ hash: string; salt: st
 export function $verifyPassword(password: string, hashedPassword: string, salt: string): boolean {
   if (!$isStr(password) || !$isStr(hashedPassword) || !$isStr(salt)) return false;
 
-  const { bytes: saltBytes, error: saltError } = $convertStrToBytes(salt, 'base64url');
-  if (saltError) return false;
+  const saltBytes = $convertStrToBytes(salt, 'base64url');
+  if (saltBytes.error) return false;
 
-  const { bytes: hashedPasswordBytes, error: hashedPasswordError } = $convertStrToBytes(hashedPassword, 'base64url');
-  if (hashedPasswordError) return false;
+  const hashedPasswordBytes = $convertStrToBytes(hashedPassword, 'base64url');
+  if (hashedPasswordBytes.error) return false;
 
   try {
     return nodeCrypto.timingSafeEqual(
       nodeCrypto.pbkdf2Sync(
         password.normalize('NFKC'),
-        saltBytes,
+        saltBytes.result,
         CONFIG.password.pbkdf2.iterations,
         CONFIG.password.pbkdf2.keyLength,
         CONFIG.hash.sha512.node,
       ),
-      hashedPasswordBytes,
+      hashedPasswordBytes.result,
     );
   } catch {
     return false;

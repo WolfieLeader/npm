@@ -7,10 +7,10 @@ describe('Node Crypto - AES-256-GCM', () => {
   let secretKey: NodeKey;
 
   test('Create secret key from string', () => {
-    const res = tryCreateSecretKey(secret);
-    expect(res.success).toBe(true);
-    expect(res.secretKey).toBeDefined();
-    secretKey = res.secretKey as NodeKey;
+    const key = tryCreateSecretKey(secret);
+    expect(key.success).toBe(true);
+    expect(key.result).toBeDefined();
+    secretKey = key.result as NodeKey;
   });
 
   test('Encrypt and decrypt data', () => {

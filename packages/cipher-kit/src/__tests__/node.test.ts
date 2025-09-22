@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  convertToFormat,
   type NodeKey,
   tryBytesToString,
   tryCreateSecretKey,
@@ -112,5 +113,11 @@ describe('Node Crypto - AES-256-GCM', () => {
     const decrypted = tryDecryptObj(encrypted.result as string, secretKey);
     expect(decrypted.success).toBe(true);
     expect(decrypted.result).toEqual(largeObj);
+  });
+
+  test('Convert', () => {
+    const binary = convertToFormat('Héllø 🙂', 'utf8', 'binary');
+    console.log('binary:', binary);
+    expect(binary).toBeDefined();
   });
 });

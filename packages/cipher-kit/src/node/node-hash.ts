@@ -50,6 +50,7 @@ export function tryHashPassword(password: string): Result<{ hash: string; salt: 
         CONFIG.hash.sha512.node,
       )
       .toString('base64url');
+
     return $ok({ salt, hash });
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Password Hashing: Failed to hash password', desc: $fmtError(error) });

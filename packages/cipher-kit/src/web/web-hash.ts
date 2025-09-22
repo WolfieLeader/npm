@@ -26,6 +26,12 @@ export async function tryHash(data: string): Promise<Result<string>> {
   }
 }
 
+/**
+ * Hashes a password using PBKDF2 with SHA-512.
+ *
+ * @param password - The password to hash.
+ * @returns A Result containing an object with the hash and salt, or an error.
+ */
 export async function tryHashPassword(password: string): Promise<Result<{ hash: string; salt: string }>> {
   if (!$isStr(password)) {
     return $err({
@@ -48,16 +54,26 @@ export async function tryHashPassword(password: string): Promise<Result<{ hash: 
       baseKey,
       CONFIG.password.pbkdf2.keyLength * 8,
     );
+
     const { result: saltString, error: saltError } = tryBytesToString(salt, 'base64url');
     if (saltError) return $err(saltError);
     const { result: hashString, error: hashError } = tryBytesToString(bits, 'base64url');
     if (hashError) return $err(hashError);
+
     return $ok({ hash: hashString, salt: saltString });
   } catch (error) {
     return $err({ msg: 'Crypto Web API - Password Hashing: Failed to hash password', desc: $fmtError(error) });
   }
 }
 
+/**
+ * Verifies a password against a hashed password and salt.
+ *
+ * @param password - The password to verify.
+ * @param hashedPassword - The hashed password to compare against (in base64url format).
+ * @param salt - The salt used during hashing (in base64url format).
+ * @returns A boolean indicating whether the password matches the hashed password.
+ */
 export async function verifyPassword(password: string, hashedPassword: string, salt: string): Promise<boolean> {
   if (!$isStr(password) || !$isStr(hashedPassword) || !$isStr(salt)) return false;
   const { bytes: saltBytes, error: saltError } = tryStringToBytes(salt, 'base64url');
@@ -95,4 +111,17 @@ export async function hash(data: string): Promise<string> {
   const { result, error } = await tryHash(data);
   if (error) throw new Error($fmtResultErr(error));
   return result;
+}
+
+/**
+ * Hashes a password using PBKDF2 with SHA-512.
+ *
+ * @param password - The password to hash.
+ * @returns An object with the hash and salt.
+ * @throws {Error} If the input password is invalid or hashing fails.
+ */
+export async function hashPassword(password: string): Promise<{ hash: string; salt: string }> {
+  const { hash, salt, error } = await tryHashPassword(password);
+  if (error) throw new Error($fmtResultErr(error));
+  return { hash, salt };
 }

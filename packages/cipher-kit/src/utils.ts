@@ -21,7 +21,9 @@ export const CONFIG = Object.freeze({
     sha512: { node: 'sha512', web: 'SHA-512' },
   },
   encrypt: {
-    aes256gcm: { ivLength: 12, node: 'aes-256-gcm', web: 'AES-GCM' },
+    aes256gcm: { keyBytes: 32, ivLength: 12, node: 'aes-256-gcm', web: 'AES-GCM' },
+    aes192gcm: { keyBytes: 24, ivLength: 12, node: 'aes-192-gcm', web: 'AES-GCM' },
+    aes128gcm: { keyBytes: 16, ivLength: 12, node: 'aes-128-gcm', web: 'AES-GCM' },
   },
   password: {
     pbkdf2: { saltLength: 16, iterations: 320_000, keyLength: 64 },

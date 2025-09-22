@@ -2,34 +2,6 @@ import nodeCrypto from 'node:crypto';
 import type { NodeKey, WebApiKey } from '~/types';
 import { $err, $fmtError, $fmtResultErr, $ok, type Result } from './error';
 
-/** Node.js encryption algorithm */
-export const NODE_ALGORITHM = 'aes-256-gcm';
-
-/** Web API encryption algorithm */
-export const WEB_API_ALGORITHM = 'AES-GCM';
-
-/** Regular expressions for encrypted data formats */
-export const ENCRYPTED_REGEX = Object.freeze({
-  GENERAL: /^(?:[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?\.)$/,
-  NODE: /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/,
-  WEB_API: /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/,
-});
-
-/** Checks if the input string is in a valid encrypted format. */
-export function isInEncryptedFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTED_REGEX.GENERAL.test(data);
-}
-
-/** Checks if the input string is in a valid Node.js encrypted format. */
-export function isInNodeEncryptedFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTED_REGEX.NODE.test(data);
-}
-
-/** Checks if the input string is in a valid Web API encrypted format. */
-export function isInWebApiEncryptedFormat(data: string): boolean {
-  return typeof data === 'string' && ENCRYPTED_REGEX.WEB_API.test(data);
-}
-
 export function $isStr(value: unknown, min = 1): value is string {
   return value !== null && value !== undefined && typeof value === 'string' && value.trim().length >= min;
 }
@@ -41,6 +13,42 @@ export function $isObj(value: unknown): value is Record<string, unknown> {
     value !== undefined &&
     (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
   );
+}
+
+export const CONFIG = Object.freeze({
+  hash: {
+    sha256: { node: 'sha256', web: 'SHA-256' },
+    sha512: { node: 'sha512', web: 'SHA-512' },
+  },
+  encrypt: {
+    aes256gcm: { ivLength: 12, node: 'aes-256-gcm', web: 'AES-GCM' },
+  },
+  password: {
+    pbkdf2: { saltLength: 16, iterations: 320_000, keyLength: 64 },
+  },
+} as const);
+
+export const encodingFormats = Object.freeze(['base64', 'base64url', 'hex', 'utf8', 'binary'] as const);
+
+/** Regular expressions for encrypted data formats */
+export const ENCRYPTED_REGEX = Object.freeze({
+  GENERAL: /^(?:[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?\.)$/,
+  NODE: /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/,
+  WEB_API: /^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.$/,
+});
+
+export function checkFormat(data: string, format: 'general' | 'node' | 'web'): boolean {
+  if (typeof data !== 'string') return false;
+  switch (format) {
+    case 'general':
+      return ENCRYPTED_REGEX.GENERAL.test(data);
+    case 'node':
+      return ENCRYPTED_REGEX.NODE.test(data);
+    case 'web':
+      return ENCRYPTED_REGEX.WEB_API.test(data);
+    default:
+      throw new Error(`Unknown format: ${format}`);
+  }
 }
 
 /** Checks if the input is a valid Web API key. */

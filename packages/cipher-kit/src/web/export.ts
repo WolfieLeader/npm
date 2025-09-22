@@ -1,12 +1,11 @@
 export type { WebApiKey } from '~/types';
 export {
+  checkFormat,
   ENCRYPTED_REGEX,
-  isInEncryptedFormat,
-  isInWebApiEncryptedFormat,
   isWebApiKey,
-  tryParseToObj as parseToObj,
-  tryStringifyObj as stringifyObj,
-  WEB_API_ALGORITHM,
+  parseToObj,
+  stringifyObj,
+  tryParseToObj,
+  tryStringifyObj,
 } from '~/utils';
-export * from './web-encode';
-export * from './web-encrypt';
+export * from './kit';

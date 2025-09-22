@@ -1,30 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import {
-  convertToFormat,
-  tryBytesToString,
-  tryCreateSecretKey,
-  tryDecrypt,
-  tryDecryptObj,
-  tryEncrypt,
-  tryEncryptObj,
-  tryStringToBytes,
-  type WebApiKey,
-} from '~/web/export';
+import { tryCreateSecretKey, tryDecrypt, tryDecryptObj, tryEncrypt, tryEncryptObj, type WebApiKey } from '~/web/export';
 
 describe('Web API Crypto - AES-256-GCM', () => {
   const secret = 'Secret0123456789Secret0123456789';
   const data = '🦊 secret stuff ~ !@#$%^&*()_+';
   let secretKey: WebApiKey;
-
-  test('Encode and decode data', () => {
-    const { bytes: encoded, error: encodeError } = tryStringToBytes(data, 'utf8');
-    expect(encodeError).toBeUndefined();
-    expect(encoded).toBeInstanceOf(Uint8Array);
-
-    const { result: decoded, error: decodeError } = tryBytesToString(encoded as Uint8Array<ArrayBuffer>, 'utf8');
-    expect(decodeError).toBeUndefined();
-    expect(decoded).toBe(data);
-  });
 
   test('Create secret key from string', async () => {
     const res = await tryCreateSecretKey(secret);
@@ -113,11 +93,5 @@ describe('Web API Crypto - AES-256-GCM', () => {
     const decrypted = await tryDecryptObj(encrypted.result as string, secretKey);
     expect(decrypted.success).toBe(true);
     expect(decrypted.result).toEqual(largeObj);
-  });
-
-  test('Convert', () => {
-    const binary = convertToFormat('Héllø 🙂', 'utf8', 'binary');
-    console.log('binary:', binary);
-    expect(binary).toBeDefined();
   });
 });

@@ -30,7 +30,7 @@ export const CONFIG = Object.freeze({
   },
 } as const);
 
-export const encodingFormats = Object.freeze(['base64', 'base64url', 'hex', 'utf8', 'binary'] as const);
+export const encodingFormats = Object.freeze(['base64', 'base64url', 'hex', 'utf8', 'latin1'] as const);
 
 /** Regular expressions for encrypted data formats */
 export const ENCRYPTED_REGEX = Object.freeze({
@@ -76,6 +76,15 @@ export function isNodeKey(key: unknown): key is NodeKey {
   return key instanceof nodeCrypto.KeyObject;
 }
 
+export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
+  try {
+    if (!$isObj(obj)) return $err({ msg: 'Invalid object', desc: 'Input is not a plain object' });
+    return $ok(JSON.stringify(obj));
+  } catch (error) {
+    return $err({ msg: 'Utility: Stringify error', desc: $fmtError(error) });
+  }
+}
+
 /**
  * Stringify an object.
  *
@@ -84,20 +93,7 @@ export function isNodeKey(key: unknown): key is NodeKey {
  * @throws {Error} If the object cannot be stringified.
  */
 export function stringifyObj<T extends object = Record<string, unknown>>(obj: T): string {
-  const { result, error } = tryStringifyObj(obj);
-  if (error) throw new Error($fmtResultErr(error));
-  return result;
-}
-
-/**
- * Parse a string to an object.
- *
- * @param str - The JSON string to parse.
- * @returns A parsed object.
- * @throws {Error} If the string cannot be parsed or is not a valid object.
- */
-export function parseToObj<T extends object = Record<string, unknown>>(str: string): T {
-  const { result, error } = tryParseToObj<T>(str);
+  const { result, error } = $stringifyObj(obj);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }
@@ -109,11 +105,18 @@ export function parseToObj<T extends object = Record<string, unknown>>(str: stri
  * @returns A Result containing the JSON string or an error.
  */
 export function tryStringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
+  return $stringifyObj(obj);
+}
+
+export function $parseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
   try {
-    if (!$isObj(obj)) return $err({ msg: 'Invalid object', desc: 'Input is not a plain object' });
-    return $ok(JSON.stringify(obj));
+    if (!$isStr(str)) return $err({ msg: 'Utility: Invalid input', desc: 'Input is not a valid string' });
+    const obj = JSON.parse(str);
+
+    if (!$isObj(obj)) return $err({ msg: 'Utility: Invalid object format', desc: 'Parsed data is not a plain object' });
+    return $ok({ result: obj as T });
   } catch (error) {
-    return $err({ msg: 'Utility: Stringify error', desc: $fmtError(error) });
+    return $err({ msg: 'Utility: Invalid format', desc: $fmtError(error) });
   }
 }
 
@@ -124,13 +127,18 @@ export function tryStringifyObj<T extends object = Record<string, unknown>>(obj:
  * @returns A Result containing the parsed object or an error.
  */
 export function tryParseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
-  try {
-    if (!$isStr(str)) return $err({ msg: 'Utility: Invalid input', desc: 'Input is not a valid string' });
-    const obj = JSON.parse(str);
+  return $parseToObj<T>(str);
+}
 
-    if (!$isObj(obj)) return $err({ msg: 'Utility: Invalid object format', desc: 'Parsed data is not a plain object' });
-    return $ok({ result: obj as T });
-  } catch (error) {
-    return $err({ msg: 'Utility: Invalid format', desc: $fmtError(error) });
-  }
+/**
+ * Parse a string to an object.
+ *
+ * @param str - The JSON string to parse.
+ * @returns A parsed object.
+ * @throws {Error} If the string cannot be parsed or is not a valid object.
+ */
+export function parseToObj<T extends object = Record<string, unknown>>(str: string): T {
+  const { result, error } = $parseToObj<T>(str);
+  if (error) throw new Error($fmtResultErr(error));
+  return result;
 }

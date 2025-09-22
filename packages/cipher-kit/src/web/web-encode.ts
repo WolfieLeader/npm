@@ -10,7 +10,7 @@ const strToBytesFuncs = {
   base64url: $fromBase64Url,
   hex: $fromHex,
   utf8: (data: string) => textEncoder.encode(data),
-  binary: $fromBinary,
+  latin1: $fromLatin1,
 } as const satisfies Record<EncodingFormat, (data: string) => Uint8Array<ArrayBuffer>>;
 
 const bytesToStrFuncs = {
@@ -18,7 +18,7 @@ const bytesToStrFuncs = {
   base64url: $toBase64Url,
   hex: $toHex,
   utf8: (data: Uint8Array) => textDecoder.decode(data),
-  binary: $toBinary,
+  latin1: $toLatin1,
 } as const satisfies Record<EncodingFormat, (data: Uint8Array<ArrayBuffer>) => string>;
 
 /**
@@ -126,7 +126,7 @@ export function tryBytesToString(
   }
 }
 
-function $toBinary(bytes: Uint8Array<ArrayBuffer>): string {
+function $toLatin1(bytes: Uint8Array<ArrayBuffer>): string {
   let out = '';
   const chunk = 1 << 15; // 32KiB per chunk
   for (let i = 0; i < bytes.length; i += chunk) {
@@ -135,7 +135,7 @@ function $toBinary(bytes: Uint8Array<ArrayBuffer>): string {
   return out;
 }
 
-function $fromBinary(data: string): Uint8Array<ArrayBuffer> {
+function $fromLatin1(data: string): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(data.length);
   for (let i = 0; i < data.length; i++) {
     const charCode = data.charCodeAt(i);
@@ -146,11 +146,11 @@ function $fromBinary(data: string): Uint8Array<ArrayBuffer> {
 }
 
 function $toBase64(bytes: Uint8Array<ArrayBuffer>): string {
-  return btoa($toBinary(bytes));
+  return btoa($toLatin1(bytes));
 }
 
 function $fromBase64(data: string): Uint8Array<ArrayBuffer> {
-  return $fromBinary(atob(data));
+  return $fromLatin1(atob(data));
 }
 
 function $toBase64Url(bytes: Uint8Array<ArrayBuffer>): string {

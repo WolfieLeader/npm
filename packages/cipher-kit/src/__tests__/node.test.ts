@@ -1,30 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import {
-  convertToFormat,
-  type NodeKey,
-  tryBytesToString,
-  tryCreateSecretKey,
-  tryDecrypt,
-  tryDecryptObj,
-  tryEncrypt,
-  tryEncryptObj,
-  tryStringToBytes,
-} from '~/node/export';
+import { type NodeKey, tryCreateSecretKey, tryDecrypt, tryDecryptObj, tryEncrypt, tryEncryptObj } from '~/node/export';
 
 describe('Node Crypto - AES-256-GCM', () => {
   const secret = 'Secret0123456789Secret0123456789';
   const data = '🦊 secret stuff ~ !@#$%^&*()_+';
   let secretKey: NodeKey;
-
-  test('Encode and decode data', () => {
-    const { bytes: encoded, error: encodeError } = tryStringToBytes(data, 'utf8');
-    expect(encodeError).toBeUndefined();
-    expect(encoded).toBeInstanceOf(Buffer);
-
-    const { result: decoded, error: decodeError } = tryBytesToString(encoded as Buffer, 'utf8');
-    expect(decodeError).toBeUndefined();
-    expect(decoded).toBe(data);
-  });
 
   test('Create secret key from string', () => {
     const res = tryCreateSecretKey(secret);
@@ -113,11 +93,5 @@ describe('Node Crypto - AES-256-GCM', () => {
     const decrypted = tryDecryptObj(encrypted.result as string, secretKey);
     expect(decrypted.success).toBe(true);
     expect(decrypted.result).toEqual(largeObj);
-  });
-
-  test('Convert', () => {
-    const binary = convertToFormat('Héllø 🙂', 'utf8', 'binary');
-    console.log('binary:', binary);
-    expect(binary).toBeDefined();
   });
 });

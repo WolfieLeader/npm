@@ -28,6 +28,8 @@ export const CONFIG = Object.freeze({
   },
 } as const);
 
+export const encodingFormats = Object.freeze(['base64', 'base64url', 'hex', 'utf8', 'binary'] as const);
+
 /** Regular expressions for encrypted data formats */
 export const ENCRYPTED_REGEX = Object.freeze({
   GENERAL: /^(?:[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?\.)$/,

@@ -2,38 +2,6 @@ import { $err, $fmtError, $fmtResultErr, $ok, type Result } from '~/error';
 import type { EncodingFormat } from '~/types';
 import { $isStr } from '~/utils';
 
-/**
- * Converts a string to a Uint8Array (byte array) using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8'.
- *
- * @param data - The input string to convert.
- * @param format - The encoding format to use (default is 'utf8').
- * @returns A Uint8Array containing the encoded data.
- * @throws {Error} If the input data is invalid or conversion fails.
- */
-export function stringToBytes(data: string, format: EncodingFormat = 'utf8'): Uint8Array<ArrayBuffer> {
-  const { bytes, error } = tryStringToBytes(data, format);
-  if (error) throw new Error($fmtResultErr(error));
-  return bytes;
-}
-
-/**
- * Converts a Uint8Array or ArrayBuffer (byte array) to a string using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8'.
- *
- * @param data - The input Uint8Array or ArrayBuffer to convert.
- * @param format - The encoding format to use (default is 'utf8').
- * @returns A string representation of the Uint8Array or ArrayBuffer in the specified format.
- * @throws {Error} If the input data is invalid or conversion fails.
- */
-export function bytesToString(data: ArrayBuffer | Uint8Array<ArrayBuffer>, format: EncodingFormat = 'utf8'): string {
-  const { result, error } = tryBytesToString(data, format);
-  if (error) throw new Error($fmtResultErr(error));
-  return result;
-}
-
-// ----------------------------------------------------------------
-
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
@@ -161,4 +129,36 @@ function $fromHex(data: string): Uint8Array<ArrayBuffer> {
     out[i] = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16);
   }
   return out;
+}
+
+// ----------------------------------------------------------------
+
+/**
+ * Converts a string to a Uint8Array (byte array) using the specified encoding format.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8'.
+ *
+ * @param data - The input string to convert.
+ * @param format - The encoding format to use (default is 'utf8').
+ * @returns A Uint8Array containing the encoded data.
+ * @throws {Error} If the input data is invalid or conversion fails.
+ */
+export function stringToBytes(data: string, format: EncodingFormat = 'utf8'): Uint8Array<ArrayBuffer> {
+  const { bytes, error } = tryStringToBytes(data, format);
+  if (error) throw new Error($fmtResultErr(error));
+  return bytes;
+}
+
+/**
+ * Converts a Uint8Array or ArrayBuffer (byte array) to a string using the specified encoding format.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8'.
+ *
+ * @param data - The input Uint8Array or ArrayBuffer to convert.
+ * @param format - The encoding format to use (default is 'utf8').
+ * @returns A string representation of the Uint8Array or ArrayBuffer in the specified format.
+ * @throws {Error} If the input data is invalid or conversion fails.
+ */
+export function bytesToString(data: ArrayBuffer | Uint8Array<ArrayBuffer>, format: EncodingFormat = 'utf8'): string {
+  const { result, error } = tryBytesToString(data, format);
+  if (error) throw new Error($fmtResultErr(error));
+  return result;
 }

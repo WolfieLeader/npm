@@ -2,11 +2,31 @@ import nodeCrypto from 'node:crypto';
 import type { NodeKey, WebApiKey } from '~/types';
 import { $err, $fmtError, $fmtResultErr, $ok, type Result } from './error';
 
-/** Node.js encryption algorithm */
-export const NODE_ALGORITHM = 'aes-256-gcm';
+export function $isStr(value: unknown, min = 1): value is string {
+  return value !== null && value !== undefined && typeof value === 'string' && value.trim().length >= min;
+}
 
-/** Web API encryption algorithm */
-export const WEB_API_ALGORITHM = 'AES-GCM';
+export function $isObj(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    value !== undefined &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
+  );
+}
+
+export const CONFIG = Object.freeze({
+  hash: {
+    sha256: { node: 'sha256', web: 'SHA-256' },
+    sha512: { node: 'sha512', web: 'SHA-512' },
+  },
+  encrypt: {
+    aes256gcm: { ivLength: 12, node: 'aes-256-gcm', web: 'AES-GCM' },
+  },
+  password: {
+    pbkdf2: { saltLength: 16, iterations: 320_000, keyLength: 64 },
+  },
+} as const);
 
 /** Regular expressions for encrypted data formats */
 export const ENCRYPTED_REGEX = Object.freeze({
@@ -28,19 +48,6 @@ export function isInNodeEncryptedFormat(data: string): boolean {
 /** Checks if the input string is in a valid Web API encrypted format. */
 export function isInWebApiEncryptedFormat(data: string): boolean {
   return typeof data === 'string' && ENCRYPTED_REGEX.WEB_API.test(data);
-}
-
-export function $isStr(value: unknown, min = 1): value is string {
-  return value !== null && value !== undefined && typeof value === 'string' && value.trim().length >= min;
-}
-
-export function $isObj(value: unknown): value is Record<string, unknown> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    value !== undefined &&
-    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
-  );
 }
 
 /** Checks if the input is a valid Web API key. */

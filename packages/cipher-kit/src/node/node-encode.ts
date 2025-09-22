@@ -13,7 +13,7 @@ export function $convertStrToBytes(data: string, format: EncodingFormat = 'utf8'
   if (!encodingFormats.includes(format)) {
     return $err({
       msg: `Crypto NodeJS API - String to Bytes: Unsupported encode format: ${format}`,
-      desc: 'Use base64, base64url, hex, utf8, or binary',
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
   try {
@@ -33,7 +33,7 @@ export function $convertBytesToStr(data: Buffer, format: EncodingFormat = 'utf8'
   if (!encodingFormats.includes(format)) {
     return $err({
       msg: `Crypto NodeJS API - Bytes to String: Unsupported format: ${format}`,
-      desc: 'Use base64, base64url, hex, utf8, or binary',
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
   try {
@@ -54,7 +54,7 @@ export function $convertFormat(data: string, from: EncodingFormat, to: EncodingF
   if (!encodingFormats.includes(from) || !encodingFormats.includes(to)) {
     return $err({
       msg: `Crypto NodeJS API - Convert Format: Unsupported format: from ${from} to ${to}`,
-      desc: 'Use base64, base64url, hex, utf8, or binary',
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
 

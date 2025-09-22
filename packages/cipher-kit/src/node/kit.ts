@@ -238,7 +238,7 @@ export function verifyPassword(password: string, hashedPassword: string, salt: s
 
 /**
  * Converts a string to a Buffer (byte array) using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'binary'.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'latin1'.
  *
  * @param data - The input string to convert.
  * @param format - The encoding format to use (default is 'utf8').
@@ -250,7 +250,7 @@ export function tryConvertStrToBytes(data: string, format: EncodingFormat = 'utf
 
 /**
  * Converts a string to a Buffer (byte array) using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'binary'.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'latin1'.
  *
  * @param data - The input string to convert.
  * @param format - The encoding format to use (default is 'utf8').
@@ -265,7 +265,7 @@ export function convertStrToBytes(data: string, format: EncodingFormat = 'utf8')
 
 /**
  * Converts a Buffer (byte array) to a string using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'binary'.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'latin1'.
  *
  * @param data - The input Buffer to convert.
  * @param format - The encoding format to use (default is 'utf8').
@@ -277,7 +277,7 @@ export function tryConvertBytesToStr(data: Buffer, format: EncodingFormat = 'utf
 
 /**
  * Converts a Buffer (byte array) to a string using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'binary'.
+ * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'latin1'.
  *
  * @param data - The input Buffer to convert.
  * @param format - The encoding format to use (default is 'utf8').

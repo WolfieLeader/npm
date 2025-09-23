@@ -5,7 +5,8 @@
 
 <p align="center">
   Secure, Lightweight, and Cross-Platform <br/>
-  Encryption, Decryption, and Hashing for Web, Node.js, Deno, and Bun
+  Encryption, Decryption, and Hashing <br/> 
+  for Web, Node.js, Deno, Bun, and Cloudflare Workers
 </p>
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
@@ -72,7 +73,7 @@ import {
   tryDecrypt,
 } from 'cipher-kit/node';
 
-const STRING = 'The brown fox 🦊 jumps over the lazy dog 🐶.';
+const str = 'The brown fox 🦊 jumps over the lazy dog 🐶.';
 
 function nodeExample() {
   console.log(`New UUID: ${generateUuid()}`);
@@ -81,7 +82,7 @@ function nodeExample() {
 
   const secretKey = createSecretKey('my secure passphrase');
 
-  const encrypted = encrypt(STRING, secretKey);
+  const encrypted = encrypt(str, secretKey);
   console.log(`Encrypted Data: ${encrypted}`);
   console.log(`Decrypted Data: ${decrypt(encrypted, secretKey)}`);
 
@@ -89,7 +90,7 @@ function nodeExample() {
   console.log(`Encrypted Object: ${encryptedObj}`);
   console.log(`Decrypted Object: ${JSON.stringify(decryptObj(encryptedObj, secretKey))}`);
 
-  const { result: tryEncrypted, error: tryEncryptError } = tryEncrypt(STRING, secretKey);
+  const { result: tryEncrypted, error: tryEncryptError } = tryEncrypt(str, secretKey);
   if (tryEncryptError) {
     console.error(`Encryption Try failed: ${tryEncryptError.message} - ${tryEncryptError.description}`);
     return;
@@ -122,7 +123,7 @@ import {
   tryDecrypt,
 } from 'cipher-kit/web-api';
 
-const STRING = 'The brown fox 🦊 jumps over the lazy dog 🐶.';
+const str = 'The brown fox 🦊 jumps over the lazy dog 🐶.';
 
 async function webApiExample() {
   console.log(`New UUID: ${generateUuid()}`);
@@ -131,7 +132,7 @@ async function webApiExample() {
 
   const secretKey = await createSecretKey('my secure passphrase');
 
-  const encrypted = await encrypt(STRING, secretKey);
+  const encrypted = await encrypt(str, secretKey);
   console.log(`Encrypted Data: ${encrypted}`);
   console.log(`Decrypted Data: ${await decrypt(encrypted, secretKey)}`);
 
@@ -139,7 +140,7 @@ async function webApiExample() {
   console.log(`Encrypted Object: ${encryptedObj}`);
   console.log(`Decrypted Object: ${JSON.stringify(await decryptObj(encryptedObj, secretKey))}`);
 
-  const { result: tryEncrypted, error: tryEncryptError } = await tryEncrypt(STRING, secretKey);
+  const { result: tryEncrypted, error: tryEncryptError } = await tryEncrypt(str, secretKey);
   if (tryEncryptError) {
     console.error(`Encryption Try failed: ${tryEncryptError.message} - ${tryEncryptError.description}`);
     return;

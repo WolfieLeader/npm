@@ -85,6 +85,8 @@
     "web",
     "node",
     "deno",
-    "bun"
+    "bun",
+    "cloudflare",
+    "workers"
   ]
 }

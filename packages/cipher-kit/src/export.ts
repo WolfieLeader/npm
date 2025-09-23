@@ -8,7 +8,7 @@ export {
   ENCRYPTED_REGEX,
   isNodeKey,
   isWebApiKey,
-  matchPattern as checkFormat,
+  matchPattern,
 } from '~/helpers/validate';
 export type * from './helpers/types';
 export * as nodeKit from './node/kit';

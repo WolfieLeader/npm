@@ -8,6 +8,6 @@ export type { WebApiKey } from '~/helpers/types';
 export {
   ENCRYPTED_REGEX,
   isWebApiKey,
-  matchPattern as checkFormat,
+  matchPattern,
 } from '~/helpers/validate';
 export * from './kit';

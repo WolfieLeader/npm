@@ -8,6 +8,6 @@ export type { NodeKey } from '~/helpers/types';
 export {
   ENCRYPTED_REGEX,
   isNodeKey,
-  matchPattern as checkFormat,
+  matchPattern,
 } from '~/helpers/validate';
 export * from './kit';

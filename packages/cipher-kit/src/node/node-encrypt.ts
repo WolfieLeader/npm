@@ -157,18 +157,16 @@ export function $hashPassword(password: string): Result<{ hash: string; salt: st
   }
 
   try {
-    const salt = nodeCrypto.randomBytes(PASSWORD_HASHING.pbkdf2.saltLength).toString('base64url');
-    const hash = nodeCrypto
-      .pbkdf2Sync(
-        password.normalize('NFKC'),
-        salt,
-        PASSWORD_HASHING.pbkdf2.iterations,
-        PASSWORD_HASHING.pbkdf2.keyLength,
-        DIGEST_ALGORITHMS.sha512.node,
-      )
-      .toString('base64url');
+    const salt = nodeCrypto.randomBytes(PASSWORD_HASHING.pbkdf2.saltLength);
+    const hash = nodeCrypto.pbkdf2Sync(
+      password.normalize('NFKC'),
+      salt,
+      PASSWORD_HASHING.pbkdf2.iterations,
+      PASSWORD_HASHING.pbkdf2.keyLength,
+      DIGEST_ALGORITHMS.sha512.node,
+    );
 
-    return $ok({ salt, hash });
+    return $ok({ salt: salt.toString('base64url'), hash: hash.toString('base64url') });
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Password Hashing: Failed to hash password', desc: $fmtError(error) });
   }

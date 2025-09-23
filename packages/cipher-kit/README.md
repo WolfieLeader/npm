@@ -5,7 +5,8 @@
 
 <p align="center">
   Secure, Lightweight, and Cross-Platform <br/>
-  Encryption, Decryption, and Hashing for Web, Node.js, Deno, and Bun
+  Encryption, Decryption, and Hashing <br/> 
+  for Web, Node.js, Deno, Bun, and Cloudflare Workers
 </p>
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>

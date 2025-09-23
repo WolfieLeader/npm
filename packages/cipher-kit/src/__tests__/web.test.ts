@@ -7,10 +7,10 @@ describe('Web API Crypto - AES-256-GCM', () => {
   let secretKey: WebApiKey;
 
   test('Create secret key from string', async () => {
-    const res = await tryCreateSecretKey(secret);
-    expect(res.success).toBe(true);
-    expect(res.secretKey).toBeDefined();
-    secretKey = res.secretKey as WebApiKey;
+    const key = await tryCreateSecretKey(secret);
+    expect(key.success).toBe(true);
+    expect(key.result).toBeDefined();
+    secretKey = key.result as WebApiKey;
   });
 
   test('Encrypt and decrypt data', async () => {

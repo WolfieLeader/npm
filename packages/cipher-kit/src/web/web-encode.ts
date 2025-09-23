@@ -1,77 +1,14 @@
-import { $err, $fmtError, $fmtResultErr, $ok, type Result } from '~/error';
+import { $err, $fmtError, $ok, type Result } from '~/error';
 import type { EncodingFormat } from '~/types';
 import { $isStr, encodingFormats } from '~/utils';
 
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+export const textEncoder = new TextEncoder();
+export const textDecoder = new TextDecoder();
 
-const strToBytesFuncs = {
-  base64: $fromBase64,
-  base64url: $fromBase64Url,
-  hex: $fromHex,
-  utf8: (data: string) => textEncoder.encode(data),
-  latin1: $fromLatin1,
-} as const satisfies Record<EncodingFormat, (data: string) => Uint8Array<ArrayBuffer>>;
-
-const bytesToStrFuncs = {
-  base64: $toBase64,
-  base64url: $toBase64Url,
-  hex: $toHex,
-  utf8: (data: Uint8Array) => textDecoder.decode(data),
-  latin1: $toLatin1,
-} as const satisfies Record<EncodingFormat, (data: Uint8Array<ArrayBuffer>) => string>;
-
-/**
- * Convert data from one encoding format to another.
- *
- * @param data - The input data to convert.
- * @param from - The encoding format to convert from.
- * @param to - The encoding format to convert to.
- * @returns A Result containing the converted string or an error.
- */
-export function tryConvertToFormat(data: string, from: EncodingFormat, to: EncodingFormat): Result<{ result: string }> {
-  if (!$isStr(data)) {
-    return $err({
-      msg: 'Crypto Web API - Convert Format: Empty data',
-      desc: 'Data must be a non-empty string',
-    });
-  }
-  if (!encodingFormats.includes(from) || !encodingFormats.includes(to)) {
-    return $err({
-      msg: `Crypto Web API - Convert Format: Unsupported format: from ${from} to ${to}`,
-      desc: 'Use base64, base64url, hex, utf8, or binary',
-    });
-  }
-  const { bytes, error: toBytesError } = tryStringToBytes(data, from);
-  if (toBytesError) {
-    return $err({
-      msg: 'Crypto Web API - Convert Format: Failed to convert to bytes',
-      desc: toBytesError.description,
-    });
-  }
-  const { result, error: toStringError } = tryBytesToString(bytes, to);
-  if (toStringError) {
-    return $err({
-      msg: 'Crypto Web API - Convert Format: Failed to convert to string',
-      desc: toStringError.description,
-    });
-  }
-
-  return $ok({ result });
-}
-
-/**
- * Converts a string to a Uint8Array (byte array) using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'binary'.
- *
- * @param data - The input string to convert.
- * @param format - The encoding format to use (default is 'utf8').
- * @returns A Result containing a Uint8Array with the encoded data or an error.
- */
-export function tryStringToBytes(
+export function $convertStrToBytes(
   data: string,
   format: EncodingFormat = 'utf8',
-): Result<{ bytes: Uint8Array<ArrayBuffer> }> {
+): Result<{ result: Uint8Array<ArrayBuffer> }> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto Web API - String to Bytes: Empty data',
@@ -81,30 +18,19 @@ export function tryStringToBytes(
   if (!encodingFormats.includes(format)) {
     return $err({
       msg: `Crypto Web API - String to Bytes: Unsupported encode format: ${format}`,
-      desc: 'Use base64, base64url, hex, utf8, or binary',
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
 
   try {
-    const bytes = strToBytesFuncs[format](data);
-    return $ok({ bytes });
+    const bytes = strToBytes[format](data);
+    return $ok({ result: bytes });
   } catch (error) {
     return $err({ msg: 'Crypto Web API - String to Bytes: Failed to convert data', desc: $fmtError(error) });
   }
 }
 
-/**
- * Converts a Uint8Array or ArrayBuffer (byte array) to a string using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'binary'.
- *
- * @param data - The input Uint8Array or ArrayBuffer to convert.
- * @param format - The encoding format to use (default is 'utf8').
- * @returns A Result containing the string representation of the Uint8Array or ArrayBuffer or an error.
- */
-export function tryBytesToString(
-  data: ArrayBuffer | Uint8Array<ArrayBuffer>,
-  format: EncodingFormat = 'utf8',
-): Result<string> {
+export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, format: EncodingFormat = 'utf8'): Result<string> {
   if (!(data instanceof ArrayBuffer || data instanceof Uint8Array)) {
     return $err({
       msg: 'Crypto Web API - Bytes to String: Invalid data type',
@@ -114,19 +40,58 @@ export function tryBytesToString(
   if (!encodingFormats.includes(format)) {
     return $err({
       msg: `Crypto Web API - Bytes to String: Unsupported format: ${format}`,
-      desc: 'Use base64, base64url, hex, utf8, or binary',
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
   try {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-    const str = bytesToStrFuncs[format](bytes);
+    const str = bytesToStr[format](bytes);
     return $ok(str);
   } catch (error) {
     return $err({ msg: 'Crypto Web API - Bytes to String: Failed to convert data', desc: $fmtError(error) });
   }
 }
 
-function $toLatin1(bytes: Uint8Array<ArrayBuffer>): string {
+export function $convertFormat(data: string, from: EncodingFormat, to: EncodingFormat): Result<{ result: string }> {
+  if (!$isStr(data)) {
+    return $err({
+      msg: 'Crypto Web API - Convert Format: Empty data',
+      desc: 'Data must be a non-empty string',
+    });
+  }
+  if (!encodingFormats.includes(from) || !encodingFormats.includes(to)) {
+    return $err({
+      msg: `Crypto Web API - Convert Format: Unsupported format: from ${from} to ${to}`,
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
+    });
+  }
+
+  const bytes = $convertStrToBytes(data, from);
+  if (bytes.error) return $err({ msg: bytes.error.message, desc: bytes.error.description });
+
+  const str = $convertBytesToStr(bytes.result, to);
+  if (str.error) return $err({ msg: str.error.message, desc: str.error.description });
+
+  return $ok({ result: str.result });
+}
+
+const strToBytes = {
+  base64: $fromBase64,
+  base64url: $fromBase64Url,
+  hex: $fromHex,
+  latin1: $fromLatin1,
+  utf8: (data: string) => textEncoder.encode(data),
+} as const satisfies Record<EncodingFormat, (data: string) => Uint8Array<ArrayBuffer>>;
+
+const bytesToStr = {
+  base64: $toBase64,
+  base64url: $toBase64Url,
+  hex: $toHex,
+  latin1: $toLatin1,
+  utf8: (data: Uint8Array) => textDecoder.decode(data),
+} as const satisfies Record<EncodingFormat, (data: Uint8Array) => string>;
+
+function $toLatin1(bytes: Uint8Array): string {
   let out = '';
   const chunk = 1 << 15; // 32KiB per chunk
   for (let i = 0; i < bytes.length; i += chunk) {
@@ -139,13 +104,13 @@ function $fromLatin1(data: string): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(data.length);
   for (let i = 0; i < data.length; i++) {
     const charCode = data.charCodeAt(i);
-    if (charCode > 255) throw new Error('Invalid binary string');
+    if (charCode > 255) throw new Error('Invalid latin1 string');
     out[i] = charCode;
   }
   return out;
 }
 
-function $toBase64(bytes: Uint8Array<ArrayBuffer>): string {
+function $toBase64(bytes: Uint8Array): string {
   return btoa($toLatin1(bytes));
 }
 
@@ -153,7 +118,7 @@ function $fromBase64(data: string): Uint8Array<ArrayBuffer> {
   return $fromLatin1(atob(data));
 }
 
-function $toBase64Url(bytes: Uint8Array<ArrayBuffer>): string {
+function $toBase64Url(bytes: Uint8Array): string {
   return $toBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
@@ -164,7 +129,7 @@ function $fromBase64Url(data: string): Uint8Array<ArrayBuffer> {
   return $fromBase64(base64);
 }
 
-function $toHex(bytes: Uint8Array<ArrayBuffer>): string {
+function $toHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
@@ -178,51 +143,4 @@ function $fromHex(data: string): Uint8Array<ArrayBuffer> {
     out[i] = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16);
   }
   return out;
-}
-
-// ----------------------------------------------------------------
-
-/**
- * Convert data from one encoding format to another.
- *
- * @param data - The input data to convert.
- * @param from - The encoding format to convert from.
- * @param to - The encoding format to convert to.
- * @returns A converted string.
- * @throws {Error} If the input data is invalid or conversion fails.
- */
-export function convertToFormat(data: string, from: EncodingFormat, to: EncodingFormat): string {
-  const { result, error } = tryConvertToFormat(data, from, to);
-  if (error) throw new Error($fmtResultErr(error));
-  return result;
-}
-
-/**
- * Converts a string to a Uint8Array (byte array) using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'binary'.
- *
- * @param data - The input string to convert.
- * @param format - The encoding format to use (default is 'utf8').
- * @returns A Uint8Array containing the encoded data.
- * @throws {Error} If the input data is invalid or conversion fails.
- */
-export function stringToBytes(data: string, format: EncodingFormat = 'utf8'): Uint8Array<ArrayBuffer> {
-  const { bytes, error } = tryStringToBytes(data, format);
-  if (error) throw new Error($fmtResultErr(error));
-  return bytes;
-}
-
-/**
- * Converts a Uint8Array or ArrayBuffer (byte array) to a string using the specified encoding format.
- * Supported formats: 'base64', 'base64url', 'hex', 'utf8', 'binary'.
- *
- * @param data - The input Uint8Array or ArrayBuffer to convert.
- * @param format - The encoding format to use (default is 'utf8').
- * @returns A string representation of the Uint8Array or ArrayBuffer in the specified format.
- * @throws {Error} If the input data is invalid or conversion fails.
- */
-export function bytesToString(data: ArrayBuffer | Uint8Array<ArrayBuffer>, format: EncodingFormat = 'utf8'): string {
-  const { result, error } = tryBytesToString(data, format);
-  if (error) throw new Error($fmtResultErr(error));
-  return result;
 }

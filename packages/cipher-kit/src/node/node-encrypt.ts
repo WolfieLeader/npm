@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
 import { $err, $fmtError, $ok, type Result } from '~/error';
 import type { NodeKey } from '~/types';
-import { $isStr, CONFIG, checkFormat, isNodeKey, tryParseToObj, tryStringifyObj } from '~/utils';
+import { $isStr, $parseToObj, $stringifyObj, CONFIG, checkFormat, isNodeKey } from '~/utils';
 import { $convertBytesToStr, $convertStrToBytes } from './node-encode';
 
 export function $generateUuid(): Result<string> {
@@ -110,7 +110,7 @@ export function $decrypt(encrypted: string, secretKey: NodeKey): Result<string> 
   }
 }
 export function $encryptObj<T extends object = Record<string, unknown>>(data: T, secretKey: NodeKey): Result<string> {
-  const { result, error } = tryStringifyObj(data);
+  const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
   return $encrypt(result, secretKey);
 }
@@ -121,7 +121,7 @@ export function $decryptObj<T extends object = Record<string, unknown>>(
 ): Result<{ result: T }> {
   const { result, error } = $decrypt(encrypted, secretKey);
   if (error) return $err(error);
-  return tryParseToObj<T>(result);
+  return $parseToObj<T>(result);
 }
 
 export function $hash(data: string): Result<string> {

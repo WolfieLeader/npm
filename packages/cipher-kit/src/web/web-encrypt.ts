@@ -18,15 +18,16 @@ export async function $createSecretKey(key: string): Promise<Result<{ result: We
     return $err({ msg: 'Crypto Web API - Key Generation: Empty key', desc: 'Key must be a non-empty string' });
   }
 
-  const bytes = $convertStrToBytes(key, 'utf8');
-  if (bytes.error) return $err(bytes.error);
-
   try {
-    const hashedKey = await crypto.subtle.digest(DIGEST_ALGORITHMS.sha256.web, bytes.result);
-    const secretKey = await crypto.subtle.importKey(
-      'raw',
-      hashedKey,
-      { name: ENCRYPTION_ALGORITHMS.aes256gcm.web },
+    const secretKey = await crypto.subtle.deriveKey(
+      {
+        name: 'HKDF',
+        hash: DIGEST_ALGORITHMS.sha256.web,
+        salt: textEncoder.encode('cipher-kit-salt'),
+        info: textEncoder.encode('cipher-kit'),
+      },
+      await crypto.subtle.importKey('raw', textEncoder.encode(key.normalize('NFKC')), 'HKDF', false, ['deriveKey']),
+      { name: ENCRYPTION_ALGORITHMS.aes256gcm.web, length: ENCRYPTION_ALGORITHMS.aes256gcm.keyBytes * 8 },
       true,
       ['encrypt', 'decrypt'],
     );

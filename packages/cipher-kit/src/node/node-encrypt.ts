@@ -21,8 +21,14 @@ export function $createSecretKey(key: string): Result<{ result: NodeKey }> {
   }
 
   try {
-    const hashedKey = nodeCrypto.createHash(DIGEST_ALGORITHMS.sha256.node).update(key).digest();
-    const secretKey = nodeCrypto.createSecretKey(hashedKey);
+    const derivedKey = nodeCrypto.hkdfSync(
+      DIGEST_ALGORITHMS.sha256.node,
+      key.normalize('NFKC'),
+      'cipher-kit-salt',
+      'cipher-kit',
+      ENCRYPTION_ALGORITHMS.aes256gcm.keyBytes,
+    );
+    const secretKey = nodeCrypto.createSecretKey(Buffer.from(derivedKey));
     return $ok({ result: secretKey });
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Key Generation: Failed to create secret key', desc: $fmtError(error) });

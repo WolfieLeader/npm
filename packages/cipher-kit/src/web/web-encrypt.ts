@@ -1,8 +1,8 @@
 import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS, PASSWORD_HASHING } from '~/helpers/consts';
 import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
 import { $parseToObj, $stringifyObj } from '~/helpers/object';
-import type { WebApiKey } from '~/helpers/types';
-import { $isStr, isWebApiKey, matchPattern } from '~/helpers/validate';
+import type { WebSecretKey } from '~/helpers/types';
+import { $isStr, isWebSecretKey, matchPattern } from '~/helpers/validate';
 import { $convertBytesToStr, $convertStrToBytes, textEncoder } from './web-encode';
 
 export function $generateUuid(): Result<string> {
@@ -13,7 +13,7 @@ export function $generateUuid(): Result<string> {
   }
 }
 
-export async function $createSecretKey(key: string): Promise<Result<{ result: WebApiKey }>> {
+export async function $createSecretKey(key: string): Promise<Result<{ result: WebSecretKey }>> {
   if (!$isStr(key)) {
     return $err({ msg: 'Crypto Web API - Key Generation: Empty key', desc: 'Key must be a non-empty string' });
   }
@@ -32,7 +32,7 @@ export async function $createSecretKey(key: string): Promise<Result<{ result: We
       ['encrypt', 'decrypt'],
     );
 
-    return $ok({ result: secretKey });
+    return $ok({ result: secretKey as WebSecretKey });
   } catch (error) {
     return $err({
       msg: 'Crypto Web API - Key Generation: Failed to create secret key',
@@ -41,7 +41,7 @@ export async function $createSecretKey(key: string): Promise<Result<{ result: We
   }
 }
 
-export async function $encrypt(data: string, secretKey: WebApiKey): Promise<Result<string>> {
+export async function $encrypt(data: string, secretKey: WebSecretKey): Promise<Result<string>> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto Web API - Encryption: Empty data for encryption',
@@ -49,7 +49,7 @@ export async function $encrypt(data: string, secretKey: WebApiKey): Promise<Resu
     });
   }
 
-  if (!isWebApiKey(secretKey)) {
+  if (!isWebSecretKey(secretKey)) {
     return $err({
       msg: 'Crypto Web API - Encryption: Invalid encryption key',
       desc: 'Expected a WebApiKey (webcrypto.CryptoKey)',
@@ -83,7 +83,7 @@ export async function $encrypt(data: string, secretKey: WebApiKey): Promise<Resu
   }
 }
 
-export async function $decrypt(encrypted: string, secretKey: WebApiKey): Promise<Result<string>> {
+export async function $decrypt(encrypted: string, secretKey: WebSecretKey): Promise<Result<string>> {
   if (matchPattern(encrypted, 'web') === false) {
     return $err({
       msg: 'Crypto Web API - Decryption: Invalid encrypted data format',
@@ -99,7 +99,7 @@ export async function $decrypt(encrypted: string, secretKey: WebApiKey): Promise
     });
   }
 
-  if (!isWebApiKey(secretKey)) {
+  if (!isWebSecretKey(secretKey)) {
     return $err({
       msg: 'Crypto Web API - Decryption: Invalid decryption key',
       desc: 'Expected a WebApiKey (webcrypto.CryptoKey)',
@@ -131,7 +131,7 @@ export async function $decrypt(encrypted: string, secretKey: WebApiKey): Promise
 
 export async function $encryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: WebApiKey,
+  secretKey: WebSecretKey,
 ): Promise<Result<string>> {
   const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
@@ -140,7 +140,7 @@ export async function $encryptObj<T extends object = Record<string, unknown>>(
 
 export async function $decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: WebApiKey,
+  secretKey: WebSecretKey,
 ): Promise<Result<{ result: T }>> {
   const { result, error } = await $decrypt(encrypted, secretKey);
   if (error) return $err(error);

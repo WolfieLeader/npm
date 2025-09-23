@@ -6,8 +6,8 @@ export {
 } from '~/helpers/object';
 export {
   ENCRYPTED_REGEX,
-  isNodeKey,
-  isWebApiKey,
+  isNodeSecretKey,
+  isWebSecretKey,
   matchPattern,
 } from '~/helpers/validate';
 export type * from './helpers/types';

@@ -1,5 +1,5 @@
 import { $fmtResultErr, type Result } from '~/helpers/error';
-import type { EncodingFormat, WebApiKey } from '~/helpers/types';
+import type { EncodingFormat, WebSecretKey } from '~/helpers/types';
 import { $convertBytesToStr, $convertFormat, $convertStrToBytes } from './web-encode';
 import {
   $createSecretKey,
@@ -12,6 +12,8 @@ import {
   $hashPassword,
   $verifyPassword,
 } from './web-encrypt';
+
+export { isWebSecretKey } from '~/helpers/validate';
 
 /**
  * Generates a UUID (v4).
@@ -41,7 +43,7 @@ export function generateUuid(): string {
  * @param key - The input string to derive the secret key from.
  * @returns A Result containing a WebApiKey object representing the derived secret key or an error.
  */
-export async function tryCreateSecretKey(key: string): Promise<Result<{ result: WebApiKey }>> {
+export async function tryCreateSecretKey(key: string): Promise<Result<{ result: WebSecretKey }>> {
   return await $createSecretKey(key);
 }
 
@@ -53,7 +55,7 @@ export async function tryCreateSecretKey(key: string): Promise<Result<{ result: 
  * @returns A WebApiKey object representing the derived secret key.
  * @throws {Error} If the input key is invalid or key generation fails.
  */
-export async function createSecretKey(key: string): Promise<WebApiKey> {
+export async function createSecretKey(key: string): Promise<WebSecretKey> {
   const { result, error } = await $createSecretKey(key);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -67,7 +69,7 @@ export async function createSecretKey(key: string): Promise<WebApiKey> {
  * @param secretKey - The WebApiKey object used for encryption.
  * @returns A Result containing a string representing the encrypted data in the specified format or an error.
  */
-export async function tryEncrypt(data: string, secretKey: WebApiKey): Promise<Result<string>> {
+export async function tryEncrypt(data: string, secretKey: WebSecretKey): Promise<Result<string>> {
   return await $encrypt(data, secretKey);
 }
 
@@ -80,7 +82,7 @@ export async function tryEncrypt(data: string, secretKey: WebApiKey): Promise<Re
  * @returns A string representing the encrypted data in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
  */
-export async function encrypt(data: string, secretKey: WebApiKey): Promise<string> {
+export async function encrypt(data: string, secretKey: WebSecretKey): Promise<string> {
   const { result, error } = await $encrypt(data, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -94,7 +96,7 @@ export async function encrypt(data: string, secretKey: WebApiKey): Promise<strin
  * @param secretKey - The WebApiKey object used for decryption.
  * @returns A Result containing a string representing the decrypted data or an error.
  */
-export async function tryDecrypt(encrypted: string, secretKey: WebApiKey): Promise<Result<string>> {
+export async function tryDecrypt(encrypted: string, secretKey: WebSecretKey): Promise<Result<string>> {
   return await $decrypt(encrypted, secretKey);
 }
 
@@ -107,7 +109,7 @@ export async function tryDecrypt(encrypted: string, secretKey: WebApiKey): Promi
  * @returns A string representing the decrypted data.
  * @throws {Error} If the input data or key is invalid, or if decryption fails.
  */
-export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<string> {
+export async function decrypt(encrypted: string, secretKey: WebSecretKey): Promise<string> {
   const { result, error } = await $decrypt(encrypted, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -124,7 +126,7 @@ export async function decrypt(encrypted: string, secretKey: WebApiKey): Promise<
  */
 export async function tryEncryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: WebApiKey,
+  secretKey: WebSecretKey,
 ): Promise<Result<string>> {
   return await $encryptObj(data, secretKey);
 }
@@ -141,7 +143,7 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
  */
 export async function encryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: WebApiKey,
+  secretKey: WebSecretKey,
 ): Promise<string> {
   const { result, error } = await $encryptObj(data, secretKey);
   if (error) throw new Error($fmtResultErr(error));
@@ -159,7 +161,7 @@ export async function encryptObj<T extends object = Record<string, unknown>>(
  */
 export async function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: WebApiKey,
+  secretKey: WebSecretKey,
 ): Promise<Result<{ result: T }>> {
   return await $decryptObj<T>(encrypted, secretKey);
 }
@@ -176,7 +178,7 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
  */
 export async function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: WebApiKey,
+  secretKey: WebSecretKey,
 ): Promise<{ result: T }> {
   const { result, error } = await $decryptObj<T>(encrypted, secretKey);
   if (error) throw new Error($fmtResultErr(error));

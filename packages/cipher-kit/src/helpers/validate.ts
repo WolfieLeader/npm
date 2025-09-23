@@ -1,5 +1,5 @@
 import nodeCrypto from 'node:crypto';
-import type { NodeKey, WebApiKey } from '~/helpers/types';
+import type { NodeSecretKey, WebSecretKey } from '~/helpers/types';
 
 export function $isStr(value: unknown, min = 1): value is string {
   return value !== null && value !== undefined && typeof value === 'string' && value.trim().length >= min;
@@ -29,12 +29,12 @@ export function matchPattern(data: string, format: 'general' | 'node' | 'web'): 
 }
 
 /** Checks if the input is a valid Node.js key. */
-export function isNodeKey(key: unknown): key is NodeKey {
+export function isNodeSecretKey(key: unknown): key is NodeSecretKey {
   return key instanceof nodeCrypto.KeyObject;
 }
 
 /** Checks if the input is a valid Web API key. */
-export function isWebApiKey(key: unknown): key is WebApiKey {
+export function isWebSecretKey(key: unknown): key is WebSecretKey {
   return (
     key !== null &&
     key !== undefined &&

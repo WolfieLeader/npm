@@ -1,6 +1,6 @@
 import type { Buffer } from 'node:buffer';
 import { $fmtResultErr, type Result } from '~/helpers/error';
-import type { EncodingFormat, NodeKey } from '~/helpers/types';
+import type { EncodingFormat, NodeSecretKey } from '~/helpers/types';
 import { $convertBytesToStr, $convertFormat, $convertStrToBytes } from './node-encode';
 import {
   $createSecretKey,
@@ -13,6 +13,8 @@ import {
   $hashPassword,
   $verifyPassword,
 } from './node-encrypt';
+
+export { isNodeSecretKey } from '~/helpers/validate';
 
 /**
  * Generates a UUID (v4).
@@ -42,7 +44,7 @@ export function generateUuid(): string {
  * @param key - The input string to derive the secret key from.
  * @returns A Result containing a NodeKey object representing the derived secret key or an error.
  */
-export function tryCreateSecretKey(key: string): Result<{ result: NodeKey }> {
+export function tryCreateSecretKey(key: string): Result<{ result: NodeSecretKey }> {
   return $createSecretKey(key);
 }
 
@@ -54,7 +56,7 @@ export function tryCreateSecretKey(key: string): Result<{ result: NodeKey }> {
  * @returns A NodeKey object representing the derived secret key.
  * @throws {Error} If the input key is invalid or key generation fails.
  */
-export function createSecretKey(key: string): NodeKey {
+export function createSecretKey(key: string): NodeSecretKey {
   const { result, error } = $createSecretKey(key);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -68,7 +70,7 @@ export function createSecretKey(key: string): NodeKey {
  * @param secretKey - The NodeKey object used for encryption.
  * @returns A Result containing a string representing the encrypted data in the specified format or an error.
  */
-export function tryEncrypt(data: string, secretKey: NodeKey): Result<string> {
+export function tryEncrypt(data: string, secretKey: NodeSecretKey): Result<string> {
   return $encrypt(data, secretKey);
 }
 
@@ -81,7 +83,7 @@ export function tryEncrypt(data: string, secretKey: NodeKey): Result<string> {
  * @returns A string representing the encrypted data in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
  */
-export function encrypt(data: string, secretKey: NodeKey): string {
+export function encrypt(data: string, secretKey: NodeSecretKey): string {
   const { result, error } = $encrypt(data, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -95,7 +97,7 @@ export function encrypt(data: string, secretKey: NodeKey): string {
  * @param secretKey - The NodeKey object used for decryption.
  * @returns A Result containing a string representing the decrypted data or an error.
  */
-export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string> {
+export function tryDecrypt(encrypted: string, secretKey: NodeSecretKey): Result<string> {
   return $decrypt(encrypted, secretKey);
 }
 
@@ -108,7 +110,7 @@ export function tryDecrypt(encrypted: string, secretKey: NodeKey): Result<string
  * @returns A string representing the decrypted data.
  * @throws {Error} If the input data or key is invalid, or if decryption fails.
  */
-export function decrypt(encrypted: string, secretKey: NodeKey): string {
+export function decrypt(encrypted: string, secretKey: NodeSecretKey): string {
   const { result, error } = $decrypt(encrypted, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -123,7 +125,10 @@ export function decrypt(encrypted: string, secretKey: NodeKey): string {
  * @param secretKey - The NodeKey object used for encryption.
  * @returns A Result containing a string representing the encrypted object in the specified format or an error.
  */
-export function tryEncryptObj<T extends object = Record<string, unknown>>(data: T, secretKey: NodeKey): Result<string> {
+export function tryEncryptObj<T extends object = Record<string, unknown>>(
+  data: T,
+  secretKey: NodeSecretKey,
+): Result<string> {
   return $encryptObj(data, secretKey);
 }
 
@@ -137,7 +142,7 @@ export function tryEncryptObj<T extends object = Record<string, unknown>>(data: 
  * @returns A string representing the encrypted object in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
  */
-export function encryptObj<T extends object = Record<string, unknown>>(data: T, secretKey: NodeKey): string {
+export function encryptObj<T extends object = Record<string, unknown>>(data: T, secretKey: NodeSecretKey): string {
   const { result, error } = $encryptObj(data, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -154,7 +159,7 @@ export function encryptObj<T extends object = Record<string, unknown>>(data: T, 
  */
 export function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: NodeKey,
+  secretKey: NodeSecretKey,
 ): Result<{ result: T }> {
   return $decryptObj<T>(encrypted, secretKey);
 }
@@ -171,7 +176,7 @@ export function tryDecryptObj<T extends object = Record<string, unknown>>(
  */
 export function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: NodeKey,
+  secretKey: NodeSecretKey,
 ): { result: T } {
   const { result, error } = $decryptObj<T>(encrypted, secretKey);
   if (error) throw new Error($fmtResultErr(error));

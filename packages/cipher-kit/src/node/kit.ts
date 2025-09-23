@@ -1,6 +1,6 @@
 import type { Buffer } from 'node:buffer';
-import { $fmtResultErr, type Result } from '~/error';
-import type { EncodingFormat, NodeKey } from '~/types';
+import { $fmtResultErr, type Result } from '~/helpers/error';
+import type { EncodingFormat, NodeKey } from '~/helpers/types';
 import { $convertBytesToStr, $convertFormat, $convertStrToBytes } from './node-encode';
 import {
   $createSecretKey,

@@ -1,11 +1,13 @@
-export type { WebApiKey } from '~/types';
 export {
-  checkFormat,
-  ENCRYPTED_REGEX,
-  isWebApiKey,
   parseToObj,
   stringifyObj,
   tryParseToObj,
   tryStringifyObj,
-} from '~/utils';
+} from '~/helpers/object';
+export type { WebApiKey } from '~/helpers/types';
+export {
+  ENCRYPTED_REGEX,
+  isWebApiKey,
+  matchPattern as checkFormat,
+} from '~/helpers/validate';
 export * from './kit';

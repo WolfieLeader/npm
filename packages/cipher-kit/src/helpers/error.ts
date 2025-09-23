@@ -1,4 +1,4 @@
-import { $isObj } from './utils';
+import { $isObj } from './validate';
 
 export interface ResultErr {
   readonly message: string;

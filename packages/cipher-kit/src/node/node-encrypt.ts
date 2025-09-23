@@ -1,8 +1,10 @@
 import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
-import { $err, $fmtError, $ok, type Result } from '~/error';
-import type { NodeKey } from '~/types';
-import { $isStr, $parseToObj, $stringifyObj, CONFIG, checkFormat, isNodeKey } from '~/utils';
+import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS, PASSWORD_HASHING } from '~/helpers/consts';
+import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
+import { $parseToObj, $stringifyObj } from '~/helpers/object';
+import type { NodeKey } from '~/helpers/types';
+import { $isStr, isNodeKey, matchPattern } from '~/helpers/validate';
 import { $convertBytesToStr, $convertStrToBytes } from './node-encode';
 
 export function $generateUuid(): Result<string> {
@@ -19,7 +21,7 @@ export function $createSecretKey(key: string): Result<{ result: NodeKey }> {
   }
 
   try {
-    const hashedKey = nodeCrypto.createHash(CONFIG.hash.sha256.node).update(key).digest();
+    const hashedKey = nodeCrypto.createHash(DIGEST_ALGORITHMS.sha256.node).update(key).digest();
     const secretKey = nodeCrypto.createSecretKey(hashedKey);
     return $ok({ result: secretKey });
   } catch (error) {
@@ -43,8 +45,8 @@ export function $encrypt(data: string, secretKey: NodeKey): Result<string> {
   }
 
   try {
-    const iv = nodeCrypto.randomBytes(CONFIG.encrypt.aes256gcm.ivLength);
-    const cipher = nodeCrypto.createCipheriv(CONFIG.encrypt.aes256gcm.node, secretKey, iv);
+    const iv = nodeCrypto.randomBytes(ENCRYPTION_ALGORITHMS.aes256gcm.ivLength);
+    const cipher = nodeCrypto.createCipheriv(ENCRYPTION_ALGORITHMS.aes256gcm.node, secretKey, iv);
     const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
     const tag = cipher.getAuthTag();
 
@@ -66,7 +68,7 @@ export function $encrypt(data: string, secretKey: NodeKey): Result<string> {
 }
 
 export function $decrypt(encrypted: string, secretKey: NodeKey): Result<string> {
-  if (checkFormat(encrypted, 'node') === false) {
+  if (matchPattern(encrypted, 'node') === false) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Invalid encrypted data format',
       desc: 'Encrypted data must be in the format "iv.cipher.tag."',
@@ -100,7 +102,7 @@ export function $decrypt(encrypted: string, secretKey: NodeKey): Result<string> 
   }
 
   try {
-    const decipher = nodeCrypto.createDecipheriv(CONFIG.encrypt.aes256gcm.node, secretKey, ivBytes.result);
+    const decipher = nodeCrypto.createDecipheriv(ENCRYPTION_ALGORITHMS.aes256gcm.node, secretKey, ivBytes.result);
     decipher.setAuthTag(tagBytes.result);
     const decrypted = Buffer.concat([decipher.update(cipherBytes.result), decipher.final()]);
 
@@ -133,7 +135,7 @@ export function $hash(data: string): Result<string> {
   }
 
   try {
-    const hashed = nodeCrypto.createHash(CONFIG.hash.sha256.node).update(data).digest();
+    const hashed = nodeCrypto.createHash(DIGEST_ALGORITHMS.sha256.node).update(data).digest();
     return $convertBytesToStr(hashed, 'base64url');
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Hashing: Failed to hash data with Crypto NodeJS', desc: $fmtError(error) });
@@ -149,14 +151,14 @@ export function $hashPassword(password: string): Result<{ hash: string; salt: st
   }
 
   try {
-    const salt = nodeCrypto.randomBytes(CONFIG.password.pbkdf2.saltLength).toString('base64url');
+    const salt = nodeCrypto.randomBytes(PASSWORD_HASHING.pbkdf2.saltLength).toString('base64url');
     const hash = nodeCrypto
       .pbkdf2Sync(
         password.normalize('NFKC'),
         salt,
-        CONFIG.password.pbkdf2.iterations,
-        CONFIG.password.pbkdf2.keyLength,
-        CONFIG.hash.sha512.node,
+        PASSWORD_HASHING.pbkdf2.iterations,
+        PASSWORD_HASHING.pbkdf2.keyLength,
+        DIGEST_ALGORITHMS.sha512.node,
       )
       .toString('base64url');
 
@@ -180,9 +182,9 @@ export function $verifyPassword(password: string, hashedPassword: string, salt: 
       nodeCrypto.pbkdf2Sync(
         password.normalize('NFKC'),
         saltBytes.result,
-        CONFIG.password.pbkdf2.iterations,
-        CONFIG.password.pbkdf2.keyLength,
-        CONFIG.hash.sha512.node,
+        PASSWORD_HASHING.pbkdf2.iterations,
+        PASSWORD_HASHING.pbkdf2.keyLength,
+        DIGEST_ALGORITHMS.sha512.node,
       ),
       hashedPasswordBytes.result,
     );

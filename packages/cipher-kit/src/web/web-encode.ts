@@ -1,6 +1,7 @@
-import { $err, $fmtError, $ok, type Result } from '~/error';
-import type { EncodingFormat } from '~/types';
-import { $isStr, encodingFormats } from '~/utils';
+import { ENCODING_FORMATS } from '~/helpers/consts';
+import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
+import type { EncodingFormat } from '~/helpers/types';
+import { $isStr } from '~/helpers/validate';
 
 export const textEncoder = new TextEncoder();
 export const textDecoder = new TextDecoder();
@@ -15,7 +16,7 @@ export function $convertStrToBytes(
       desc: 'Data must be a non-empty string',
     });
   }
-  if (!encodingFormats.includes(format)) {
+  if (!ENCODING_FORMATS.includes(format)) {
     return $err({
       msg: `Crypto Web API - String to Bytes: Unsupported encode format: ${format}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
@@ -37,7 +38,7 @@ export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, format: Encod
       desc: 'Data must be an ArrayBuffer or Uint8Array',
     });
   }
-  if (!encodingFormats.includes(format)) {
+  if (!ENCODING_FORMATS.includes(format)) {
     return $err({
       msg: `Crypto Web API - Bytes to String: Unsupported format: ${format}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
@@ -59,7 +60,7 @@ export function $convertFormat(data: string, from: EncodingFormat, to: EncodingF
       desc: 'Data must be a non-empty string',
     });
   }
-  if (!encodingFormats.includes(from) || !encodingFormats.includes(to)) {
+  if (!ENCODING_FORMATS.includes(from) || !ENCODING_FORMATS.includes(to)) {
     return $err({
       msg: `Crypto Web API - Convert Format: Unsupported format: from ${from} to ${to}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',

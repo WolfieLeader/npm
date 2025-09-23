@@ -1,5 +1,5 @@
-import { $fmtResultErr, type Result } from '~/error';
-import type { EncodingFormat, WebApiKey } from '~/types';
+import { $fmtResultErr, type Result } from '~/helpers/error';
+import type { EncodingFormat, WebApiKey } from '~/helpers/types';
 import { $convertBytesToStr, $convertFormat, $convertStrToBytes } from './web-encode';
 import {
   $createSecretKey,

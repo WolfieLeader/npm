@@ -1,6 +1,8 @@
-import { $err, $fmtError, $ok, type Result } from '~/error';
-import type { WebApiKey } from '~/types';
-import { $isStr, $parseToObj, $stringifyObj, CONFIG, checkFormat, isWebApiKey } from '~/utils';
+import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS, PASSWORD_HASHING } from '~/helpers/consts';
+import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
+import { $parseToObj, $stringifyObj } from '~/helpers/object';
+import type { WebApiKey } from '~/helpers/types';
+import { $isStr, isWebApiKey, matchPattern } from '~/helpers/validate';
 import { $convertBytesToStr, $convertStrToBytes, textEncoder } from './web-encode';
 
 export function $generateUuid(): Result<string> {
@@ -20,11 +22,14 @@ export async function $createSecretKey(key: string): Promise<Result<{ result: We
   if (bytes.error) return $err(bytes.error);
 
   try {
-    const hashedKey = await crypto.subtle.digest(CONFIG.hash.sha256.web, bytes.result);
-    const secretKey = await crypto.subtle.importKey('raw', hashedKey, { name: CONFIG.encrypt.aes256gcm.web }, true, [
-      'encrypt',
-      'decrypt',
-    ]);
+    const hashedKey = await crypto.subtle.digest(DIGEST_ALGORITHMS.sha256.web, bytes.result);
+    const secretKey = await crypto.subtle.importKey(
+      'raw',
+      hashedKey,
+      { name: ENCRYPTION_ALGORITHMS.aes256gcm.web },
+      true,
+      ['encrypt', 'decrypt'],
+    );
 
     return $ok({ result: secretKey });
   } catch (error) {
@@ -54,9 +59,9 @@ export async function $encrypt(data: string, secretKey: WebApiKey): Promise<Resu
   if (bytes.error) return $err(bytes.error);
 
   try {
-    const iv = crypto.getRandomValues(new Uint8Array(CONFIG.encrypt.aes256gcm.ivLength));
+    const iv = crypto.getRandomValues(new Uint8Array(ENCRYPTION_ALGORITHMS.aes256gcm.ivLength));
     const cipherWithTag = await crypto.subtle.encrypt(
-      { name: CONFIG.encrypt.aes256gcm.web, iv: iv },
+      { name: ENCRYPTION_ALGORITHMS.aes256gcm.web, iv: iv },
       secretKey,
       bytes.result,
     );
@@ -78,7 +83,7 @@ export async function $encrypt(data: string, secretKey: WebApiKey): Promise<Resu
 }
 
 export async function $decrypt(encrypted: string, secretKey: WebApiKey): Promise<Result<string>> {
-  if (checkFormat(encrypted, 'web') === false) {
+  if (matchPattern(encrypted, 'web') === false) {
     return $err({
       msg: 'Crypto Web API - Decryption: Invalid encrypted data format',
       desc: 'Encrypted data must be in the format "iv.cipherWithTag."',
@@ -112,7 +117,7 @@ export async function $decrypt(encrypted: string, secretKey: WebApiKey): Promise
 
   try {
     const decrypted = await crypto.subtle.decrypt(
-      { name: CONFIG.encrypt.aes256gcm.web, iv: ivBytes.result },
+      { name: ENCRYPTION_ALGORITHMS.aes256gcm.web, iv: ivBytes.result },
       secretKey,
       cipherWithTagBytes.result,
     );
@@ -150,7 +155,7 @@ export async function $hash(data: string): Promise<Result<string>> {
   if (bytes.error) return $err(bytes.error);
 
   try {
-    const hashed = await crypto.subtle.digest(CONFIG.hash.sha256.web, bytes.result);
+    const hashed = await crypto.subtle.digest(DIGEST_ALGORITHMS.sha256.web, bytes.result);
     return $convertBytesToStr(hashed, 'base64url');
   } catch (error) {
     return $err({ msg: 'Crypto Web API - Hashing: Failed to hash data', desc: $fmtError(error) });
@@ -175,9 +180,9 @@ export async function $hashPassword(password: string): Promise<Result<{ hash: st
       ['deriveBits'],
     );
     const bits = await crypto.subtle.deriveBits(
-      { name: 'PBKDF2', salt, iterations: CONFIG.password.pbkdf2.iterations, hash: CONFIG.hash.sha512.web },
+      { name: 'PBKDF2', salt, iterations: PASSWORD_HASHING.pbkdf2.iterations, hash: DIGEST_ALGORITHMS.sha512.web },
       baseKey,
-      CONFIG.password.pbkdf2.keyLength * 8,
+      PASSWORD_HASHING.pbkdf2.keyLength * 8,
     );
 
     const saltStr = $convertBytesToStr(salt, 'base64url');
@@ -215,11 +220,11 @@ export async function $verifyPassword(password: string, hashedPassword: string, 
         {
           name: 'PBKDF2',
           salt: saltBytes.result,
-          iterations: CONFIG.password.pbkdf2.iterations,
-          hash: CONFIG.hash.sha512.web,
+          iterations: PASSWORD_HASHING.pbkdf2.iterations,
+          hash: DIGEST_ALGORITHMS.sha512.web,
         },
         baseKey,
-        CONFIG.password.pbkdf2.keyLength * 8,
+        PASSWORD_HASHING.pbkdf2.keyLength * 8,
       ),
     );
 

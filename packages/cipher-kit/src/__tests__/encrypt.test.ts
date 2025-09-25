@@ -5,7 +5,7 @@ const secret = 'Secret0123456789Secret0123456789';
 const data = '🦊 secret stuff ~ !@#$%^&*()_+';
 
 describe('Encryption', () => {
-  test('Encrypt Data', async () => {
+  test('Encrypt Data Default', async () => {
     // biome-ignore lint/style/useConst: ignore
     let nodeSecretKey: SecretKey<'node'>;
     const nodeKey = nodeKit.tryCreateSecretKey(secret);
@@ -73,6 +73,89 @@ describe('Encryption', () => {
     const decryptedObjWeb = await webKit.tryDecryptObj<typeof largeObj>(encryptedObjWeb.result as string, webSecretKey);
     expect(decryptedObjWeb.success).toBe(true);
     expect(decryptedObjWeb.result).toEqual(largeObj);
+  });
+
+  test('Encrypt Data AES128GCM', async () => {
+    // biome-ignore lint/style/useConst: ignore
+    let nodeSecretKey: SecretKey<'node'>;
+    const nodeKey = nodeKit.tryCreateSecretKey(secret, { algorithm: 'aes128gcm' });
+    expect(nodeKey.success).toBe(true);
+    expect(nodeKey.result).toBeDefined();
+    expect(isSecretKey(nodeKey.result, 'node')).toBe(true);
+    nodeSecretKey = nodeKey.result as SecretKey<'node'>;
+
+    // biome-ignore lint/style/useConst: ignore
+    let webSecretKey: SecretKey<'web'>;
+    const webKey = await webKit.tryCreateSecretKey(secret, { algorithm: 'aes128gcm' });
+    expect(webKey.success).toBe(true);
+    expect(webKey.result).toBeDefined();
+    expect(isSecretKey(webKey.result, 'web')).toBe(true);
+    webSecretKey = webKey.result as SecretKey<'web'>;
+
+    const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey, { outputEncoding: 'hex' });
+    expect(encryptedNode.success).toBe(true);
+    expect(encryptedNode.result).toBeDefined();
+    expect(matchPattern(encryptedNode.result as string, 'node')).toBe(true);
+
+    const encryptedWeb = await webKit.tryEncrypt(data, webSecretKey, { outputEncoding: 'hex' });
+    expect(encryptedWeb.success).toBe(true);
+    expect(encryptedWeb.result).toBeDefined();
+    expect(matchPattern(encryptedWeb.result as string, 'web')).toBe(true);
+
+    expect(encryptedNode.result).not.toBe(encryptedWeb.result);
+
+    const decryptedNode = nodeKit.tryDecrypt(encryptedNode.result as string, nodeSecretKey, { inputEncoding: 'hex' });
+    expect(decryptedNode.success).toBe(true);
+    expect(decryptedNode.result).toBe(data);
+
+    const decryptedWeb = await webKit.tryDecrypt(encryptedWeb.result as string, webSecretKey, { inputEncoding: 'hex' });
+    expect(decryptedWeb.success).toBe(true);
+    expect(decryptedWeb.result).toBe(data);
+
+    expect(decryptedNode.result).toBe(decryptedWeb.result);
+
+    const encryptedNode2 = nodeKit.tryEncrypt(data, nodeSecretKey, { outputEncoding: 'hex' });
+    expect(encryptedNode2.success).toBe(true);
+    expect(encryptedNode2.result).toBeDefined();
+    expect(encryptedNode2.result).not.toBe(encryptedNode.result);
+
+    const encryptedWeb2 = await webKit.tryEncrypt(data, webSecretKey, { outputEncoding: 'hex' });
+    expect(encryptedWeb2.success).toBe(true);
+    expect(encryptedWeb2.result).toBeDefined();
+    expect(encryptedWeb2.result).not.toBe(encryptedWeb.result);
+
+    const encryptedObjNode = nodeKit.tryEncryptObj(largeObj, nodeSecretKey, { outputEncoding: 'base64' });
+    expect(encryptedObjNode.success).toBe(true);
+    expect(encryptedObjNode.result).toBeDefined();
+    expect(matchPattern(encryptedObjNode.result as string, 'node')).toBe(true);
+
+    const encryptedObjWeb = await webKit.tryEncryptObj(largeObj, webSecretKey, { outputEncoding: 'base64' });
+    expect(encryptedObjWeb.success).toBe(true);
+    expect(encryptedObjWeb.result).toBeDefined();
+    expect(matchPattern(encryptedObjWeb.result as string, 'web')).toBe(true);
+
+    expect(encryptedObjNode.result).not.toBe(encryptedObjWeb.result);
+
+    const decryptedObjNode = nodeKit.tryDecryptObj<typeof largeObj>(encryptedObjNode.result as string, nodeSecretKey, {
+      inputEncoding: 'base64',
+    });
+    expect(decryptedObjNode.success).toBe(true);
+    expect(decryptedObjNode.result).toEqual(largeObj);
+
+    const decryptedObjWeb = await webKit.tryDecryptObj<typeof largeObj>(
+      encryptedObjWeb.result as string,
+      webSecretKey,
+      { inputEncoding: 'base64' },
+    );
+    expect(decryptedObjWeb.success).toBe(true);
+    expect(decryptedObjWeb.result).toEqual(largeObj);
+  });
+
+  test('Encoding Test', () => {
+    expect(nodeKit.convertEncoding(data, 'utf8', 'base64')).toBe(webKit.convertEncoding(data, 'utf8', 'base64'));
+    expect(nodeKit.convertEncoding(data, 'utf8', 'hex')).toBe(webKit.convertEncoding(data, 'utf8', 'hex'));
+    expect(nodeKit.convertEncoding(data, 'utf8', 'base64url')).toBe(webKit.convertEncoding(data, 'utf8', 'base64url'));
+    expect(nodeKit.convertEncoding(data, 'utf8', 'latin1')).toBe(webKit.convertEncoding(data, 'utf8', 'latin1'));
   });
 });
 

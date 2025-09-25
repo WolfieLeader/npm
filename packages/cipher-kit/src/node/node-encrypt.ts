@@ -12,7 +12,7 @@ import type {
   SecretKey,
   VerifyPasswordOptions,
 } from '~/helpers/types';
-import { $isStr, isSecretKey, matchPattern } from '~/helpers/validate';
+import { $isSecretKey, $isStr, matchPattern } from '~/helpers/validate';
 import { $convertBytesToStr, $convertStrToBytes } from './node-encode';
 
 export function $generateUuid(): Result<string> {
@@ -78,7 +78,7 @@ export function $createSecretKey(
     const secretKey = Object.freeze({
       platform: 'node',
       digest: digest,
-      algo: encryptAlgo,
+      algorithm: algorithm,
       key: key,
     }) as SecretKey<'node'>;
 
@@ -105,7 +105,8 @@ export function $encrypt(data: string, secretKey: SecretKey<'node'>, options: En
     });
   }
 
-  if (!isSecretKey(secretKey, 'node')) {
+  const injectedKey = $isSecretKey(secretKey, 'node');
+  if (!injectedKey) {
     return $err({
       msg: 'Crypto NodeJS API - Encryption: Invalid Secret Key',
       desc: 'Expected a Node SecretKey',
@@ -116,8 +117,8 @@ export function $encrypt(data: string, secretKey: SecretKey<'node'>, options: En
   if (error) return $err(error);
 
   try {
-    const iv = nodeCrypto.randomBytes(secretKey.algo.ivLength);
-    const cipher = nodeCrypto.createCipheriv(secretKey.algo.node, secretKey.key, iv);
+    const iv = nodeCrypto.randomBytes(injectedKey.injected.ivLength);
+    const cipher = nodeCrypto.createCipheriv(injectedKey.injected.node, injectedKey.key, iv);
     const encrypted = Buffer.concat([cipher.update(result), cipher.final()]);
     const tag = cipher.getAuthTag();
 
@@ -167,7 +168,8 @@ export function $decrypt(
     });
   }
 
-  if (!isSecretKey(secretKey, 'node')) {
+  const injectedKey = $isSecretKey(secretKey, 'node');
+  if (!injectedKey) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Invalid Secret Key',
       desc: 'Expected a Node SecretKey',
@@ -186,7 +188,7 @@ export function $decrypt(
   }
 
   try {
-    const decipher = nodeCrypto.createDecipheriv(secretKey.algo.node, secretKey.key, ivBytes.result);
+    const decipher = nodeCrypto.createDecipheriv(injectedKey.injected.node, injectedKey.key, ivBytes.result);
     decipher.setAuthTag(tagBytes.result);
     const decrypted = Buffer.concat([decipher.update(cipherBytes.result), decipher.final()]);
 
@@ -250,6 +252,15 @@ export function $hash(data: string, options: HashOptions = {}): Result<string> {
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Hashing: Failed to hash data with Crypto NodeJS', desc: $fmtError(error) });
   }
+}
+
+export function $hashObj<T extends object = Record<string, unknown>>(
+  data: T,
+  options: HashOptions = {},
+): Result<string> {
+  const { result, error } = $stringifyObj(data);
+  if (error) return $err(error);
+  return $hash(result, options);
 }
 
 export function $hashPassword(

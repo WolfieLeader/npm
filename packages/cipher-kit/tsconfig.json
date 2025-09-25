@@ -3,7 +3,7 @@
   "display": "Cipher Kit",
   "compilerOptions": {
     "composite": false,
-    "target": "es2020",
+    "target": "es2022",
     "moduleDetection": "force",
     "module": "esnext",
     "rootDir": ".",

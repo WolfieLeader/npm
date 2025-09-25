@@ -3,8 +3,8 @@ import nodeCrypto from 'node:crypto';
 import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS, PASSWORD_HASHING } from '~/helpers/consts';
 import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
 import { $parseToObj, $stringifyObj } from '~/helpers/object';
-import type { NodeSecretKey } from '~/helpers/types';
-import { $isStr, isNodeSecretKey, matchPattern } from '~/helpers/validate';
+import type { SecretKey } from '~/helpers/types';
+import { $isStr, isSecretKey, matchPattern } from '~/helpers/validate';
 import { $convertBytesToStr, $convertStrToBytes } from './node-encode';
 
 export function $generateUuid(): Result<string> {
@@ -15,27 +15,77 @@ export function $generateUuid(): Result<string> {
   }
 }
 
-export function $createSecretKey(key: string): Result<{ result: NodeSecretKey }> {
-  if (!$isStr(key)) {
-    return $err({ msg: 'Crypto NodeJS API - Key Generation: Empty key', desc: 'Key must be a non-empty string' });
+export function $createSecretKey(
+  secret: string,
+  options: {
+    algorithm?: keyof typeof ENCRYPTION_ALGORITHMS;
+    digest?: keyof typeof DIGEST_ALGORITHMS;
+    salt?: string;
+    info?: string;
+  } = {},
+): Result<{ result: SecretKey<'node'> }> {
+  if (!$isStr(secret)) {
+    return $err({ msg: 'Crypto NodeJS API - Key Generation: Empty Secret', desc: 'Secret must be a non-empty string' });
   }
+
+  const algorithm = options.algorithm ?? 'aes256gcm';
+  if (!(algorithm in ENCRYPTION_ALGORITHMS)) {
+    return $err({
+      msg: `Crypto NodeJS API - Key Generation: Unsupported algorithm: ${algorithm}`,
+      desc: `Supported algorithms are: ${Object.keys(ENCRYPTION_ALGORITHMS).join(', ')}`,
+    });
+  }
+
+  const digest = options.digest ?? 'sha256';
+  if (!(digest in DIGEST_ALGORITHMS)) {
+    return $err({
+      msg: `Crypto NodeJS API - Key Generation: Unsupported digest: ${digest}`,
+      desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(', ')}`,
+    });
+  }
+
+  const salt = options.salt ?? 'cipher-kit-salt';
+  if (!$isStr(salt, 8)) {
+    return $err({
+      msg: 'Crypto NodeJS API - Key Generation: Weak salt',
+      desc: 'Salt must be a non-empty string with at least 8 characters',
+    });
+  }
+
+  const info = options.info ?? 'cipher-kit';
+  if (!$isStr(info)) {
+    return $err({
+      msg: 'Crypto NodeJS API - Key Generation: Invalid info',
+      desc: 'Info must be a non-empty string',
+    });
+  }
+
+  const encryptAlgo = ENCRYPTION_ALGORITHMS[algorithm];
+  const digestAlgo = DIGEST_ALGORITHMS[digest];
 
   try {
     const derivedKey = nodeCrypto.hkdfSync(
-      DIGEST_ALGORITHMS.sha256.node,
-      key.normalize('NFKC'),
-      'cipher-kit-salt',
-      'cipher-kit',
-      ENCRYPTION_ALGORITHMS.aes256gcm.keyBytes,
+      digestAlgo.node,
+      secret.normalize('NFKC'),
+      salt.normalize('NFKC'),
+      info.normalize('NFKC'),
+      encryptAlgo.keyBytes,
     );
-    const secretKey = nodeCrypto.createSecretKey(Buffer.from(derivedKey));
-    return $ok({ result: secretKey as NodeSecretKey });
+    const key = nodeCrypto.createSecretKey(Buffer.from(derivedKey));
+    const secretKey = Object.freeze({
+      platform: 'node',
+      digest: digest,
+      algo: encryptAlgo,
+      key: key,
+    }) as SecretKey<'node'>;
+
+    return $ok({ result: secretKey });
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Key Generation: Failed to create secret key', desc: $fmtError(error) });
   }
 }
 
-export function $encrypt(data: string, secretKey: NodeSecretKey): Result<string> {
+export function $encrypt(data: string, secretKey: SecretKey<'node'>): Result<string> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto NodeJS API - Encryption: Empty data for encryption',
@@ -43,16 +93,16 @@ export function $encrypt(data: string, secretKey: NodeSecretKey): Result<string>
     });
   }
 
-  if (!isNodeSecretKey(secretKey)) {
+  if (!isSecretKey(secretKey, 'node')) {
     return $err({
-      msg: 'Crypto NodeJS API - Encryption: Invalid encryption key',
-      desc: 'Expected a NodeKey (crypto.KeyObject)',
+      msg: 'Crypto NodeJS API - Encryption: Invalid Secret Key',
+      desc: 'Expected a Node SecretKey',
     });
   }
 
   try {
-    const iv = nodeCrypto.randomBytes(ENCRYPTION_ALGORITHMS.aes256gcm.ivLength);
-    const cipher = nodeCrypto.createCipheriv(ENCRYPTION_ALGORITHMS.aes256gcm.node, secretKey, iv);
+    const iv = nodeCrypto.randomBytes(secretKey.algo.ivLength);
+    const cipher = nodeCrypto.createCipheriv(secretKey.algo.node, secretKey.key, iv);
     const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
     const tag = cipher.getAuthTag();
 
@@ -73,7 +123,7 @@ export function $encrypt(data: string, secretKey: NodeSecretKey): Result<string>
   }
 }
 
-export function $decrypt(encrypted: string, secretKey: NodeSecretKey): Result<string> {
+export function $decrypt(encrypted: string, secretKey: SecretKey<'node'>): Result<string> {
   if (matchPattern(encrypted, 'node') === false) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Invalid encrypted data format',
@@ -89,10 +139,10 @@ export function $decrypt(encrypted: string, secretKey: NodeSecretKey): Result<st
     });
   }
 
-  if (!isNodeSecretKey(secretKey)) {
+  if (!isSecretKey(secretKey, 'node')) {
     return $err({
-      msg: 'Crypto NodeJS API - Decryption: Invalid decryption key',
-      desc: 'Expected a NodeKey (crypto.KeyObject)',
+      msg: 'Crypto NodeJS API - Decryption: Invalid Secret Key',
+      desc: 'Expected a Node SecretKey',
     });
   }
 
@@ -108,7 +158,7 @@ export function $decrypt(encrypted: string, secretKey: NodeSecretKey): Result<st
   }
 
   try {
-    const decipher = nodeCrypto.createDecipheriv(ENCRYPTION_ALGORITHMS.aes256gcm.node, secretKey, ivBytes.result);
+    const decipher = nodeCrypto.createDecipheriv(secretKey.algo.node, secretKey.key, ivBytes.result);
     decipher.setAuthTag(tagBytes.result);
     const decrypted = Buffer.concat([decipher.update(cipherBytes.result), decipher.final()]);
 
@@ -119,7 +169,7 @@ export function $decrypt(encrypted: string, secretKey: NodeSecretKey): Result<st
 }
 export function $encryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: NodeSecretKey,
+  secretKey: SecretKey<'node'>,
 ): Result<string> {
   const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
@@ -128,7 +178,7 @@ export function $encryptObj<T extends object = Record<string, unknown>>(
 
 export function $decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: NodeSecretKey,
+  secretKey: SecretKey<'node'>,
 ): Result<{ result: T }> {
   const { result, error } = $decrypt(encrypted, secretKey);
   if (error) return $err(error);

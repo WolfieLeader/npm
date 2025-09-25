@@ -1,8 +1,8 @@
 import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS, PASSWORD_HASHING } from '~/helpers/consts';
 import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
 import { $parseToObj, $stringifyObj } from '~/helpers/object';
-import type { WebSecretKey } from '~/helpers/types';
-import { $isStr, isWebSecretKey, matchPattern } from '~/helpers/validate';
+import type { SecretKey } from '~/helpers/types';
+import { $isStr, isSecretKey, matchPattern } from '~/helpers/validate';
 import { $convertBytesToStr, $convertStrToBytes, textEncoder } from './web-encode';
 
 export function $generateUuid(): Result<string> {
@@ -13,26 +13,78 @@ export function $generateUuid(): Result<string> {
   }
 }
 
-export async function $createSecretKey(key: string): Promise<Result<{ result: WebSecretKey }>> {
-  if (!$isStr(key)) {
-    return $err({ msg: 'Crypto Web API - Key Generation: Empty key', desc: 'Key must be a non-empty string' });
+export async function $createSecretKey(
+  secret: string,
+  options: {
+    algorithm?: keyof typeof ENCRYPTION_ALGORITHMS;
+    digest?: keyof typeof DIGEST_ALGORITHMS;
+    salt?: string;
+    info?: string;
+  } = {},
+): Promise<Result<{ result: SecretKey<'web'> }>> {
+  if (!$isStr(secret)) {
+    return $err({ msg: 'Crypto Web API - Key Generation: Empty Secret', desc: 'Secret must be a non-empty string' });
   }
 
+  const algorithm = options.algorithm ?? 'aes256gcm';
+  if (!(algorithm in ENCRYPTION_ALGORITHMS)) {
+    return $err({
+      msg: `Crypto NodeJS API - Key Generation: Unsupported algorithm: ${algorithm}`,
+      desc: `Supported algorithms are: ${Object.keys(ENCRYPTION_ALGORITHMS).join(', ')}`,
+    });
+  }
+
+  const digest = options.digest ?? 'sha256';
+  if (!(digest in DIGEST_ALGORITHMS)) {
+    return $err({
+      msg: `Crypto NodeJS API - Key Generation: Unsupported digest: ${digest}`,
+      desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(', ')}`,
+    });
+  }
+
+  const salt = options.salt ?? 'cipher-kit-salt';
+  if (!$isStr(salt, 8)) {
+    return $err({
+      msg: 'Crypto NodeJS API - Key Generation: Weak salt',
+      desc: 'Salt must be a non-empty string with at least 8 characters',
+    });
+  }
+
+  const info = options.info ?? 'cipher-kit';
+  if (!$isStr(info)) {
+    return $err({
+      msg: 'Crypto NodeJS API - Key Generation: Invalid info',
+      desc: 'Info must be a non-empty string',
+    });
+  }
+
+  const encryptAlgo = ENCRYPTION_ALGORITHMS[algorithm];
+  const digestAlgo = DIGEST_ALGORITHMS[digest];
+
   try {
-    const secretKey = await crypto.subtle.deriveKey(
+    const ikm = await crypto.subtle.importKey('raw', textEncoder.encode(secret.normalize('NFKC')), 'HKDF', false, [
+      'deriveKey',
+    ]);
+    const key = await crypto.subtle.deriveKey(
       {
         name: 'HKDF',
-        hash: DIGEST_ALGORITHMS.sha256.web,
-        salt: textEncoder.encode('cipher-kit-salt'),
-        info: textEncoder.encode('cipher-kit'),
+        hash: digestAlgo.web,
+        salt: textEncoder.encode(salt.normalize('NFKC')),
+        info: textEncoder.encode(info.normalize('NFKC')),
       },
-      await crypto.subtle.importKey('raw', textEncoder.encode(key.normalize('NFKC')), 'HKDF', false, ['deriveKey']),
-      { name: ENCRYPTION_ALGORITHMS.aes256gcm.web, length: ENCRYPTION_ALGORITHMS.aes256gcm.keyBytes * 8 },
+      ikm,
+      { name: encryptAlgo.web, length: encryptAlgo.keyBytes * 8 },
       true,
       ['encrypt', 'decrypt'],
     );
+    const secretKey = Object.freeze({
+      platform: 'web',
+      digest: digest,
+      algo: encryptAlgo,
+      key: key,
+    }) as SecretKey<'web'>;
 
-    return $ok({ result: secretKey as WebSecretKey });
+    return $ok({ result: secretKey });
   } catch (error) {
     return $err({
       msg: 'Crypto Web API - Key Generation: Failed to create secret key',
@@ -41,7 +93,7 @@ export async function $createSecretKey(key: string): Promise<Result<{ result: We
   }
 }
 
-export async function $encrypt(data: string, secretKey: WebSecretKey): Promise<Result<string>> {
+export async function $encrypt(data: string, secretKey: SecretKey<'web'>): Promise<Result<string>> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto Web API - Encryption: Empty data for encryption',
@@ -49,10 +101,10 @@ export async function $encrypt(data: string, secretKey: WebSecretKey): Promise<R
     });
   }
 
-  if (!isWebSecretKey(secretKey)) {
+  if (!isSecretKey<'web'>(secretKey, 'web')) {
     return $err({
-      msg: 'Crypto Web API - Encryption: Invalid encryption key',
-      desc: 'Expected a WebApiKey (webcrypto.CryptoKey)',
+      msg: 'Crypto Web API - Encryption: Invalid Secret Key',
+      desc: 'Expected a Web SecretKey',
     });
   }
 
@@ -60,10 +112,10 @@ export async function $encrypt(data: string, secretKey: WebSecretKey): Promise<R
   if (bytes.error) return $err(bytes.error);
 
   try {
-    const iv = crypto.getRandomValues(new Uint8Array(ENCRYPTION_ALGORITHMS.aes256gcm.ivLength));
+    const iv = crypto.getRandomValues(new Uint8Array(secretKey.algo.ivLength));
     const cipherWithTag = await crypto.subtle.encrypt(
-      { name: ENCRYPTION_ALGORITHMS.aes256gcm.web, iv: iv },
-      secretKey,
+      { name: secretKey.algo.web, iv: iv },
+      secretKey.key,
       bytes.result,
     );
 
@@ -83,7 +135,7 @@ export async function $encrypt(data: string, secretKey: WebSecretKey): Promise<R
   }
 }
 
-export async function $decrypt(encrypted: string, secretKey: WebSecretKey): Promise<Result<string>> {
+export async function $decrypt(encrypted: string, secretKey: SecretKey<'web'>): Promise<Result<string>> {
   if (matchPattern(encrypted, 'web') === false) {
     return $err({
       msg: 'Crypto Web API - Decryption: Invalid encrypted data format',
@@ -99,10 +151,10 @@ export async function $decrypt(encrypted: string, secretKey: WebSecretKey): Prom
     });
   }
 
-  if (!isWebSecretKey(secretKey)) {
+  if (!isSecretKey<'web'>(secretKey, 'web')) {
     return $err({
-      msg: 'Crypto Web API - Decryption: Invalid decryption key',
-      desc: 'Expected a WebApiKey (webcrypto.CryptoKey)',
+      msg: 'Crypto Web API - Decryption: Invalid Secret Key',
+      desc: 'Expected a Web SecretKey',
     });
   }
 
@@ -118,8 +170,8 @@ export async function $decrypt(encrypted: string, secretKey: WebSecretKey): Prom
 
   try {
     const decrypted = await crypto.subtle.decrypt(
-      { name: ENCRYPTION_ALGORITHMS.aes256gcm.web, iv: ivBytes.result },
-      secretKey,
+      { name: secretKey.algo.web, iv: ivBytes.result },
+      secretKey.key,
       cipherWithTagBytes.result,
     );
 
@@ -131,7 +183,7 @@ export async function $decrypt(encrypted: string, secretKey: WebSecretKey): Prom
 
 export async function $encryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: WebSecretKey,
+  secretKey: SecretKey<'web'>,
 ): Promise<Result<string>> {
   const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
@@ -140,7 +192,7 @@ export async function $encryptObj<T extends object = Record<string, unknown>>(
 
 export async function $decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: WebSecretKey,
+  secretKey: SecretKey<'web'>,
 ): Promise<Result<{ result: T }>> {
   const { result, error } = await $decrypt(encrypted, secretKey);
   if (error) return $err(error);

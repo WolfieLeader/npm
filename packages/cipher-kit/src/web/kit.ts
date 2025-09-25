@@ -1,5 +1,6 @@
+import type { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from '~/helpers/consts';
 import { $fmtResultErr, type Result } from '~/helpers/error';
-import type { EncodingFormat, WebSecretKey } from '~/helpers/types';
+import type { EncodingFormat, SecretKey } from '~/helpers/types';
 import { $convertBytesToStr, $convertFormat, $convertStrToBytes } from './web-encode';
 import {
   $createSecretKey,
@@ -12,8 +13,6 @@ import {
   $hashPassword,
   $verifyPassword,
 } from './web-encrypt';
-
-export { isWebSecretKey } from '~/helpers/validate';
 
 /**
  * Generates a UUID (v4).
@@ -40,23 +39,39 @@ export function generateUuid(): string {
  * Derives a secret key from the provided string for encryption/decryption.
  * Internally, the key is hashed using SHA-256 to ensure it meets the required length.
  *
- * @param key - The input string to derive the secret key from.
- * @returns A Result containing a WebApiKey object representing the derived secret key or an error.
+ * @param secret - The input string to derive the secret key from.
+ * @returns A Result containing a SecretKey object representing the derived secret key or an error.
  */
-export async function tryCreateSecretKey(key: string): Promise<Result<{ result: WebSecretKey }>> {
-  return await $createSecretKey(key);
+export async function tryCreateSecretKey(
+  secret: string,
+  options: {
+    algorithm?: keyof typeof ENCRYPTION_ALGORITHMS;
+    digest?: keyof typeof DIGEST_ALGORITHMS;
+    salt?: string;
+    info?: string;
+  } = {},
+): Promise<Result<{ result: SecretKey<'web'> }>> {
+  return await $createSecretKey(secret, options);
 }
 
 /**
  * Derives a secret key from the provided string for encryption/decryption.
  * Internally, the key is hashed using SHA-256 to ensure it meets the required length.
  *
- * @param key - The input string to derive the secret key from.
- * @returns A WebApiKey object representing the derived secret key.
+ * @param secret - The input string to derive the secret key from.
+ * @returns A SecretKey object representing the derived secret key.
  * @throws {Error} If the input key is invalid or key generation fails.
  */
-export async function createSecretKey(key: string): Promise<WebSecretKey> {
-  const { result, error } = await $createSecretKey(key);
+export async function createSecretKey(
+  secret: string,
+  options: {
+    algorithm?: keyof typeof ENCRYPTION_ALGORITHMS;
+    digest?: keyof typeof DIGEST_ALGORITHMS;
+    salt?: string;
+    info?: string;
+  } = {},
+): Promise<SecretKey<'web'>> {
+  const { result, error } = await $createSecretKey(secret, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }
@@ -66,10 +81,10 @@ export async function createSecretKey(key: string): Promise<WebSecretKey> {
  * The output is a string in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param data - The input string to encrypt.
- * @param secretKey - The WebApiKey object used for encryption.
+ * @param secretKey - The SecretKey object used for encryption.
  * @returns A Result containing a string representing the encrypted data in the specified format or an error.
  */
-export async function tryEncrypt(data: string, secretKey: WebSecretKey): Promise<Result<string>> {
+export async function tryEncrypt(data: string, secretKey: SecretKey<'web'>): Promise<Result<string>> {
   return await $encrypt(data, secretKey);
 }
 
@@ -78,11 +93,11 @@ export async function tryEncrypt(data: string, secretKey: WebSecretKey): Promise
  * The output is a string in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param data - The input string to encrypt.
- * @param secretKey - The WebApiKey object used for encryption.
+ * @param secretKey - The SecretKey object used for encryption.
  * @returns A string representing the encrypted data in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
  */
-export async function encrypt(data: string, secretKey: WebSecretKey): Promise<string> {
+export async function encrypt(data: string, secretKey: SecretKey<'web'>): Promise<string> {
   const { result, error } = await $encrypt(data, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -93,10 +108,10 @@ export async function encrypt(data: string, secretKey: WebSecretKey): Promise<st
  * The input must be in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param encrypted - The input string to decrypt.
- * @param secretKey - The WebApiKey object used for decryption.
+ * @param secretKey - The SecretKey object used for decryption.
  * @returns A Result containing a string representing the decrypted data or an error.
  */
-export async function tryDecrypt(encrypted: string, secretKey: WebSecretKey): Promise<Result<string>> {
+export async function tryDecrypt(encrypted: string, secretKey: SecretKey<'web'>): Promise<Result<string>> {
   return await $decrypt(encrypted, secretKey);
 }
 
@@ -105,11 +120,11 @@ export async function tryDecrypt(encrypted: string, secretKey: WebSecretKey): Pr
  * The input must be in the format "iv.cipherWithTag" where each component is base64url encoded.
  *
  * @param encrypted - The input string to decrypt.
- * @param secretKey - The WebApiKey object used for decryption.
+ * @param secretKey - The SecretKey object used for decryption.
  * @returns A string representing the decrypted data.
  * @throws {Error} If the input data or key is invalid, or if decryption fails.
  */
-export async function decrypt(encrypted: string, secretKey: WebSecretKey): Promise<string> {
+export async function decrypt(encrypted: string, secretKey: SecretKey<'web'>): Promise<string> {
   const { result, error } = await $decrypt(encrypted, secretKey);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -121,12 +136,12 @@ export async function decrypt(encrypted: string, secretKey: WebSecretKey): Promi
  * The output is a string in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param data - The input object to encrypt.
- * @param secretKey - The WebApiKey object used for encryption.
+ * @param secretKey - The SecretKey object used for encryption.
  * @returns A Result containing a string representing the encrypted object in the specified format or an error.
  */
 export async function tryEncryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: WebSecretKey,
+  secretKey: SecretKey<'web'>,
 ): Promise<Result<string>> {
   return await $encryptObj(data, secretKey);
 }
@@ -137,13 +152,13 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
  * The output is a string in the format "iv.cipherWithTag." where each component is base64url encoded.
  *
  * @param data - The input object to encrypt.
- * @param secretKey - The WebApiKey object used for encryption.
+ * @param secretKey - The SecretKey object used for encryption.
  * @returns A string representing the encrypted object in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
  */
 export async function encryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: WebSecretKey,
+  secretKey: SecretKey<'web'>,
 ): Promise<string> {
   const { result, error } = await $encryptObj(data, secretKey);
   if (error) throw new Error($fmtResultErr(error));
@@ -156,12 +171,12 @@ export async function encryptObj<T extends object = Record<string, unknown>>(
  * The decrypted string is parsed as JSON to reconstruct the original object.
  *
  * @param encrypted - The input string to decrypt.
- * @param secretKey - The WebApiKey object used for decryption.
+ * @param secretKey - The SecretKey object used for decryption.
  * @returns A Result containing an object representing the decrypted data or an error.
  */
 export async function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: WebSecretKey,
+  secretKey: SecretKey<'web'>,
 ): Promise<Result<{ result: T }>> {
   return await $decryptObj<T>(encrypted, secretKey);
 }
@@ -172,13 +187,13 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
  * The decrypted string is parsed as JSON to reconstruct the original object.
  *
  * @param encrypted - The input string to decrypt.
- * @param secretKey - The WebApiKey object used for decryption.
+ * @param secretKey - The SecretKey object used for decryption.
  * @returns An object representing the decrypted data.
  * @throws {Error} If the input data or key is invalid, or if decryption fails.
  */
 export async function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: WebSecretKey,
+  secretKey: SecretKey<'web'>,
 ): Promise<{ result: T }> {
   const { result, error } = await $decryptObj<T>(encrypted, secretKey);
   if (error) throw new Error($fmtResultErr(error));

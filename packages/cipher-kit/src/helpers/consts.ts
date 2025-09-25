@@ -7,9 +7,9 @@ export const DIGEST_ALGORITHMS = Object.freeze({
 } as const);
 
 export const ENCRYPTION_ALGORITHMS = Object.freeze({
-  aes256gcm: { keyBytes: 32, ivLength: 12, node: 'aes-256-gcm', web: 'AES-GCM' },
-  aes192gcm: { keyBytes: 24, ivLength: 12, node: 'aes-192-gcm', web: 'AES-GCM' },
-  aes128gcm: { keyBytes: 16, ivLength: 12, node: 'aes-128-gcm', web: 'AES-GCM' },
+  aes256gcm: { name: 'aes256gcm', keyBytes: 32, ivLength: 12, node: 'aes-256-gcm', web: 'AES-GCM' },
+  aes192gcm: { name: 'aes192gcm', keyBytes: 24, ivLength: 12, node: 'aes-192-gcm', web: 'AES-GCM' },
+  aes128gcm: { name: 'aes128gcm', keyBytes: 16, ivLength: 12, node: 'aes-128-gcm', web: 'AES-GCM' },
 } as const);
 
 export const PASSWORD_HASHING = Object.freeze({

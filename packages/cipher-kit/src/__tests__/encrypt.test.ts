@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { matchPattern, type NodeSecretKey, nodeKit, type WebSecretKey, webKit } from '~/export';
+import { isSecretKey, matchPattern, nodeKit, type SecretKey, webKit } from '~/export';
 
 const secret = 'Secret0123456789Secret0123456789';
 const data = '🦊 secret stuff ~ !@#$%^&*()_+';
@@ -7,20 +7,20 @@ const data = '🦊 secret stuff ~ !@#$%^&*()_+';
 describe('Encryption', () => {
   test('Encrypt Data', async () => {
     // biome-ignore lint/style/useConst: ignore
-    let nodeSecretKey: NodeSecretKey;
+    let nodeSecretKey: SecretKey<'node'>;
     const nodeKey = nodeKit.tryCreateSecretKey(secret);
     expect(nodeKey.success).toBe(true);
     expect(nodeKey.result).toBeDefined();
-    expect(nodeKit.isNodeSecretKey(nodeKey.result)).toBe(true);
-    nodeSecretKey = nodeKey.result as NodeSecretKey;
+    expect(isSecretKey(nodeKey.result, 'node')).toBe(true);
+    nodeSecretKey = nodeKey.result as SecretKey<'node'>;
 
     // biome-ignore lint/style/useConst: ignore
-    let webSecretKey: WebSecretKey;
+    let webSecretKey: SecretKey<'web'>;
     const webKey = await webKit.tryCreateSecretKey(secret);
     expect(webKey.success).toBe(true);
     expect(webKey.result).toBeDefined();
-    expect(webKit.isWebSecretKey(webKey.result)).toBe(true);
-    webSecretKey = webKey.result as WebSecretKey;
+    expect(isSecretKey(webKey.result, 'web')).toBe(true);
+    webSecretKey = webKey.result as SecretKey<'web'>;
 
     const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey);
     expect(encryptedNode.success).toBe(true);

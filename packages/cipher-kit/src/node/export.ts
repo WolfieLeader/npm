@@ -4,9 +4,10 @@ export {
   tryParseToObj,
   tryStringifyObj,
 } from '~/helpers/object';
-export type { NodeSecretKey } from '~/helpers/types';
+export type * from '~/helpers/types';
 export {
   ENCRYPTED_REGEX,
+  isSecretKey,
   matchPattern,
 } from '~/helpers/validate';
 export * from './kit';

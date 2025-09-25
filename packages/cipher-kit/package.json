@@ -1,6 +1,6 @@
 {
   "name": "cipher-kit",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "description": "🔐 Secure, Lightweight, and Cross-Platform Encryption, Decryption, and Hashing for Web, Node.js, Deno, Bun, and Cloudflare Workers",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/cipher-kit#readme",
   "repository": {

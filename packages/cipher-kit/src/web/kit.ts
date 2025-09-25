@@ -18,6 +18,7 @@ import {
   $encryptObj,
   $generateUuid,
   $hash,
+  $hashObj,
   $hashPassword,
   $verifyPassword,
 } from './web-encrypt';
@@ -234,6 +235,37 @@ export async function tryHash(data: string, options: HashOptions = {}): Promise<
  */
 export async function hash(data: string, options: HashOptions = {}): Promise<string> {
   const { result, error } = await $hash(data, options);
+  if (error) throw new Error($fmtResultErr(error));
+  return result;
+}
+
+/**
+ * Hashes the input object by first serializing it to a JSON string using stable key ordering,
+ * then hashing the string using SHA-256 and returning the hash in base64url format.
+ *
+ * @param data - The input object to hash.
+ * @returns A Result containing a string representing the SHA-256 hash of the serialized object in base64url format or an error.
+ * */
+export async function tryHashObj<T extends object = Record<string, unknown>>(
+  data: T,
+  options: HashOptions = {},
+): Promise<Result<string>> {
+  return await $hashObj(data, options);
+}
+
+/**
+ * Hashes the input object by first serializing it to a JSON string using stable key ordering,
+ * then hashing the string using SHA-256 and returning the hash in base64url format.
+ *
+ * @param data - The input object to hash.
+ * @returns A string representing the SHA-256 hash of the serialized object in base64url format.
+ * @throws {Error} If the input data is invalid or hashing fails.
+ */
+export async function hashObj<T extends object = Record<string, unknown>>(
+  data: T,
+  options: HashOptions = {},
+): Promise<string> {
+  const { result, error } = await $hashObj(data, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }

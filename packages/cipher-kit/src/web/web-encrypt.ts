@@ -10,7 +10,7 @@ import type {
   SecretKey,
   VerifyPasswordOptions,
 } from '~/helpers/types';
-import { $isStr, isSecretKey, matchPattern } from '~/helpers/validate';
+import { $isSecretKey, $isStr, matchPattern } from '~/helpers/validate';
 import { $convertBytesToStr, $convertStrToBytes, textEncoder } from './web-encode';
 
 export function $generateUuid(): Result<string> {
@@ -83,7 +83,7 @@ export async function $createSecretKey(
     const secretKey = Object.freeze({
       platform: 'web',
       digest: digest,
-      algo: encryptAlgo,
+      algorithm: algorithm,
       key: key,
     }) as SecretKey<'web'>;
 
@@ -117,7 +117,8 @@ export async function $encrypt(
     });
   }
 
-  if (!isSecretKey(secretKey, 'web')) {
+  const injectedKey = $isSecretKey(secretKey, 'web');
+  if (!injectedKey) {
     return $err({
       msg: 'Crypto Web API - Encryption: Invalid Secret Key',
       desc: 'Expected a Web SecretKey',
@@ -128,8 +129,12 @@ export async function $encrypt(
   if (error) return $err(error);
 
   try {
-    const iv = crypto.getRandomValues(new Uint8Array(secretKey.algo.ivLength));
-    const cipherWithTag = await crypto.subtle.encrypt({ name: secretKey.algo.web, iv: iv }, secretKey.key, result);
+    const iv = crypto.getRandomValues(new Uint8Array(injectedKey.injected.ivLength));
+    const cipherWithTag = await crypto.subtle.encrypt(
+      { name: injectedKey.injected.web, iv: iv },
+      injectedKey.key,
+      result,
+    );
 
     const ivStr = $convertBytesToStr(iv, outputEncoding);
     const cipherStr = $convertBytesToStr(cipherWithTag, outputEncoding);
@@ -176,7 +181,8 @@ export async function $decrypt(
     });
   }
 
-  if (!isSecretKey(secretKey, 'web')) {
+  const injectedKey = $isSecretKey(secretKey, 'web');
+  if (!injectedKey) {
     return $err({
       msg: 'Crypto Web API - Decryption: Invalid Secret Key',
       desc: 'Expected a Web SecretKey',
@@ -195,8 +201,8 @@ export async function $decrypt(
 
   try {
     const decrypted = await crypto.subtle.decrypt(
-      { name: secretKey.algo.web, iv: ivBytes.result },
-      secretKey.key,
+      { name: injectedKey.injected.web, iv: ivBytes.result },
+      injectedKey.key,
       cipherWithTagBytes.result,
     );
 
@@ -258,6 +264,15 @@ export async function $hash(data: string, options: HashOptions = {}): Promise<Re
   } catch (error) {
     return $err({ msg: 'Crypto Web API - Hashing: Failed to hash data', desc: $fmtError(error) });
   }
+}
+
+export async function $hashObj<T extends object = Record<string, unknown>>(
+  data: T,
+  options: HashOptions = {},
+): Promise<Result<string>> {
+  const { result, error } = $stringifyObj(data);
+  if (error) return $err(error);
+  return await $hash(result, options);
 }
 
 export async function $hashPassword(

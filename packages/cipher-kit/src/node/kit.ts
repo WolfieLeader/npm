@@ -19,6 +19,7 @@ import {
   $encryptObj,
   $generateUuid,
   $hash,
+  $hashObj,
   $hashPassword,
   $verifyPassword,
 } from './node-encrypt';
@@ -223,6 +224,34 @@ export function tryHash(data: string, options: HashOptions = {}): Result<string>
  */
 export function hash(data: string, options: HashOptions = {}): string {
   const { result, error } = $hash(data, options);
+  if (error) throw new Error($fmtResultErr(error));
+  return result;
+}
+
+/**
+ * Hashes the input object by first serializing it to a JSON string using stable key ordering,
+ * then hashing the string using SHA-256 and returning the hash in base64url format.
+ *
+ * @param data - The input object to hash.
+ * @returns A Result containing a string representing the SHA-256 hash of the serialized object in base64url format or an error.
+ * */
+export function tryHashObj<T extends object = Record<string, unknown>>(
+  data: T,
+  options: HashOptions = {},
+): Result<string> {
+  return $hashObj(data, options);
+}
+
+/**
+ * Hashes the input object by first serializing it to a JSON string using stable key ordering,
+ * then hashing the string using SHA-256 and returning the hash in base64url format.
+ *
+ * @param data - The input object to hash.
+ * @returns A string representing the SHA-256 hash of the serialized object in base64url format.
+ * @throws {Error} If the input data is invalid or hashing fails.
+ */
+export function hashObj<T extends object = Record<string, unknown>>(data: T, options: HashOptions = {}): string {
+  const { result, error } = $hashObj(data, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }

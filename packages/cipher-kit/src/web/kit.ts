@@ -101,7 +101,7 @@ export async function encrypt(
   secretKey: SecretKey<'web'>,
   options: EncryptOptions = {},
 ): Promise<string> {
-  const { result, error } = await $encrypt(data, secretKey);
+  const { result, error } = await $encrypt(data, secretKey, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }

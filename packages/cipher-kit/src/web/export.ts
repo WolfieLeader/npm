@@ -4,7 +4,7 @@ export {
   tryParseToObj,
   tryStringifyObj,
 } from '~/helpers/object';
-export type { SecretKey } from '~/helpers/types';
+export type * from '~/helpers/types';
 export {
   ENCRYPTED_REGEX,
   isSecretKey,

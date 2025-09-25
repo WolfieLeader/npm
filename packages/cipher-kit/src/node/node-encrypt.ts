@@ -1,9 +1,17 @@
 import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
-import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS, PASSWORD_HASHING } from '~/helpers/consts';
+import { DIGEST_ALGORITHMS, ENCODINGS, ENCRYPTION_ALGORITHMS } from '~/helpers/consts';
 import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
 import { $parseToObj, $stringifyObj } from '~/helpers/object';
-import type { SecretKey } from '~/helpers/types';
+import type {
+  CreateSecretKeyOptions,
+  DecryptOptions,
+  EncryptOptions,
+  HashOptions,
+  HashPasswordOptions,
+  SecretKey,
+  VerifyPasswordOptions,
+} from '~/helpers/types';
 import { $isStr, isSecretKey, matchPattern } from '~/helpers/validate';
 import { $convertBytesToStr, $convertStrToBytes } from './node-encode';
 
@@ -17,12 +25,7 @@ export function $generateUuid(): Result<string> {
 
 export function $createSecretKey(
   secret: string,
-  options: {
-    algorithm?: keyof typeof ENCRYPTION_ALGORITHMS;
-    digest?: keyof typeof DIGEST_ALGORITHMS;
-    salt?: string;
-    info?: string;
-  } = {},
+  options: CreateSecretKeyOptions = {},
 ): Result<{ result: SecretKey<'node'> }> {
   if (!$isStr(secret)) {
     return $err({ msg: 'Crypto NodeJS API - Key Generation: Empty Secret', desc: 'Secret must be a non-empty string' });
@@ -85,11 +88,20 @@ export function $createSecretKey(
   }
 }
 
-export function $encrypt(data: string, secretKey: SecretKey<'node'>): Result<string> {
+export function $encrypt(data: string, secretKey: SecretKey<'node'>, options: EncryptOptions = {}): Result<string> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto NodeJS API - Encryption: Empty data for encryption',
       desc: 'Data must be a non-empty string',
+    });
+  }
+
+  const inputEncoding = options.inputEncoding ?? 'utf8';
+  const outputEncoding = options.outputEncoding ?? 'base64url';
+  if (!ENCODINGS.includes(inputEncoding) || !ENCODINGS.includes(outputEncoding)) {
+    return $err({
+      msg: `Crypto NodeJS API - Encryption: Unsupported input encoding: ${inputEncoding} or output encoding: ${outputEncoding}`,
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
 
@@ -100,15 +112,18 @@ export function $encrypt(data: string, secretKey: SecretKey<'node'>): Result<str
     });
   }
 
+  const { result, error } = $convertStrToBytes(data, inputEncoding);
+  if (error) return $err(error);
+
   try {
     const iv = nodeCrypto.randomBytes(secretKey.algo.ivLength);
     const cipher = nodeCrypto.createCipheriv(secretKey.algo.node, secretKey.key, iv);
-    const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
+    const encrypted = Buffer.concat([cipher.update(result), cipher.final()]);
     const tag = cipher.getAuthTag();
 
-    const ivStr = $convertBytesToStr(iv, 'base64url');
-    const cipherStr = $convertBytesToStr(encrypted, 'base64url');
-    const tagStr = $convertBytesToStr(tag, 'base64url');
+    const ivStr = $convertBytesToStr(iv, outputEncoding);
+    const cipherStr = $convertBytesToStr(encrypted, outputEncoding);
+    const tagStr = $convertBytesToStr(tag, outputEncoding);
 
     if (ivStr.error || cipherStr.error || tagStr.error) {
       return $err({
@@ -123,11 +138,24 @@ export function $encrypt(data: string, secretKey: SecretKey<'node'>): Result<str
   }
 }
 
-export function $decrypt(encrypted: string, secretKey: SecretKey<'node'>): Result<string> {
+export function $decrypt(
+  encrypted: string,
+  secretKey: SecretKey<'node'>,
+  options: DecryptOptions = {},
+): Result<string> {
   if (matchPattern(encrypted, 'node') === false) {
     return $err({
       msg: 'Crypto NodeJS API - Decryption: Invalid encrypted data format',
       desc: 'Encrypted data must be in the format "iv.cipher.tag."',
+    });
+  }
+
+  const inputEncoding = options.inputEncoding ?? 'base64url';
+  const outputEncoding = options.outputEncoding ?? 'utf8';
+  if (!ENCODINGS.includes(inputEncoding) || !ENCODINGS.includes(outputEncoding)) {
+    return $err({
+      msg: `Crypto NodeJS API - Decryption: Unsupported input encoding: ${inputEncoding} or output encoding: ${outputEncoding}`,
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
 
@@ -146,9 +174,9 @@ export function $decrypt(encrypted: string, secretKey: SecretKey<'node'>): Resul
     });
   }
 
-  const ivBytes = $convertStrToBytes(iv, 'base64url');
-  const cipherBytes = $convertStrToBytes(cipher, 'base64url');
-  const tagBytes = $convertStrToBytes(tag, 'base64url');
+  const ivBytes = $convertStrToBytes(iv, inputEncoding);
+  const cipherBytes = $convertStrToBytes(cipher, inputEncoding);
+  const tagBytes = $convertStrToBytes(tag, inputEncoding);
 
   if (ivBytes.error || cipherBytes.error || tagBytes.error) {
     return $err({
@@ -162,7 +190,7 @@ export function $decrypt(encrypted: string, secretKey: SecretKey<'node'>): Resul
     decipher.setAuthTag(tagBytes.result);
     const decrypted = Buffer.concat([decipher.update(cipherBytes.result), decipher.final()]);
 
-    return $convertBytesToStr(decrypted, 'utf8');
+    return $convertBytesToStr(decrypted, outputEncoding);
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Decryption: Failed to decrypt data', desc: $fmtError(error) });
   }
@@ -170,38 +198,64 @@ export function $decrypt(encrypted: string, secretKey: SecretKey<'node'>): Resul
 export function $encryptObj<T extends object = Record<string, unknown>>(
   data: T,
   secretKey: SecretKey<'node'>,
+  options: EncryptOptions = {},
 ): Result<string> {
   const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
-  return $encrypt(result, secretKey);
+  return $encrypt(result, secretKey, options);
 }
 
 export function $decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
   secretKey: SecretKey<'node'>,
+  options: DecryptOptions = {},
 ): Result<{ result: T }> {
-  const { result, error } = $decrypt(encrypted, secretKey);
+  const { result, error } = $decrypt(encrypted, secretKey, options);
   if (error) return $err(error);
   return $parseToObj<T>(result);
 }
 
-export function $hash(data: string): Result<string> {
-  if (!$isStr(data, 0)) {
+export function $hash(data: string, options: HashOptions = {}): Result<string> {
+  if (!$isStr(data)) {
     return $err({
       msg: 'Crypto NodeJS API - Hashing: Empty data for hashing',
       desc: 'Data must be a non-empty string',
     });
   }
 
+  const inputEncoding = options.inputEncoding ?? 'utf8';
+  const outputEncoding = options.outputEncoding ?? 'base64url';
+  if (!ENCODINGS.includes(inputEncoding) || !ENCODINGS.includes(outputEncoding)) {
+    return $err({
+      msg: `Crypto NodeJS API - Hashing: Unsupported encoding: ${inputEncoding} or ${outputEncoding}`,
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
+    });
+  }
+
+  const digest = options.digest ?? 'sha256';
+  if (!(digest in DIGEST_ALGORITHMS)) {
+    return $err({
+      msg: `Crypto NodeJS API - Hashing: Unsupported digest: ${digest}`,
+      desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(', ')}`,
+    });
+  }
+  const digestAlgo = DIGEST_ALGORITHMS[digest];
+
+  const { result, error } = $convertStrToBytes(data, inputEncoding);
+  if (error) return $err(error);
+
   try {
-    const hashed = nodeCrypto.createHash(DIGEST_ALGORITHMS.sha256.node).update(data).digest();
-    return $convertBytesToStr(hashed, 'base64url');
+    const hashed = nodeCrypto.createHash(digestAlgo.node).update(result).digest();
+    return $convertBytesToStr(hashed, outputEncoding);
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Hashing: Failed to hash data with Crypto NodeJS', desc: $fmtError(error) });
   }
 }
 
-export function $hashPassword(password: string): Result<{ hash: string; salt: string }> {
+export function $hashPassword(
+  password: string,
+  options: HashPasswordOptions = {},
+): Result<{ hash: string; salt: string }> {
   if (!$isStr(password)) {
     return $err({
       msg: 'Crypto NodeJS API - Password Hashing: Empty password for hashing',
@@ -209,40 +263,87 @@ export function $hashPassword(password: string): Result<{ hash: string; salt: st
     });
   }
 
-  try {
-    const salt = nodeCrypto.randomBytes(PASSWORD_HASHING.pbkdf2.saltLength);
-    const hash = nodeCrypto.pbkdf2Sync(
-      password.normalize('NFKC'),
-      salt,
-      PASSWORD_HASHING.pbkdf2.iterations,
-      PASSWORD_HASHING.pbkdf2.keyLength,
-      DIGEST_ALGORITHMS.sha512.node,
-    );
+  const digest = options.digest ?? 'sha512';
+  if (!(digest in DIGEST_ALGORITHMS)) {
+    return $err({
+      msg: `Crypto NodeJS API - Password Hashing: Unsupported digest: ${digest}`,
+      desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(', ')}`,
+    });
+  }
+  const digestAlgo = DIGEST_ALGORITHMS[digest];
 
-    return $ok({ salt: salt.toString('base64url'), hash: hash.toString('base64url') });
+  const outputEncoding = options.outputEncoding ?? 'base64url';
+  if (!ENCODINGS.includes(outputEncoding)) {
+    return $err({
+      msg: `Crypto NodeJS API - Password Hashing: Unsupported encoding: ${outputEncoding}`,
+      desc: 'Use base64, base64url, hex, utf8, or latin1',
+    });
+  }
+
+  const saltLength = options.saltLength ?? 16;
+  if (typeof saltLength !== 'number' || saltLength < 8) {
+    return $err({
+      msg: 'Crypto NodeJS API - Password Hashing: Weak salt length',
+      desc: 'Salt length must be a number and at least 8 bytes (recommended 16 or more)',
+    });
+  }
+
+  const iterations = options.iterations ?? 320_000;
+  if (typeof iterations !== 'number' || iterations < 1000) {
+    return $err({
+      msg: 'Crypto NodeJS API - Password Hashing: Weak iterations count',
+      desc: 'Iterations must be a number and at least 1000 (recommended 320,000 or more)',
+    });
+  }
+
+  const keyLength = options.keyLength ?? 64;
+  if (typeof keyLength !== 'number' || keyLength < 16) {
+    return $err({
+      msg: 'Crypto NodeJS API - Password Hashing: Invalid key length',
+      desc: 'Key length must be a number and at least 16 bytes (recommended 64 or more)',
+    });
+  }
+
+  try {
+    const salt = nodeCrypto.randomBytes(saltLength);
+    const hash = nodeCrypto.pbkdf2Sync(password.normalize('NFKC'), salt, iterations, keyLength, digestAlgo.node);
+
+    return $ok({ salt: salt.toString(outputEncoding), hash: hash.toString(outputEncoding) });
   } catch (error) {
     return $err({ msg: 'Crypto NodeJS API - Password Hashing: Failed to hash password', desc: $fmtError(error) });
   }
 }
 
-export function $verifyPassword(password: string, hashedPassword: string, salt: string): boolean {
+export function $verifyPassword(
+  password: string,
+  hashedPassword: string,
+  salt: string,
+  options: VerifyPasswordOptions = {},
+): boolean {
   if (!$isStr(password) || !$isStr(hashedPassword) || !$isStr(salt)) return false;
 
-  const saltBytes = $convertStrToBytes(salt, 'base64url');
+  const digest = options.digest ?? 'sha512';
+  if (!(digest in DIGEST_ALGORITHMS)) return false;
+  const digestAlgo = DIGEST_ALGORITHMS[digest];
+
+  const inputEncoding = options.inputEncoding ?? 'base64url';
+  if (!ENCODINGS.includes(inputEncoding)) return false;
+
+  const iterations = options.iterations ?? 320_000;
+  if (typeof iterations !== 'number' || iterations < 1000) return false;
+
+  const keyLength = options.keyLength ?? 64;
+  if (typeof keyLength !== 'number' || keyLength < 16) return false;
+
+  const saltBytes = $convertStrToBytes(salt, inputEncoding);
   if (saltBytes.error) return false;
 
-  const hashedPasswordBytes = $convertStrToBytes(hashedPassword, 'base64url');
+  const hashedPasswordBytes = $convertStrToBytes(hashedPassword, inputEncoding);
   if (hashedPasswordBytes.error) return false;
 
   try {
     return nodeCrypto.timingSafeEqual(
-      nodeCrypto.pbkdf2Sync(
-        password.normalize('NFKC'),
-        saltBytes.result,
-        PASSWORD_HASHING.pbkdf2.iterations,
-        PASSWORD_HASHING.pbkdf2.keyLength,
-        DIGEST_ALGORITHMS.sha512.node,
-      ),
+      nodeCrypto.pbkdf2Sync(password.normalize('NFKC'), saltBytes.result, iterations, keyLength, digestAlgo.node),
       hashedPasswordBytes.result,
     );
   } catch {

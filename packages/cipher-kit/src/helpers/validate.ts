@@ -1,5 +1,5 @@
 import nodeCrypto from 'node:crypto';
-import type { SecretKey } from '~/helpers/types';
+import type { EncryptionAlgorithm, SecretKey } from '~/helpers/types';
 import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from './consts';
 
 export function $isStr(x: unknown, min = 1): x is string {
@@ -35,7 +35,7 @@ export function isSecretKey<Platform extends 'node' | 'web'>(x: unknown, platfor
   for (const key of algoKeys) if (!expectedAlgoKeys.has(key)) return false;
   for (const key of expectedAlgoKeys) if (!Object.hasOwn(x.algo, key)) return false;
 
-  const algo = ENCRYPTION_ALGORITHMS[x.algo.name as keyof typeof ENCRYPTION_ALGORITHMS];
+  const algo = ENCRYPTION_ALGORITHMS[x.algo.name as EncryptionAlgorithm];
   if (
     x.algo.keyBytes !== algo.keyBytes ||
     x.algo.ivLength !== algo.ivLength ||

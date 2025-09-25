@@ -1,6 +1,6 @@
-import { ENCODING_FORMATS } from '~/helpers/consts';
+import { ENCODINGS } from '~/helpers/consts';
 import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
-import type { EncodingFormat } from '~/helpers/types';
+import type { Encoding } from '~/helpers/types';
 import { $isStr } from '~/helpers/validate';
 
 export const textEncoder = new TextEncoder();
@@ -8,7 +8,7 @@ export const textDecoder = new TextDecoder();
 
 export function $convertStrToBytes(
   data: string,
-  format: EncodingFormat = 'utf8',
+  inputEncoding: Encoding = 'utf8',
 ): Result<{ result: Uint8Array<ArrayBuffer> }> {
   if (!$isStr(data)) {
     return $err({
@@ -16,53 +16,53 @@ export function $convertStrToBytes(
       desc: 'Data must be a non-empty string',
     });
   }
-  if (!ENCODING_FORMATS.includes(format)) {
+  if (!ENCODINGS.includes(inputEncoding)) {
     return $err({
-      msg: `Crypto Web API - String to Bytes: Unsupported encode format: ${format}`,
+      msg: `Crypto Web API - String to Bytes: Unsupported encoding: ${inputEncoding}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
 
   try {
-    const bytes = strToBytes[format](data);
+    const bytes = strToBytes[inputEncoding](data);
     return $ok({ result: bytes });
   } catch (error) {
     return $err({ msg: 'Crypto Web API - String to Bytes: Failed to convert data', desc: $fmtError(error) });
   }
 }
 
-export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, format: EncodingFormat = 'utf8'): Result<string> {
+export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding: Encoding = 'utf8'): Result<string> {
   if (!(data instanceof ArrayBuffer || data instanceof Uint8Array)) {
     return $err({
       msg: 'Crypto Web API - Bytes to String: Invalid data type',
       desc: 'Data must be an ArrayBuffer or Uint8Array',
     });
   }
-  if (!ENCODING_FORMATS.includes(format)) {
+  if (!ENCODINGS.includes(outputEncoding)) {
     return $err({
-      msg: `Crypto Web API - Bytes to String: Unsupported format: ${format}`,
+      msg: `Crypto Web API - Bytes to String: Unsupported encoding: ${outputEncoding}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
   try {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-    const str = bytesToStr[format](bytes);
+    const str = bytesToStr[outputEncoding](bytes);
     return $ok(str);
   } catch (error) {
     return $err({ msg: 'Crypto Web API - Bytes to String: Failed to convert data', desc: $fmtError(error) });
   }
 }
 
-export function $convertFormat(data: string, from: EncodingFormat, to: EncodingFormat): Result<{ result: string }> {
+export function $convertEncoding(data: string, from: Encoding, to: Encoding): Result<{ result: string }> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto Web API - Convert Format: Empty data',
       desc: 'Data must be a non-empty string',
     });
   }
-  if (!ENCODING_FORMATS.includes(from) || !ENCODING_FORMATS.includes(to)) {
+  if (!ENCODINGS.includes(from) || !ENCODINGS.includes(to)) {
     return $err({
-      msg: `Crypto Web API - Convert Format: Unsupported format: from ${from} to ${to}`,
+      msg: `Crypto Web API - Convert Format: Unsupported encoding: from ${from} to ${to}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
     });
   }
@@ -82,7 +82,7 @@ const strToBytes = {
   hex: $fromHex,
   latin1: $fromLatin1,
   utf8: (data: string) => textEncoder.encode(data),
-} as const satisfies Record<EncodingFormat, (data: string) => Uint8Array<ArrayBuffer>>;
+} as const satisfies Record<Encoding, (data: string) => Uint8Array<ArrayBuffer>>;
 
 const bytesToStr = {
   base64: $toBase64,
@@ -90,7 +90,7 @@ const bytesToStr = {
   hex: $toHex,
   latin1: $toLatin1,
   utf8: (data: Uint8Array) => textDecoder.decode(data),
-} as const satisfies Record<EncodingFormat, (data: Uint8Array) => string>;
+} as const satisfies Record<Encoding, (data: Uint8Array) => string>;
 
 function $toLatin1(bytes: Uint8Array): string {
   let out = '';

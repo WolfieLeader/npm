@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { ENCODINGS } from '~/helpers/consts';
+import { ENCODING } from '~/helpers/consts';
 import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
 import type { Encoding } from '~/helpers/types';
 import { $isStr } from '~/helpers/validate';
@@ -11,7 +11,7 @@ export function $convertStrToBytes(data: string, inputEncoding: Encoding = 'utf8
       desc: 'Data must be a non-empty string',
     });
   }
-  if (!ENCODINGS.includes(inputEncoding)) {
+  if (!ENCODING.includes(inputEncoding)) {
     return $err({
       msg: `Crypto NodeJS API - String to Bytes: Unsupported encoding: ${inputEncoding}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
@@ -31,7 +31,7 @@ export function $convertBytesToStr(data: Buffer, outputEncoding: Encoding = 'utf
       desc: 'Data must be a Buffer',
     });
   }
-  if (!ENCODINGS.includes(outputEncoding)) {
+  if (!ENCODING.includes(outputEncoding)) {
     return $err({
       msg: `Crypto NodeJS API - Bytes to String: Unsupported encoding: ${outputEncoding}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
@@ -52,7 +52,7 @@ export function $convertEncoding(data: string, from: Encoding, to: Encoding): Re
     });
   }
 
-  if (!ENCODINGS.includes(from) || !ENCODINGS.includes(to)) {
+  if (!ENCODING.includes(from) || !ENCODING.includes(to)) {
     return $err({
       msg: `Crypto NodeJS API - Convert Format: Unsupported encoding: from ${from} to ${to}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',

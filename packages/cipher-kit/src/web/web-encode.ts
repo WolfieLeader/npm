@@ -1,4 +1,4 @@
-import { ENCODINGS } from '~/helpers/consts';
+import { ENCODING } from '~/helpers/consts';
 import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
 import type { Encoding } from '~/helpers/types';
 import { $isStr } from '~/helpers/validate';
@@ -16,7 +16,7 @@ export function $convertStrToBytes(
       desc: 'Data must be a non-empty string',
     });
   }
-  if (!ENCODINGS.includes(inputEncoding)) {
+  if (!ENCODING.includes(inputEncoding)) {
     return $err({
       msg: `Crypto Web API - String to Bytes: Unsupported encoding: ${inputEncoding}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
@@ -38,7 +38,7 @@ export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncodin
       desc: 'Data must be an ArrayBuffer or Uint8Array',
     });
   }
-  if (!ENCODINGS.includes(outputEncoding)) {
+  if (!ENCODING.includes(outputEncoding)) {
     return $err({
       msg: `Crypto Web API - Bytes to String: Unsupported encoding: ${outputEncoding}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',
@@ -60,7 +60,7 @@ export function $convertEncoding(data: string, from: Encoding, to: Encoding): Re
       desc: 'Data must be a non-empty string',
     });
   }
-  if (!ENCODINGS.includes(from) || !ENCODINGS.includes(to)) {
+  if (!ENCODING.includes(from) || !ENCODING.includes(to)) {
     return $err({
       msg: `Crypto Web API - Convert Format: Unsupported encoding: from ${from} to ${to}`,
       desc: 'Use base64, base64url, hex, utf8, or latin1',

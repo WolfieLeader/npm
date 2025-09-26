@@ -10,6 +10,7 @@ import type {
   SecretKey,
   VerifyPasswordOptions,
 } from '~/helpers/types';
+import { $isSecretKey } from '~/helpers/validate';
 import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from './node-encode';
 import {
   $createSecretKey,
@@ -23,6 +24,10 @@ import {
   $hashPassword,
   $verifyPassword,
 } from './node-encrypt';
+
+export function isNodeSecretKey(x: unknown): x is SecretKey<'node'> {
+  return $isSecretKey(x, 'node') !== null;
+}
 
 /**
  * Generates a UUID (v4).

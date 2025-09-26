@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { isSecretKey, matchPattern, nodeKit, type SecretKey, webKit } from '~/export';
+import { matchPattern, nodeKit, type SecretKey, webKit } from '~/export';
 
 const secret = 'Secret0123456789Secret0123456789';
 const data = '🦊 secret stuff ~ !@#$%^&*()_+';
@@ -11,7 +11,7 @@ describe('Encryption', () => {
     const nodeKey = nodeKit.tryCreateSecretKey(secret);
     expect(nodeKey.success).toBe(true);
     expect(nodeKey.result).toBeDefined();
-    expect(isSecretKey(nodeKey.result, 'node')).toBe(true);
+    expect(nodeKit.isNodeSecretKey(nodeKey.result)).toBe(true);
     nodeSecretKey = nodeKey.result as SecretKey<'node'>;
 
     // biome-ignore lint/style/useConst: ignore
@@ -19,7 +19,7 @@ describe('Encryption', () => {
     const webKey = await webKit.tryCreateSecretKey(secret);
     expect(webKey.success).toBe(true);
     expect(webKey.result).toBeDefined();
-    expect(isSecretKey(webKey.result, 'web')).toBe(true);
+    expect(webKit.isWebSecretKey(webKey.result)).toBe(true);
     webSecretKey = webKey.result as SecretKey<'web'>;
 
     const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey);
@@ -81,7 +81,7 @@ describe('Encryption', () => {
     const nodeKey = nodeKit.tryCreateSecretKey(secret, { algorithm: 'aes128gcm' });
     expect(nodeKey.success).toBe(true);
     expect(nodeKey.result).toBeDefined();
-    expect(isSecretKey(nodeKey.result, 'node')).toBe(true);
+    expect(nodeKit.isNodeSecretKey(nodeKey.result)).toBe(true);
     nodeSecretKey = nodeKey.result as SecretKey<'node'>;
 
     // biome-ignore lint/style/useConst: ignore
@@ -89,47 +89,47 @@ describe('Encryption', () => {
     const webKey = await webKit.tryCreateSecretKey(secret, { algorithm: 'aes128gcm' });
     expect(webKey.success).toBe(true);
     expect(webKey.result).toBeDefined();
-    expect(isSecretKey(webKey.result, 'web')).toBe(true);
+    expect(webKit.isWebSecretKey(webKey.result)).toBe(true);
     webSecretKey = webKey.result as SecretKey<'web'>;
 
-    const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey, { outputEncoding: 'hex' });
+    const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey, { encoding: 'hex' });
     expect(encryptedNode.success).toBe(true);
     expect(encryptedNode.result).toBeDefined();
     expect(matchPattern(encryptedNode.result as string, 'node')).toBe(true);
 
-    const encryptedWeb = await webKit.tryEncrypt(data, webSecretKey, { outputEncoding: 'hex' });
+    const encryptedWeb = await webKit.tryEncrypt(data, webSecretKey, { encoding: 'hex' });
     expect(encryptedWeb.success).toBe(true);
     expect(encryptedWeb.result).toBeDefined();
     expect(matchPattern(encryptedWeb.result as string, 'web')).toBe(true);
 
     expect(encryptedNode.result).not.toBe(encryptedWeb.result);
 
-    const decryptedNode = nodeKit.tryDecrypt(encryptedNode.result as string, nodeSecretKey, { inputEncoding: 'hex' });
+    const decryptedNode = nodeKit.tryDecrypt(encryptedNode.result as string, nodeSecretKey, { encoding: 'hex' });
     expect(decryptedNode.success).toBe(true);
     expect(decryptedNode.result).toBe(data);
 
-    const decryptedWeb = await webKit.tryDecrypt(encryptedWeb.result as string, webSecretKey, { inputEncoding: 'hex' });
+    const decryptedWeb = await webKit.tryDecrypt(encryptedWeb.result as string, webSecretKey, { encoding: 'hex' });
     expect(decryptedWeb.success).toBe(true);
     expect(decryptedWeb.result).toBe(data);
 
     expect(decryptedNode.result).toBe(decryptedWeb.result);
 
-    const encryptedNode2 = nodeKit.tryEncrypt(data, nodeSecretKey, { outputEncoding: 'hex' });
+    const encryptedNode2 = nodeKit.tryEncrypt(data, nodeSecretKey, { encoding: 'hex' });
     expect(encryptedNode2.success).toBe(true);
     expect(encryptedNode2.result).toBeDefined();
     expect(encryptedNode2.result).not.toBe(encryptedNode.result);
 
-    const encryptedWeb2 = await webKit.tryEncrypt(data, webSecretKey, { outputEncoding: 'hex' });
+    const encryptedWeb2 = await webKit.tryEncrypt(data, webSecretKey, { encoding: 'hex' });
     expect(encryptedWeb2.success).toBe(true);
     expect(encryptedWeb2.result).toBeDefined();
     expect(encryptedWeb2.result).not.toBe(encryptedWeb.result);
 
-    const encryptedObjNode = nodeKit.tryEncryptObj(largeObj, nodeSecretKey, { outputEncoding: 'base64' });
+    const encryptedObjNode = nodeKit.tryEncryptObj(largeObj, nodeSecretKey, { encoding: 'base64' });
     expect(encryptedObjNode.success).toBe(true);
     expect(encryptedObjNode.result).toBeDefined();
     expect(matchPattern(encryptedObjNode.result as string, 'node')).toBe(true);
 
-    const encryptedObjWeb = await webKit.tryEncryptObj(largeObj, webSecretKey, { outputEncoding: 'base64' });
+    const encryptedObjWeb = await webKit.tryEncryptObj(largeObj, webSecretKey, { encoding: 'base64' });
     expect(encryptedObjWeb.success).toBe(true);
     expect(encryptedObjWeb.result).toBeDefined();
     expect(matchPattern(encryptedObjWeb.result as string, 'web')).toBe(true);
@@ -137,7 +137,7 @@ describe('Encryption', () => {
     expect(encryptedObjNode.result).not.toBe(encryptedObjWeb.result);
 
     const decryptedObjNode = nodeKit.tryDecryptObj<typeof largeObj>(encryptedObjNode.result as string, nodeSecretKey, {
-      inputEncoding: 'base64',
+      encoding: 'base64',
     });
     expect(decryptedObjNode.success).toBe(true);
     expect(decryptedObjNode.result).toEqual(largeObj);
@@ -145,7 +145,7 @@ describe('Encryption', () => {
     const decryptedObjWeb = await webKit.tryDecryptObj<typeof largeObj>(
       encryptedObjWeb.result as string,
       webSecretKey,
-      { inputEncoding: 'base64' },
+      { encoding: 'base64' },
     );
     expect(decryptedObjWeb.success).toBe(true);
     expect(decryptedObjWeb.result).toEqual(largeObj);
@@ -156,6 +156,21 @@ describe('Encryption', () => {
     expect(nodeKit.convertEncoding(data, 'utf8', 'hex')).toBe(webKit.convertEncoding(data, 'utf8', 'hex'));
     expect(nodeKit.convertEncoding(data, 'utf8', 'base64url')).toBe(webKit.convertEncoding(data, 'utf8', 'base64url'));
     expect(nodeKit.convertEncoding(data, 'utf8', 'latin1')).toBe(webKit.convertEncoding(data, 'utf8', 'latin1'));
+  });
+
+  test('Hash Test', async () => {
+    expect(nodeKit.hash(data, { digest: 'sha256' })).toBe(await webKit.hash(data, { digest: 'sha256' }));
+    expect(nodeKit.hash(data, { digest: 'sha384' })).toBe(await webKit.hash(data, { digest: 'sha384' }));
+    expect(nodeKit.hash(data, { digest: 'sha512' })).toBe(await webKit.hash(data, { digest: 'sha512' }));
+    expect(nodeKit.hashObj(largeObj, { digest: 'sha256', encoding: 'hex' })).toBe(
+      await webKit.hashObj(largeObj, { digest: 'sha256', encoding: 'hex' }),
+    );
+    expect(nodeKit.hashObj(largeObj, { digest: 'sha384', encoding: 'hex' })).toBe(
+      await webKit.hashObj(largeObj, { digest: 'sha384', encoding: 'hex' }),
+    );
+    expect(nodeKit.hashObj(largeObj, { digest: 'sha512', encoding: 'hex' })).toBe(
+      await webKit.hashObj(largeObj, { digest: 'sha512', encoding: 'hex' }),
+    );
   });
 });
 

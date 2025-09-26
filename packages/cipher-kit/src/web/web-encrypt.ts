@@ -1,5 +1,5 @@
-import { DIGEST_ALGORITHMS, ENCODINGS, ENCRYPTION_ALGORITHMS } from '~/helpers/consts';
-import { $err, $fmtError, $ok, type Result } from '~/helpers/error';
+import { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from '~/helpers/consts';
+import { $err, $fmtError, $fmtResultErr, $ok, type Result, title } from '~/helpers/error';
 import { $parseToObj, $stringifyObj } from '~/helpers/object';
 import type {
   CreateSecretKeyOptions,
@@ -17,7 +17,7 @@ export function $generateUuid(): Result<string> {
   try {
     return $ok(crypto.randomUUID());
   } catch (error) {
-    return $err({ msg: 'Crypto Web API - UUID Generation: Failed to generate UUID', desc: $fmtError(error) });
+    return $err({ msg: `${title('web', 'UUID Generation')}: Failed to generate UUID`, desc: $fmtError(error) });
   }
 }
 
@@ -26,13 +26,13 @@ export async function $createSecretKey(
   options: CreateSecretKeyOptions = {},
 ): Promise<Result<{ result: SecretKey<'web'> }>> {
   if (!$isStr(secret)) {
-    return $err({ msg: 'Crypto Web API - Key Generation: Empty Secret', desc: 'Secret must be a non-empty string' });
+    return $err({ msg: `${title('web', 'Key Generation')}: Empty Secret`, desc: 'Secret must be a non-empty string' });
   }
 
   const algorithm = options.algorithm ?? 'aes256gcm';
   if (!(algorithm in ENCRYPTION_ALGORITHMS)) {
     return $err({
-      msg: `Crypto NodeJS API - Key Generation: Unsupported algorithm: ${algorithm}`,
+      msg: `${title('web', 'Key Generation')}: Unsupported algorithm: ${algorithm}`,
       desc: `Supported algorithms are: ${Object.keys(ENCRYPTION_ALGORITHMS).join(', ')}`,
     });
   }
@@ -40,7 +40,7 @@ export async function $createSecretKey(
   const digest = options.digest ?? 'sha256';
   if (!(digest in DIGEST_ALGORITHMS)) {
     return $err({
-      msg: `Crypto NodeJS API - Key Generation: Unsupported digest: ${digest}`,
+      msg: `${title('web', 'Key Generation')}: Unsupported digest: ${digest}`,
       desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(', ')}`,
     });
   }
@@ -48,7 +48,7 @@ export async function $createSecretKey(
   const salt = options.salt ?? 'cipher-kit-salt';
   if (!$isStr(salt, 8)) {
     return $err({
-      msg: 'Crypto NodeJS API - Key Generation: Weak salt',
+      msg: `${title('web', 'Key Generation')}: Weak salt`,
       desc: 'Salt must be a non-empty string with at least 8 characters',
     });
   }
@@ -56,7 +56,7 @@ export async function $createSecretKey(
   const info = options.info ?? 'cipher-kit';
   if (!$isStr(info)) {
     return $err({
-      msg: 'Crypto NodeJS API - Key Generation: Invalid info',
+      msg: `${title('web', 'Key Generation')}: Invalid info`,
       desc: 'Info must be a non-empty string',
     });
   }
@@ -90,7 +90,7 @@ export async function $createSecretKey(
     return $ok({ result: secretKey });
   } catch (error) {
     return $err({
-      msg: 'Crypto Web API - Key Generation: Failed to create secret key',
+      msg: `${title('web', 'Key Generation')}: Failed to create secret key`,
       desc: $fmtError(error),
     });
   }
@@ -103,29 +103,28 @@ export async function $encrypt(
 ): Promise<Result<string>> {
   if (!$isStr(data)) {
     return $err({
-      msg: 'Crypto Web API - Encryption: Empty data for encryption',
+      msg: `${title('web', 'Encryption')}: Empty data for encryption`,
       desc: 'Data must be a non-empty string',
     });
   }
 
-  const inputEncoding = options.inputEncoding ?? 'utf8';
-  const outputEncoding = options.outputEncoding ?? 'base64url';
-  if (!ENCODINGS.includes(inputEncoding) || !ENCODINGS.includes(outputEncoding)) {
+  const encoding = options.encoding ?? 'base64url';
+  if (!CIPHER_ENCODING.includes(encoding)) {
     return $err({
-      msg: `Crypto Web API - Encryption: Unsupported encoding: input ${inputEncoding} or output ${outputEncoding}`,
-      desc: 'Use base64, base64url, hex, utf8, or latin1',
+      msg: `${title('web', 'Encryption')}: Unsupported output encoding: ${encoding}`,
+      desc: 'Use base64, base64url, or hex',
     });
   }
 
   const injectedKey = $isSecretKey(secretKey, 'web');
   if (!injectedKey) {
     return $err({
-      msg: 'Crypto Web API - Encryption: Invalid Secret Key',
+      msg: `${title('web', 'Encryption')}: Invalid Secret Key`,
       desc: 'Expected a Web SecretKey',
     });
   }
 
-  const { result, error } = $convertStrToBytes(data, inputEncoding);
+  const { result, error } = $convertStrToBytes(data, 'utf8');
   if (error) return $err(error);
 
   try {
@@ -136,19 +135,19 @@ export async function $encrypt(
       result,
     );
 
-    const ivStr = $convertBytesToStr(iv, outputEncoding);
-    const cipherStr = $convertBytesToStr(cipherWithTag, outputEncoding);
+    const ivStr = $convertBytesToStr(iv, encoding);
+    const cipherStr = $convertBytesToStr(cipherWithTag, encoding);
 
     if (ivStr.error || cipherStr.error) {
       return $err({
-        msg: 'Crypto Web API - Encryption: Failed to convert IV or encrypted data',
-        desc: `Conversion error: ${ivStr.error || cipherStr.error}`,
+        msg: `${title('web', 'Encryption')}: Failed to convert IV or encrypted data`,
+        desc: `Conversion error: ${$fmtResultErr(ivStr.error || cipherStr.error)}`,
       });
     }
 
     return $ok(`${ivStr.result}.${cipherStr.result}.`);
   } catch (error) {
-    return $err({ msg: 'Crypto Web API - Encryption: Failed to encrypt data', desc: $fmtError(error) });
+    return $err({ msg: `${title('web', 'Encryption')}: Failed to encrypt data`, desc: $fmtError(error) });
   }
 }
 
@@ -159,24 +158,23 @@ export async function $decrypt(
 ): Promise<Result<string>> {
   if (matchPattern(encrypted, 'web') === false) {
     return $err({
-      msg: 'Crypto Web API - Decryption: Invalid encrypted data format',
+      msg: `${title('web', 'Decryption')}: Invalid encrypted data format`,
       desc: 'Encrypted data must be in the format "iv.cipherWithTag."',
     });
   }
 
-  const inputEncoding = options.inputEncoding ?? 'base64url';
-  const outputEncoding = options.outputEncoding ?? 'utf8';
-  if (!ENCODINGS.includes(inputEncoding) || !ENCODINGS.includes(outputEncoding)) {
+  const encoding = options.encoding ?? 'base64url';
+  if (!CIPHER_ENCODING.includes(encoding)) {
     return $err({
-      msg: `Crypto Web API - Decryption: Unsupported encoding: input ${inputEncoding} or output ${outputEncoding}`,
-      desc: 'Use base64, base64url, hex, utf8, or latin1',
+      msg: `${title('web', 'Decryption')}: Unsupported input encoding: ${encoding}`,
+      desc: 'Use base64, base64url, or hex',
     });
   }
 
   const [iv, encryptedWithTag] = encrypted.split('.', 3);
   if (!$isStr(iv) || !$isStr(encryptedWithTag)) {
     return $err({
-      msg: 'Crypto Web API - Decryption: Invalid encrypted data',
+      msg: `${title('web', 'Decryption')}: Invalid encrypted data`,
       desc: 'Encrypted data must contain valid IV, encrypted and tag components',
     });
   }
@@ -184,18 +182,18 @@ export async function $decrypt(
   const injectedKey = $isSecretKey(secretKey, 'web');
   if (!injectedKey) {
     return $err({
-      msg: 'Crypto Web API - Decryption: Invalid Secret Key',
+      msg: `${title('web', 'Decryption')}: Invalid Secret Key`,
       desc: 'Expected a Web SecretKey',
     });
   }
 
-  const ivBytes = $convertStrToBytes(iv, inputEncoding);
-  const cipherWithTagBytes = $convertStrToBytes(encryptedWithTag, inputEncoding);
+  const ivBytes = $convertStrToBytes(iv, encoding);
+  const cipherWithTagBytes = $convertStrToBytes(encryptedWithTag, encoding);
 
   if (ivBytes.error || cipherWithTagBytes.error) {
     return $err({
-      msg: 'Crypto Web API - Decryption: Failed to convert IV or encrypted data',
-      desc: `Conversion error: ${ivBytes.error || cipherWithTagBytes.error}`,
+      msg: `${title('web', 'Decryption')}: Failed to convert IV or encrypted data`,
+      desc: `Conversion error: ${$fmtResultErr(ivBytes.error || cipherWithTagBytes.error)}`,
     });
   }
 
@@ -208,7 +206,7 @@ export async function $decrypt(
 
     return $convertBytesToStr(decrypted, 'utf8');
   } catch (error) {
-    return $err({ msg: 'Crypto Web API - Decryption: Failed to decrypt data', desc: $fmtError(error) });
+    return $err({ msg: `${title('web', 'Decryption')}: Failed to decrypt data`, desc: $fmtError(error) });
   }
 }
 
@@ -234,35 +232,34 @@ export async function $decryptObj<T extends object = Record<string, unknown>>(
 
 export async function $hash(data: string, options: HashOptions = {}): Promise<Result<string>> {
   if (!$isStr(data)) {
-    return $err({ msg: 'Crypto Web API - Hashing: Empty data for hashing', desc: 'Data must be a non-empty string' });
+    return $err({ msg: `${title('web', 'Hashing')}: Empty data for hashing`, desc: 'Data must be a non-empty string' });
   }
 
-  const inputEncoding = options.inputEncoding ?? 'utf8';
-  const outputEncoding = options.outputEncoding ?? 'base64url';
-  if (!ENCODINGS.includes(inputEncoding) || !ENCODINGS.includes(outputEncoding)) {
+  const encoding = options.encoding ?? 'base64url';
+  if (!CIPHER_ENCODING.includes(encoding)) {
     return $err({
-      msg: `Crypto Web API - Hashing: Unsupported input encoding: ${inputEncoding} or output encoding: ${outputEncoding}`,
-      desc: 'Use base64, base64url, hex, utf8, or latin1',
+      msg: `${title('web', 'Hashing')}: Unsupported output encoding: ${encoding}`,
+      desc: 'Use base64, base64url, or hex',
     });
   }
 
   const digest = options.digest ?? 'sha256';
   if (!(digest in DIGEST_ALGORITHMS)) {
     return $err({
-      msg: `Crypto Web API - Hashing: Unsupported digest: ${digest}`,
+      msg: `${title('web', 'Hashing')}: Unsupported digest: ${digest}`,
       desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(', ')}`,
     });
   }
   const digestAlgo = DIGEST_ALGORITHMS[digest];
 
-  const { result, error } = $convertStrToBytes(data, inputEncoding);
+  const { result, error } = $convertStrToBytes(data, 'utf8');
   if (error) return $err(error);
 
   try {
     const hashed = await crypto.subtle.digest(digestAlgo.web, result);
-    return $convertBytesToStr(hashed, outputEncoding);
+    return $convertBytesToStr(hashed, encoding);
   } catch (error) {
-    return $err({ msg: 'Crypto Web API - Hashing: Failed to hash data', desc: $fmtError(error) });
+    return $err({ msg: `${title('web', 'Hashing')}: Failed to hash data`, desc: $fmtError(error) });
   }
 }
 
@@ -281,7 +278,7 @@ export async function $hashPassword(
 ): Promise<Result<{ hash: string; salt: string }>> {
   if (!$isStr(password)) {
     return $err({
-      msg: 'Crypto Web API - Password Hashing: Empty password',
+      msg: `${title('web', 'Password Hashing')}: Empty password`,
       desc: 'Password must be a non-empty string',
     });
   }
@@ -289,24 +286,24 @@ export async function $hashPassword(
   const digest = options.digest ?? 'sha512';
   if (!(digest in DIGEST_ALGORITHMS)) {
     return $err({
-      msg: `Crypto Web API - Password Hashing: Unsupported digest: ${digest}`,
+      msg: `${title('web', 'Password Hashing')}: Unsupported digest: ${digest}`,
       desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(', ')}`,
     });
   }
   const digestAlgo = DIGEST_ALGORITHMS[digest];
 
-  const outputEncoding = options.outputEncoding ?? 'base64url';
-  if (!ENCODINGS.includes(outputEncoding)) {
+  const encoding = options.encoding ?? 'base64url';
+  if (!CIPHER_ENCODING.includes(encoding)) {
     return $err({
-      msg: `Crypto Web API - Password Hashing: Unsupported output encoding: ${outputEncoding}`,
-      desc: 'Use base64, base64url, hex, utf8, or latin1',
+      msg: `${title('web', 'Password Hashing')}: Unsupported output encoding: ${encoding}`,
+      desc: 'Use base64, base64url, or hex',
     });
   }
 
   const saltLength = options.saltLength ?? 16;
   if (typeof saltLength !== 'number' || saltLength < 8) {
     return $err({
-      msg: 'Crypto Web API - Password Hashing: Weak salt length',
+      msg: `${title('web', 'Password Hashing')}: Weak salt length`,
       desc: 'Salt length must be a number and at least 8 bytes (recommended 16)',
     });
   }
@@ -314,7 +311,7 @@ export async function $hashPassword(
   const iterations = options.iterations ?? 320_000;
   if (typeof iterations !== 'number' || iterations < 1000) {
     return $err({
-      msg: 'Crypto Web API - Password Hashing: Weak iteration count',
+      msg: `${title('web', 'Password Hashing')}: Weak iteration count`,
       desc: 'Iterations must be a number and at least 1000 (recommended 320,000 or more)',
     });
   }
@@ -322,7 +319,7 @@ export async function $hashPassword(
   const keyLength = options.keyLength ?? 64;
   if (typeof keyLength !== 'number' || keyLength < 16) {
     return $err({
-      msg: 'Crypto Web API - Password Hashing: Weak key length',
+      msg: `${title('web', 'Password Hashing')}: Weak key length`,
       desc: 'Key length must be a number and at least 16 bytes (recommended 64)',
     });
   }
@@ -342,15 +339,15 @@ export async function $hashPassword(
       keyLength * 8,
     );
 
-    const saltStr = $convertBytesToStr(salt, outputEncoding);
+    const saltStr = $convertBytesToStr(salt, encoding);
     if (saltStr.error) return $err(saltStr.error);
 
-    const hashedPasswordStr = $convertBytesToStr(bits, outputEncoding);
+    const hashedPasswordStr = $convertBytesToStr(bits, encoding);
     if (hashedPasswordStr.error) return $err(hashedPasswordStr.error);
 
     return $ok({ hash: hashedPasswordStr.result, salt: saltStr.result });
   } catch (error) {
-    return $err({ msg: 'Crypto Web API - Password Hashing: Failed to hash password', desc: $fmtError(error) });
+    return $err({ msg: `${title('web', 'Password Hashing')}: Failed to hash password`, desc: $fmtError(error) });
   }
 }
 
@@ -366,8 +363,8 @@ export async function $verifyPassword(
   if (!(digest in DIGEST_ALGORITHMS)) return false;
   const digestAlgo = DIGEST_ALGORITHMS[digest];
 
-  const inputEncoding = options.inputEncoding ?? 'base64url';
-  if (!ENCODINGS.includes(inputEncoding)) return false;
+  const encoding = options.encoding ?? 'base64url';
+  if (!CIPHER_ENCODING.includes(encoding)) return false;
 
   const iterations = options.iterations ?? 320_000;
   if (typeof iterations !== 'number' || iterations < 1000) return false;
@@ -375,10 +372,10 @@ export async function $verifyPassword(
   const keyLength = options.keyLength ?? 64;
   if (typeof keyLength !== 'number' || keyLength < 16) return false;
 
-  const saltBytes = $convertStrToBytes(salt, 'base64url');
+  const saltBytes = $convertStrToBytes(salt, encoding);
   if (saltBytes.error) return false;
 
-  const hashedPasswordBytes = $convertStrToBytes(hashedPassword, 'base64url');
+  const hashedPasswordBytes = $convertStrToBytes(hashedPassword, encoding);
   if (hashedPasswordBytes.error) return false;
 
   try {
@@ -403,14 +400,14 @@ export async function $verifyPassword(
       ),
     );
 
+    if (bits === undefined || hashedPasswordBytes.result === undefined) return false;
     if (bits.length !== hashedPasswordBytes.result.length) return false;
 
-    let isMatch = true;
+    let diff = 0;
     for (let i = 0; i < bits.length; i++) {
-      if (bits[i] !== hashedPasswordBytes.result[i]) isMatch = false;
+      diff |= (bits[i] as number) ^ (hashedPasswordBytes.result[i] as number);
     }
-
-    return isMatch;
+    return diff === 0;
   } catch {
     return false;
   }

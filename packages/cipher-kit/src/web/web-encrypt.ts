@@ -1,5 +1,5 @@
 import { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from '~/helpers/consts';
-import { $err, $fmtError, $ok, type Result, title } from '~/helpers/error';
+import { $err, $fmtError, $fmtResultErr, $ok, type Result, title } from '~/helpers/error';
 import { $parseToObj, $stringifyObj } from '~/helpers/object';
 import type {
   CreateSecretKeyOptions,
@@ -141,7 +141,7 @@ export async function $encrypt(
     if (ivStr.error || cipherStr.error) {
       return $err({
         msg: `${title('web', 'Encryption')}: Failed to convert IV or encrypted data`,
-        desc: `Conversion error: ${ivStr.error || cipherStr.error}`,
+        desc: `Conversion error: ${$fmtResultErr(ivStr.error || cipherStr.error)}`,
       });
     }
 
@@ -193,7 +193,7 @@ export async function $decrypt(
   if (ivBytes.error || cipherWithTagBytes.error) {
     return $err({
       msg: `${title('web', 'Decryption')}: Failed to convert IV or encrypted data`,
-      desc: `Conversion error: ${ivBytes.error || cipherWithTagBytes.error}`,
+      desc: `Conversion error: ${$fmtResultErr(ivBytes.error || cipherWithTagBytes.error)}`,
     });
   }
 
@@ -400,14 +400,14 @@ export async function $verifyPassword(
       ),
     );
 
+    if (bits === undefined || hashedPasswordBytes.result === undefined) return false;
     if (bits.length !== hashedPasswordBytes.result.length) return false;
 
-    let isMatch = true;
+    let diff = 0;
     for (let i = 0; i < bits.length; i++) {
-      if (bits[i] !== hashedPasswordBytes.result[i]) isMatch = false;
+      diff |= (bits[i] as number) ^ (hashedPasswordBytes.result[i] as number);
     }
-
-    return isMatch;
+    return diff === 0;
   } catch {
     return false;
   }

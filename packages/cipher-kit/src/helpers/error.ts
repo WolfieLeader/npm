@@ -36,7 +36,8 @@ export function $fmtError(error: unknown): string {
   return String(error);
 }
 
-export function $fmtResultErr(err: ResultErr): string {
+export function $fmtResultErr(err: ResultErr | undefined): string {
+  if (!err) return 'Unknown error';
   return `${err.message} - ${err.description}`;
 }
 

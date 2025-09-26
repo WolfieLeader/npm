@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer';
 import nodeCrypto from 'node:crypto';
 import { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from '~/helpers/consts';
-import { $err, $fmtError, $ok, type Result, title } from '~/helpers/error';
+import { $err, $fmtError, $fmtResultErr, $ok, type Result, title } from '~/helpers/error';
 import { $parseToObj, $stringifyObj } from '~/helpers/object';
 import type {
   CreateSecretKeyOptions,
@@ -128,7 +128,7 @@ export function $encrypt(data: string, secretKey: SecretKey<'node'>, options: En
     if (ivStr.error || cipherStr.error || tagStr.error) {
       return $err({
         msg: 'Crypto NodeJS API - Encryption: Failed to convert IV or encrypted data or tag',
-        desc: `Conversion error: ${ivStr.error || cipherStr.error || tagStr.error}`,
+        desc: `Conversion error: ${$fmtResultErr(ivStr.error || cipherStr.error || tagStr.error)}`,
       });
     }
 
@@ -181,7 +181,7 @@ export function $decrypt(
   if (ivBytes.error || cipherBytes.error || tagBytes.error) {
     return $err({
       msg: `${title('node', 'Decryption')}: Failed to convert IV or encrypted data or tag`,
-      desc: `Conversion error: ${ivBytes.error || cipherBytes.error || tagBytes.error}`,
+      desc: `Conversion error: ${$fmtResultErr(ivBytes.error || cipherBytes.error || tagBytes.error)}`,
     });
   }
 

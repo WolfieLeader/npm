@@ -7,6 +7,14 @@
     "source.organizeImports.biome": "explicit"
   },
 
+  "material-icon-theme.folders.associations": {
+    "cipher-kit": "secure",
+    "compress-kit": "repository",
+    "generate-certs": "connection",
+    "get-client-ip": "target",
+    "modern-cookies": "views"
+  },
+
   "css.lint.unknownAtRules": "ignore",
 
   "[javascript]": {

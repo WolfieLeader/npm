@@ -70,10 +70,6 @@ export function $isSecretKey<Platform extends 'node' | 'web'>(
   return Object.freeze({ ...x, injected: algorithm }) as InjectedSecretKey<Platform>;
 }
 
-export function isSecretKey<Platform extends 'node' | 'web'>(x: unknown, platform: Platform): x is SecretKey<Platform> {
-  return $isSecretKey(x, platform) !== null;
-}
-
 /** Regular expressions for encrypted data patterns */
 export const ENCRYPTED_REGEX = Object.freeze({
   node: /^([^.]+)\.([^.]+)\.([^.]+)\.$/,

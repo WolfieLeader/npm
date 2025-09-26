@@ -7,7 +7,6 @@ export {
 export type * from '~/helpers/types';
 export {
   ENCRYPTED_REGEX,
-  isSecretKey,
   matchPattern,
 } from '~/helpers/validate';
 export * from './kit';

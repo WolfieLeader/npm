@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { isSecretKey, matchPattern, nodeKit, type SecretKey, webKit } from '~/export';
+import { matchPattern, nodeKit, type SecretKey, webKit } from '~/export';
 
 const secret = 'Secret0123456789Secret0123456789';
 const data = '🦊 secret stuff ~ !@#$%^&*()_+';
@@ -11,7 +11,7 @@ describe('Encryption', () => {
     const nodeKey = nodeKit.tryCreateSecretKey(secret);
     expect(nodeKey.success).toBe(true);
     expect(nodeKey.result).toBeDefined();
-    expect(isSecretKey(nodeKey.result, 'node')).toBe(true);
+    expect(nodeKit.isNodeSecretKey(nodeKey.result)).toBe(true);
     nodeSecretKey = nodeKey.result as SecretKey<'node'>;
 
     // biome-ignore lint/style/useConst: ignore
@@ -19,7 +19,7 @@ describe('Encryption', () => {
     const webKey = await webKit.tryCreateSecretKey(secret);
     expect(webKey.success).toBe(true);
     expect(webKey.result).toBeDefined();
-    expect(isSecretKey(webKey.result, 'web')).toBe(true);
+    expect(webKit.isWebSecretKey(webKey.result)).toBe(true);
     webSecretKey = webKey.result as SecretKey<'web'>;
 
     const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey);
@@ -81,7 +81,7 @@ describe('Encryption', () => {
     const nodeKey = nodeKit.tryCreateSecretKey(secret, { algorithm: 'aes128gcm' });
     expect(nodeKey.success).toBe(true);
     expect(nodeKey.result).toBeDefined();
-    expect(isSecretKey(nodeKey.result, 'node')).toBe(true);
+    expect(nodeKit.isNodeSecretKey(nodeKey.result)).toBe(true);
     nodeSecretKey = nodeKey.result as SecretKey<'node'>;
 
     // biome-ignore lint/style/useConst: ignore
@@ -89,7 +89,7 @@ describe('Encryption', () => {
     const webKey = await webKit.tryCreateSecretKey(secret, { algorithm: 'aes128gcm' });
     expect(webKey.success).toBe(true);
     expect(webKey.result).toBeDefined();
-    expect(isSecretKey(webKey.result, 'web')).toBe(true);
+    expect(webKit.isWebSecretKey(webKey.result)).toBe(true);
     webSecretKey = webKey.result as SecretKey<'web'>;
 
     const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey, { encoding: 'hex' });

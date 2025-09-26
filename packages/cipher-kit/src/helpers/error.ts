@@ -1,10 +1,49 @@
 import { $isObj } from './validate';
 
+/**
+ * Standardized error object for Result type.
+ * Includes a `message` and a `description`.
+ */
 export interface ResultErr {
   readonly message: string;
   readonly description: string;
 }
 
+/**
+ * Result type for functions that can succeed or fail.
+ *
+ * On success, returns an object with `success: true` and the result data.
+ * On failure, returns an object with `success: false` and an error object.
+ *
+ * If the result type `T` is an object, its properties are merged into the success result.
+ * Otherwise, the result is returned under the `result` key.
+ *
+ * @example
+ * ```ts
+ * function returnNumber(): Result<number> {
+ *   return $ok(123);
+ * }
+ *
+ * function returnObject(): Result<{ a: number; b: string }> {
+ *  return $ok({ a: 1, b: 'a' });
+ * }
+ *
+ * function example() {
+ *  const res = returnNumber();
+ *  if (res.success) {
+ *   console.log(res.result); // 123
+ *  } else {
+ *   console.error(res.error);
+ *  }
+ *
+ * const {a, b, success, error} = returnObject();
+ * if (success) {
+ *   console.log(a, b); // 1 'a'
+ * } else {
+ *   console.error(error);
+ * }
+ * ```
+ */
 export type Result<T, E = ResultErr> = T extends object
   ?
       | ({ readonly [K in keyof T]: T[K] } & { readonly success: true; readonly error?: undefined })

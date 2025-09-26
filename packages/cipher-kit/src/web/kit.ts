@@ -9,6 +9,7 @@ import type {
   SecretKey,
   VerifyPasswordOptions,
 } from '~/helpers/types';
+import { $isSecretKey } from '~/helpers/validate';
 import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from './web-encode';
 import {
   $createSecretKey,
@@ -22,6 +23,10 @@ import {
   $hashPassword,
   $verifyPassword,
 } from './web-encrypt';
+
+export function isWebSecretKey(x: unknown): x is SecretKey<'web'> {
+  return $isSecretKey(x, 'web') !== null;
+}
 
 /**
  * Generates a UUID (v4).

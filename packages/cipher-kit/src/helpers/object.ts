@@ -11,26 +11,33 @@ export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T
 }
 
 /**
- * Stringify an object.
+ * Safely serializes a plain object to JSON (non-throwing).
  *
+ * Wraps `JSON.stringify` and returns a Result containing
+ * the JSON string representation of the object or an error.
+ *
+ * @template T - The input object type.
  * @param obj - The object to stringify.
- * @returns An JSON string.
- * @throws {Error} If the object cannot be stringified.
+ * @returns JSON string representation of the object or an error.
+ */
+export function tryStringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
+  return $stringifyObj(obj);
+}
+
+/**
+ * Safely serializes a plain object to JSON.
+ *
+ * Wraps `JSON.stringify` and returns the result or throws an error.
+ *
+ * @template T - The input object type.
+ * @param obj - The object to stringify.
+ * @returns JSON string representation of the object.
+ * @throws {Error} If `obj` is not a plain object or serialization fails.
  */
 export function stringifyObj<T extends object = Record<string, unknown>>(obj: T): string {
   const { result, error } = $stringifyObj(obj);
   if (error) throw new Error($fmtResultErr(error));
   return result;
-}
-
-/**
- * Stringify an object.
- *
- * @param obj - The object to stringify.
- * @returns A Result containing the JSON string or an error.
- */
-export function tryStringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
-  return $stringifyObj(obj);
 }
 
 export function $parseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
@@ -46,8 +53,12 @@ export function $parseToObj<T extends object = Record<string, unknown>>(str: str
 }
 
 /**
- * Parse a string to an object.
+ * Safely parses a JSON string to a plain object (non-throwing).
  *
+ * Wraps `JSON.parse` and returns a Result containing
+ * the parsed object or an error if parsing fails.
+ *
+ * @template T - The expected object type.
  * @param str - The JSON string to parse.
  * @returns A Result containing the parsed object or an error.
  */
@@ -56,11 +67,14 @@ export function tryParseToObj<T extends object = Record<string, unknown>>(str: s
 }
 
 /**
- * Parse a string to an object.
+ * Safely parses a JSON string to a plain object.
  *
+ * Wraps `JSON.parse` and returns the parsed object or throws an error if parsing fails.
+ *
+ * @template T - The expected object type.
  * @param str - The JSON string to parse.
  * @returns A parsed object.
- * @throws {Error} If the string cannot be parsed or is not a valid object.
+ * @throws {Error} If the string cannot be parsed or does not represent a plain object.
  */
 export function parseToObj<T extends object = Record<string, unknown>>(str: string): T {
   const { result, error } = $parseToObj<T>(str);

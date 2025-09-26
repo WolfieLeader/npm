@@ -31,11 +31,15 @@ export function $err(err: { msg: string; desc: string } | ResultErr): Result<nev
 }
 
 export function $fmtError(error: unknown): string {
-  if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
+  if (error instanceof Error) return error.message;
   return String(error);
 }
 
 export function $fmtResultErr(err: ResultErr): string {
   return `${err.message} - ${err.description}`;
+}
+
+export function title(platform: 'web' | 'node', title: string): string {
+  return `${platform === 'web' ? 'Crypto Web API' : 'Crypto NodeJS API'} - ${title}`;
 }

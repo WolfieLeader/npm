@@ -1,6 +1,6 @@
 import type nodeCrypto from 'node:crypto';
 import type { webcrypto } from 'node:crypto';
-import type { DIGEST_ALGORITHMS, ENCODINGS, ENCRYPTION_ALGORITHMS } from './consts';
+import type { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCODING, ENCRYPTION_ALGORITHMS } from './consts';
 
 declare const __brand: unique symbol;
 type Brand<T> = { readonly [__brand]: T };
@@ -13,10 +13,10 @@ export type SecretKey<Platform extends 'web' | 'node'> = {
   readonly key: Platform extends 'web' ? webcrypto.CryptoKey : nodeCrypto.KeyObject;
 } & Brand<`secretKey-${Platform}`>;
 
-export type CipherEncoding = Exclude<Encoding, 'utf8' | 'latin1'>;
+export type CipherEncoding = (typeof CIPHER_ENCODING)[number];
 
 /** Supported encoding formats */
-export type Encoding = (typeof ENCODINGS)[number];
+export type Encoding = (typeof ENCODING)[number];
 
 /** Supported encryption algorithms */
 export type EncryptionAlgorithm = keyof typeof ENCRYPTION_ALGORITHMS;
@@ -32,24 +32,21 @@ export interface CreateSecretKeyOptions {
 }
 
 export interface EncryptOptions {
-  inputEncoding?: Encoding;
-  outputEncoding?: CipherEncoding;
+  encoding?: CipherEncoding;
 }
 
 export interface DecryptOptions {
-  inputEncoding?: CipherEncoding;
-  outputEncoding?: Encoding;
+  encoding?: CipherEncoding;
 }
 
 export interface HashOptions {
   digest?: DigestAlgorithm;
-  inputEncoding?: Encoding;
-  outputEncoding?: CipherEncoding;
+  encoding?: CipherEncoding;
 }
 
 export interface HashPasswordOptions {
   digest?: DigestAlgorithm;
-  outputEncoding?: CipherEncoding;
+  encoding?: CipherEncoding;
   saltLength?: number;
   iterations?: number;
   keyLength?: number;
@@ -57,7 +54,7 @@ export interface HashPasswordOptions {
 
 export interface VerifyPasswordOptions {
   digest?: DigestAlgorithm;
-  inputEncoding?: CipherEncoding;
+  encoding?: CipherEncoding;
   iterations?: number;
   keyLength?: number;
 }

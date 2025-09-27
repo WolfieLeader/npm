@@ -70,14 +70,53 @@ export function $isSecretKey<Platform extends 'node' | 'web'>(
   return Object.freeze({ ...x, injected: algorithm }) as InjectedSecretKey<Platform>;
 }
 
-/** Regular expressions for encrypted data patterns */
+/**
+ * Regular expressions for encrypted data patterns.
+ *
+ * - **node**: `"iv.cipher.tag."` (three dot-separated parts plus a trailing dot)
+ * - **web**: `"iv.cipherWithTag."` (two parts plus a trailing dot)
+ * - **general**: accepts both shapes (2 or 3 parts) with a trailing dot
+ *
+ * Each part is any non-empty string without dots.
+ *
+ * ### 🍼 Explain Like I'm Five
+ * You have a secret code you want to check. Before you check it,
+ * you make sure it looks how a secret code should look.
+ */
 export const ENCRYPTED_REGEX = Object.freeze({
   node: /^([^.]+)\.([^.]+)\.([^.]+)\.$/,
   web: /^([^.]+)\.([^.]+)\.$/,
   general: /^([^.]+)\.([^.]+)(?:\.([^.]+))?\.$/,
 });
 
-/** Checks if the input string matches the specified encrypted data pattern. */
+/**
+ * Checks if a string matches an expected encrypted payload shape.
+ *
+ * - **node**: `"iv.cipher.tag."` (three dot-separated parts plus a trailing dot)
+ * - **web**: `"iv.cipherWithTag."` (two parts plus a trailing dot)
+ * - **general**: accepts both shapes (2 or 3 parts) with a trailing dot
+ *
+ * Each part is any non-empty string without dots.
+ *
+ * This validates only the **shape**, not whether content is valid base64/hex, etc.
+ *
+ * ### 🍼 Explain Like I'm Five
+ * You have a secret code you want to check. Before you check it,
+ * you make sure it looks how a secret code should look.
+ *
+ * @example
+ * ```ts
+ * matchPattern("abc.def.ghi.", "node");    // true
+ * matchPattern("abc.def.", "web");         // true
+ * matchPattern("abc.def.", "node");        // false
+ * matchPattern("abc.def.ghi.", "general"); // true
+ * ```
+ *
+ * @param data - The string to test.
+ * @param format - Which layout to check: `'node'`, `'web'`, or `'general'`.
+ * @returns `true` if the string matches the pattern; otherwise `false`.
+ * @throws {Error} If an unknown `format` is provided.
+ */
 export function matchPattern(data: string, format: 'general' | 'node' | 'web'): boolean {
   if (typeof data !== 'string') return false;
   if (!(format in ENCRYPTED_REGEX)) throw new Error(`Unknown format: ${format}`);

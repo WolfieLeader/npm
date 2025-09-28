@@ -3,6 +3,8 @@ import type { webcrypto } from 'node:crypto';
 import type { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCODING, ENCRYPTION_ALGORITHMS } from './consts';
 
 declare const __brand: unique symbol;
+
+/** A brand type to distinguish between different types */
 type Brand<T> = { readonly [__brand]: T };
 
 /**
@@ -15,9 +17,13 @@ type Brand<T> = { readonly [__brand]: T };
  * @template Platform - 'web' or 'node' to specify the platform of the secret key.
  */
 export type SecretKey<Platform extends 'web' | 'node'> = {
+  /** The platform the key is for ('web' or 'node'). */
   readonly platform: Platform;
+  /** The digest algorithm used for HKDF (e.g. 'sha256'). */
   readonly digest: keyof typeof DIGEST_ALGORITHMS;
+  /** The encryption algorithm used (e.g. 'aes256gcm'). */
   readonly algorithm: keyof typeof ENCRYPTION_ALGORITHMS;
+  /** The actual secret key object (CryptoKey for web, KeyObject for node). */
   readonly key: Platform extends 'web' ? webcrypto.CryptoKey : nodeCrypto.KeyObject;
 } & Brand<`secretKey-${Platform}`>;
 
@@ -47,9 +53,13 @@ export type DigestAlgorithm = keyof typeof DIGEST_ALGORITHMS;
  * - `info` (default: `'cipher-kit'`)
  */
 export interface CreateSecretKeyOptions {
+  /** Encryption algorithm to use (default: `'aes256gcm'`). */
   algorithm?: EncryptionAlgorithm;
+  /** Digest algorithm for HKDF (default: `'sha256'`). */
   digest?: DigestAlgorithm;
+  /** Optional salt for HKDF (default: `'cipher-kit-salt'`, must be ≥ 8 characters). */
   salt?: string;
+  /** Optional context info for HKDF (default: `'cipher-kit'`). */
   info?: string;
 }
 

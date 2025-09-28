@@ -21,16 +21,18 @@ export interface ResultErr {
  * @example
  * ```ts
  * // Primitive result
- * function getNum(): Result<number> { return $ok(42); }
+ * function getNum(): Result<number> {
+ *   return $ok(42);
+ * }
  * const r1 = getNum();
  * if (r1.success) console.log(r1.result); // 42
  *
  * // Object result (spread)
- * function getPair(): Result<{ a: number; b: string }> {
- *   return $ok({ a: 1, b: 'x' });
+ * function getObject(): Result<{ name: string; age: number }> {
+ *   return $ok({ name: 'Alice', age: 30 });
  * }
- * const r2 = getPair();
- * if (r2.success) console.log(r2.a, r2.b); // 1 'x'
+ * const r2 = getObject();
+ * if (r2.success) console.log(r2.name, r2.age); // 'Alice' 30
  * ```
  */
 export type Result<T, E = ResultErr> = T extends object

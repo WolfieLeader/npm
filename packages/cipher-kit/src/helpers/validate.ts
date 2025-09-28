@@ -104,6 +104,11 @@ export const ENCRYPTED_REGEX = Object.freeze({
  * You have a secret code you want to check. Before you check it,
  * you make sure it looks how a secret code should look.
  *
+ * @param data - The string to test.
+ * @param format - Which layout to check: `'node'`, `'web'`, or `'general'`.
+ * @returns `true` if the string matches the pattern; otherwise `false`.
+ * @throws {Error} If an unknown `format` is provided.
+ *
  * @example
  * ```ts
  * matchPattern("abc.def.ghi.", "node");    // true
@@ -111,11 +116,6 @@ export const ENCRYPTED_REGEX = Object.freeze({
  * matchPattern("abc.def.", "node");        // false
  * matchPattern("abc.def.ghi.", "general"); // true
  * ```
- *
- * @param data - The string to test.
- * @param format - Which layout to check: `'node'`, `'web'`, or `'general'`.
- * @returns `true` if the string matches the pattern; otherwise `false`.
- * @throws {Error} If an unknown `format` is provided.
  */
 export function matchPattern(data: string, format: 'general' | 'node' | 'web'): boolean {
   if (typeof data !== 'string') return false;

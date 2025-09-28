@@ -53,7 +53,7 @@ export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncodin
   }
 }
 
-export function $convertEncoding(data: string, from: Encoding, to: Encoding): Result<{ result: string }> {
+export function $convertEncoding(data: string, from: Encoding, to: Encoding): Result<string> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto Web API - Convert Format: Empty data',

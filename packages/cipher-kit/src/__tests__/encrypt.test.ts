@@ -162,15 +162,6 @@ describe('Encryption', () => {
     expect(nodeKit.hash(data, { digest: 'sha256' })).toBe(await webKit.hash(data, { digest: 'sha256' }));
     expect(nodeKit.hash(data, { digest: 'sha384' })).toBe(await webKit.hash(data, { digest: 'sha384' }));
     expect(nodeKit.hash(data, { digest: 'sha512' })).toBe(await webKit.hash(data, { digest: 'sha512' }));
-    expect(nodeKit.hashObj(largeObj, { digest: 'sha256', encoding: 'hex' })).toBe(
-      await webKit.hashObj(largeObj, { digest: 'sha256', encoding: 'hex' }),
-    );
-    expect(nodeKit.hashObj(largeObj, { digest: 'sha384', encoding: 'hex' })).toBe(
-      await webKit.hashObj(largeObj, { digest: 'sha384', encoding: 'hex' }),
-    );
-    expect(nodeKit.hashObj(largeObj, { digest: 'sha512', encoding: 'hex' })).toBe(
-      await webKit.hashObj(largeObj, { digest: 'sha512', encoding: 'hex' }),
-    );
   });
 });
 

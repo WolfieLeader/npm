@@ -263,15 +263,6 @@ export async function $hash(data: string, options: HashOptions = {}): Promise<Re
   }
 }
 
-export async function $hashObj<T extends object = Record<string, unknown>>(
-  data: T,
-  options: HashOptions = {},
-): Promise<Result<string>> {
-  const { result, error } = $stringifyObj(data);
-  if (error) return $err(error);
-  return await $hash(result, options);
-}
-
 export async function $hashPassword(
   password: string,
   options: HashPasswordOptions = {},

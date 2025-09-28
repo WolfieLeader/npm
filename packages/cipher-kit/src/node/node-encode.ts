@@ -44,7 +44,7 @@ export function $convertBytesToStr(data: Buffer, outputEncoding: Encoding = 'utf
   }
 }
 
-export function $convertEncoding(data: string, from: Encoding, to: Encoding): Result<{ result: string }> {
+export function $convertEncoding(data: string, from: Encoding, to: Encoding): Result<string> {
   if (!$isStr(data)) {
     return $err({
       msg: 'Crypto NodeJS API - Convert Format: Empty data',

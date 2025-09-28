@@ -251,15 +251,6 @@ export function $hash(data: string, options: HashOptions = {}): Result<string> {
   }
 }
 
-export function $hashObj<T extends object = Record<string, unknown>>(
-  data: T,
-  options: HashOptions = {},
-): Result<string> {
-  const { result, error } = $stringifyObj(data);
-  if (error) return $err(error);
-  return $hash(result, options);
-}
-
 export function $hashPassword(
   password: string,
   options: HashPasswordOptions = {},

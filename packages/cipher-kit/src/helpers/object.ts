@@ -20,6 +20,10 @@ export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T
  * You have a box of toys (your object) and take a photo of it (a JSON string)
  * so you can send it to a friend.
  *
+ * @template T - Plain object type to serialize.
+ * @param obj - The object to stringify (must be a plain object).
+ * @returns A `Result` with the JSON string on success, or an error.
+ *
  * @example
  * ```ts
  * const res = tryStringifyObj({ a: 1 });
@@ -29,10 +33,6 @@ export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T
  *   console.error(res.error.message, res.error.description);
  * }
  * ```
- *
- * @template T - Plain object type to serialize.
- * @param obj - The object to stringify (must be a plain object).
- * @returns A `Result` with the JSON string on success, or an error.
  */
 export function tryStringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
   return $stringifyObj(obj);
@@ -48,6 +48,11 @@ export function tryStringifyObj<T extends object = Record<string, unknown>>(obj:
  * You have a box of toys (your object) and take a photo of it (a JSON string)
  * so you can send it to a friend.
  *
+ * @template T - Plain object type to serialize.
+ * @param obj - The object to stringify (must be a plain object).
+ * @returns JSON string representation of the object.
+ * @throws {Error} If `obj` is not a plain object or serialization fails.
+ *
  * @example
  * ```ts
  * try {
@@ -56,11 +61,6 @@ export function tryStringifyObj<T extends object = Record<string, unknown>>(obj:
  *   console.error(error);
  * }
  * ```
- *
- * @template T - Plain object type to serialize.
- * @param obj - The object to stringify (must be a plain object).
- * @returns JSON string representation of the object.
- * @throws {Error} If `obj` is not a plain object or serialization fails.
  */
 export function stringifyObj<T extends object = Record<string, unknown>>(obj: T): string {
   const { result, error } = $stringifyObj(obj);
@@ -88,6 +88,10 @@ export function $parseToObj<T extends object = Record<string, unknown>>(str: str
  * ### 🍼 Explain Like I'm Five
  * You rebuild your toy box (an object) from a photo you took (a JSON string).
  *
+ * @template T - The expected object type.
+ * @param str - The JSON string to parse.
+ * @returns A `Result` with the parsed object on success, or an error.
+ *
  * @example
  * ```ts
  * const res = tryParseToObj<{ a: number }>('{"a":1}');
@@ -97,10 +101,6 @@ export function $parseToObj<T extends object = Record<string, unknown>>(str: str
  *   console.error(res.error.message, res.error.description);
  * }
  * ```
- *
- * @template T - The expected object type.
- * @param str - The JSON string to parse.
- * @returns A `Result` with the parsed object on success, or an error.
  */
 export function tryParseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
   return $parseToObj<T>(str);
@@ -114,6 +114,11 @@ export function tryParseToObj<T extends object = Record<string, unknown>>(str: s
  * ### 🍼 Explain Like I'm Five
  * You rebuild your toy box (an object) from a photo you took (a JSON string).
  *
+ * @template T - The expected object type.
+ * @param str - The JSON string to parse.
+ * @returns The parsed plain object.
+ * @throws {Error} If the string can’t be parsed or doesn’t represent a plain object.
+ *
  * @example
  * ```ts
  * try {
@@ -122,11 +127,6 @@ export function tryParseToObj<T extends object = Record<string, unknown>>(str: s
  *   console.error(error);
  * }
  * ```
- *
- * @template T - The expected object type.
- * @param str - The JSON string to parse.
- * @returns The parsed plain object.
- * @throws {Error} If the string can’t be parsed or doesn’t represent a plain object.
  */
 export function parseToObj<T extends object = Record<string, unknown>>(str: string): T {
   const { result, error } = $parseToObj<T>(str);

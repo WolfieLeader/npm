@@ -5,7 +5,7 @@
 
 <p align="center">
   Secure, Modern, and Cross-Platform <br/>
-  Cryptography Helpers for Web, Node.js <br/> 
+  Cryptography Helpers for Web, Node.js, <br/> 
   Deno, Bun, and Cloudflare Workers
 </p>
 
@@ -41,15 +41,21 @@ bun add cipher-kit@latest
 ## Quick Start 🚀
 
 ```typescript
-import { createSecretKey, encrypt, decrypt } from "cipher-kit/node"; // or "cipher-kit/web-api"
+// Node.js Quick Start
+import { createSecretKey, encrypt, decrypt } from "cipher-kit/node";
 
-const secretKey = createSecretKey("my-passphrase");
+const nodeSecretKey = createSecretKey("my-passphrase");
+const encrypted = encrypt("Hello World!", nodeSecretKey);
+const decrypted = decrypt(encrypted, nodeSecretKey);
+console.log(decrypted); // "Hello World!"
 
-const encrypted = encrypt("Hello, World!", secretKey);
-console.log(`Encrypted: ${encrypted}`); // Encrypted: <ciphertext>
+// Web Quick Start
+import { createSecretKey, encrypt, decrypt } from "cipher-kit/web-api";
 
-const decrypted = decrypt(encrypted, secretKey);
-console.log(`Decrypted: ${decrypted}`); // Decrypted: Hello, World!
+const webSecretKey = await createSecretKey("my-passphrase");
+const encrypted = await encrypt("Hello World!", webSecretKey);
+const decrypted = await decrypt(encrypted, webSecretKey);
+console.log(decrypted); // "Hello World!"
 ```
 
 ## Usage 🪛
@@ -245,6 +251,8 @@ The `encryptObj` and `decryptObj` functions accept the same `options` parameters
 
 Hashing is a one-way process that uses an algorithm to transform data of any size into a fixed-length string of characters, called a hash value or digest. It serves as a digital fingerprint for the data, enabling quick data retrieval in hash tables, password storage, and file integrity checks. Key features include its irreversibility (you can't get the original data back from the hash).
 
+Not suitable for storing passwords - use `hashPassword` instead.
+
 ```typescript
 // Node.js example
 import { hash } from "cipher-kit/node";
@@ -295,7 +303,7 @@ Password hashing is a one-way process that transforms a plaintext password into 
 
 Password hashing is different from general-purpose hashing because it often involves additional techniques like salting and key stretching to enhance security against brute-force attacks, and it's usually slower to compute to make rainbow table attacks less feasible.
 
-To verify a password, the same hashing process is applied to the input password, and the resulting hash is compared to the stored hash, in a time-safe manner to prevent timing attacks.
+To verify a password, the same hashing process is applied to the input password, and the resulting hash is compared to the stored hash, in a constant-time comparison to prevent timing attacks.
 
 ```typescript
 // Node.js example
@@ -423,6 +431,6 @@ This project is licensed under the [MIT License](https://opensource.org/licenses
 
 <div align="center">
 <br/>
-<p style="font-size: 14px; font-weight:bold;">Made by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></p>
-<p style="font-size: 12px; font-style: italic;">Thank you!</p>
+<div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
+<div style="font-size: 12px; font-style: italic;">Thank you!</div>
 </div>

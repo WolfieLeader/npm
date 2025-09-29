@@ -3,11 +3,10 @@
 
 <h1 align="center" style="font-weight:900;">cipher-kit</h1>
 
-<!-- TODO -->
 <p align="center">
-  Secure, Lightweight, and Cross-Platform <br/>
-  Encryption, Decryption, and Hashing <br/> 
-  for Web, Node.js, Deno, Bun, and Cloudflare Workers
+  Secure, Modern, and Cross-Platform <br/>
+  Cryptography Helpers for Web, Node.js <br/> 
+  Deno, Bun, and Cloudflare Workers
 </p>
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
@@ -41,27 +40,22 @@ bun add cipher-kit@latest
 
 ## Usage 🪛
 
-### The `try` Prefix (Non-Throwing `Result` API)
+Table of Contents:
 
-The `try` prefix functions return a `Result<T>` object that indicates success or failure without throwing exceptions.
+- [The `webKit` and `nodeKit` Objects 📦](#the-webkit-and-nodekit-objects-)
+- [The `try` Prefix (Non-Throwing `Result` API) 🤔](#the-try-prefix-non-throwing-result-api-)
+- [Encryption and Decryption 🤫](#encryption-and-decryption-)
+  - [Secret Key Creation 🔑](#_secret-key-creation-)
+  - [Encrypting Data 🔐](#_encrypting-data-)
+  - [Decrypting Data 🔓](#_decrypting-data-)
+- [Hashing 🪄](#hashing-)
+- [UUID Generation 🪪](#uuid-generation-)
+- [Password Hashing and Verification 💎](#password-hashing-and-verification-)
+- [Encoding and Decoding 🧩](#encoding-and-decoding-)
+- [Object Serialization and Deserialization 🧬](#object-serialization-and-deserialization-)
+- [Regex Utilities 🔍](#regex-utilities-)
 
-This is useful in scenarios where you want to handle errors gracefully without using `try/catch` blocks.
-
-```typescript
-// Throwing version - simpler but requires try/catch
-const message = encrypt('Secret message', secretKey);
-console.log(`Encrypted message: ${message}`);
-
-// Non-throwing version - returns a Result<T> object
-const message = tryEncrypt('Secret message', secretKey);
-if (message.success) {
-  console.log(`Encrypted message: ${message.result}`);
-} else {
-  console.error(`Encryption failed: ${message.error.message} - ${message.error.description}`);
-}
-```
-
-### The `webKit` and `nodeKit` Objects
+### The `webKit` and `nodeKit` Objects 📦
 
 The `webKit` and `nodeKit` objects provide platform-specific implementations for Web (including Deno, Bun, and Cloudflare Workers) and Node.js environments, respectively.
 
@@ -82,13 +76,33 @@ function isSecretKey(key: unknown): boolean {
 }
 ```
 
-### Encryption and Decryption
+### The `try` Prefix (Non-Throwing `Result` API) 🤔
+
+The `try` prefix functions return a `Result<T>` object that indicates success or failure without throwing exceptions.
+
+This is useful in scenarios where you want to handle errors gracefully without using `try/catch` blocks.
+
+```typescript
+// Throwing version - simpler but requires try/catch
+const message = encrypt('Secret message', secretKey);
+console.log(`Encrypted message: ${message}`);
+
+// Non-throwing version - returns a Result<T> object
+const message = tryEncrypt('Secret message', secretKey);
+if (message.success) {
+  console.log(`Encrypted message: ${message.result}`);
+} else {
+  console.error(`Encryption failed: ${message.error.message} - ${message.error.description}`);
+}
+```
+
+### Encryption and Decryption 🤫
 
 Encryption is the process of converting readable plaintext into unreadable ciphertext using an algorithm and a secret key to protect its confidentiality. Decryption is the reverse process, using the same algorithm and the correct key to convert the ciphertext back into its original, readable plaintext form.
 
 The package provides functions for both encryption and decryption. On top of that the function provides `encryptObj` and `decryptObj` functions that work the same way but for objects (using JSON serialization).
 
-#### Secret Key Creation
+#### _Secret Key Creation_ 🔑
 
 Before encrypting or decrypting data, you need to create a secret key.
 
@@ -118,7 +132,7 @@ interface CreateSecretKeyOptions {
 }
 ```
 
-#### Encrypting Data
+#### _Encrypting Data_ 🔐
 
 ```typescript
 import { encrypt } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
@@ -136,7 +150,7 @@ interface EncryptOptions {
 }
 ```
 
-#### Decrypting Data
+#### _Decrypting Data_ 🔓
 
 ```typescript
 import { decrypt } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
@@ -156,7 +170,7 @@ interface DecryptOptions {
 }
 ```
 
-### Hashing
+### Hashing 🪄
 
 Hashing is a one-way process that uses an algorithm to transform data of any size into a fixed-length string of characters, called a hash value or digest. It serves as a digital fingerprint for the data, enabling quick data retrieval in hash tables, password storage, and file integrity checks. Key features include its irreversibility (you can't get the original data back from the hash).
 
@@ -179,7 +193,7 @@ interface HashOptions {
 }
 ```
 
-### UUID Generation
+### UUID Generation 🪪
 
 UUID (Universally Unique Identifier) is a 128-bit identifier used to uniquely identify information in computer systems. It is designed to be globally unique, meaning that no two UUIDs should be the same, even if generated on different systems or at different times. UUIDs are commonly used in databases, distributed systems, and applications where unique identification is crucial.
 
@@ -190,7 +204,7 @@ const uuid = generateUUID();
 console.log(`Generated UUID: ${uuid}`);
 ```
 
-### Password Hashing and Verification
+### Password Hashing and Verification 💎
 
 Password hashing is a one-way process that transforms a plaintext password into a fixed-length hash. Password hashing is crucial for securely storing passwords in databases, as it protects user credentials from being exposed in case of a data breach.
 
@@ -244,7 +258,61 @@ interface VerifyPasswordOptions {
 }
 ```
 
-<!-- TODO obj <-> string, bytes <-> string, regex -->
+### Encoding and Decoding 🧩
+
+Encoding and decoding are processes used to convert data into a specific format for efficient transmission, storage, or representation. Encoding transforms data into a different format using a specific scheme, while decoding reverses this process to retrieve the original data. Common encoding schemes include Base64, Base64URL, and Hexadecimal (Hex).
+
+```typescript
+import { convertStrToBytes, convertBytesToStr, convertEncoding } from 'cipher-kit/web'; // or 'cipher-kit/node'
+
+// Encoding
+const buffer = convertStrToBytes('Hello World!', 'utf-8'); // the input encoding
+console.log(`Encoded: ${buffer}`);
+
+// Decoding
+const str = convertBytesToStr(buffer, 'utf-8'); // the output encoding
+console.log(`Decoded: ${str}`);
+
+// Convert between encodings
+const base64 = convertEncoding('Hello World!', 'utf-8', 'base64');
+console.log(`Base64: ${base64}`);
+```
+
+### Object Serialization and Deserialization 🧬
+
+Object serialization in JavaScript is the process of converting objects or arrays into a JSON string representation, that can be easily stored or transmitted. Deserialization is the reverse process, where the JSON string is parsed back into its original object or array structure.
+
+```typescript
+import { stringifyObj, parseToObj } from 'cipher-kit'; // works in both 'cipher-kit/web-api' and 'cipher-kit/node'
+
+const obj = { name: 'Alice', age: 30, city: 'Wonderland' };
+
+const jsonString = stringifyObj(obj);
+console.log(`Serialized: ${jsonString}`);
+
+const parsedObj = parseToObj<typeof obj>(jsonString);
+console.log(`Deserialized:`, parsedObj);
+```
+
+### Regex Utilities 🔍
+
+Regular expressions (regex) are sequences of characters that form search patterns, used for pattern matching within strings.
+
+Before we try to decrypt a message we should validate that it is in the correct format. (already done internally in the decrypt function, but here is how you can do it manually)
+
+```typescript
+import { ENCRYPTED_REGEX, matchPattern } from 'cipher-kit'; // works in both 'cipher-kit/web-api' and 'cipher-kit/node'
+
+function isEncryptedFormat(message: string): boolean {
+  return matchPattern(message, 'general'); // or "node" or "web"
+}
+
+// or
+
+function isEncryptedFormat(message: string): boolean {
+  return ENCRYPTED_REGEX.general.test(message); // or "node" or "web"
+}
+```
 
 ## Contributions 🤝
 

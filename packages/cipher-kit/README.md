@@ -42,12 +42,12 @@ bun add cipher-kit@latest
 
 Table of Contents:
 
-- [`webKit` and `nodeKit`](#webkit-and-nodekit-objects-)
-- [The `try` Prefix](#the-try-prefix-non-throwing-result-api-)
+- [webKit and nodeKit](#webkit-and-nodekit-objects-)
+- [The try Prefix](#the-try-prefix-non-throwing-result-api-)
 - [Encryption & Decryption](#encryption--decryption-)
-  - [Secret Key Creation](#_secret-key-creation-)
-  - [Encrypting Data](#_encrypting-data-)
-  - [Decrypting Data](#_decrypting-data-)
+  - [Secret Key Creation](#secret-key-creation-)
+  - [Encrypting Data](#encrypting-data-)
+  - [Decrypting Data](#decrypting-data-)
 - [Hashing](#hashing-)
 - [UUID Generation](#uuid-generation-)
 - [Password Hashing & Verification](#password-hashing--verification-)

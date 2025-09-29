@@ -28,7 +28,7 @@ Each package is fast, type-safe, and production-ready — written in TypeScript 
 ### `cipher-kit` 🔐
 
 <a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/v/cipher-kit?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/dy/cipher-kit.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/dt/cipher-kit.svg?color=03C03C" alt="npm downloads"></a>
 
 Secure, Lightweight, and Cross-Platform Encryption & Decryption for Web, Node.js, Deno, and Bun
 
@@ -43,7 +43,7 @@ Secure, Lightweight, and Cross-Platform Encryption & Decryption for Web, Node.js
 ### `compress-kit` 🔬
 
 <a href="https://www.npmjs.com/package/compress-kit" rel="nofollow"><img src="https://img.shields.io/npm/v/compress-kit?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/compress-kit" rel="nofollow"><img src="https://img.shields.io/npm/dy/compress-kit.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/compress-kit" rel="nofollow"><img src="https://img.shields.io/npm/dt/compress-kit.svg?color=03C03C" alt="npm downloads"></a>
 
 Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, and Bun
 
@@ -57,7 +57,7 @@ Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, and
 
 ### `get-client-ip` 📍
 
-<a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/v/get-client-ip?color=0078D4" alt="npm version"></a> <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dy/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/v/get-client-ip?color=0078D4" alt="npm version"></a> <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dt/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
 
 A Lightweight Utility for Extracting the Real Client IP Address from Incoming HTTP Requests
 
@@ -72,7 +72,7 @@ A Lightweight Utility for Extracting the Real Client IP Address from Incoming HT
 ### `generate-certs` 🗝️
 
 <a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/v/generate-certs?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/dy/generate-certs.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/dt/generate-certs.svg?color=03C03C" alt="npm downloads"></a>
 
 Effortless HTTPS certificate generation for local development environments.
 
@@ -88,7 +88,7 @@ Effortless HTTPS certificate generation for local development environments.
 ### `modern-cookies` 🍪
 
 <a href="https://www.npmjs.com/package/modern-cookies" rel="nofollow"><img src="https://img.shields.io/npm/v/modern-cookies?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/modern-cookies" rel="nofollow"><img src="https://img.shields.io/npm/dy/modern-cookies.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/modern-cookies" rel="nofollow"><img src="https://img.shields.io/npm/dt/modern-cookies.svg?color=03C03C" alt="npm downloads"></a>
 
 A Lightweight and Modern Cookie Utility for Express and Nest.js
 

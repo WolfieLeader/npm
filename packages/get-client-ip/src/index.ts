@@ -1,24 +1,24 @@
-import { isIP } from 'node:net';
-import type { NextFunction, Request, Response } from 'express';
+import { isIP } from "node:net";
+import type { NextFunction, Request, Response } from "express";
 
 type NoneEmptyArray<T> = [T, ...T[]];
 
 function $isIP(ip: unknown): ip is string {
-  return typeof ip === 'string' && isIP(ip) !== 0;
+  return typeof ip === "string" && isIP(ip) !== 0;
 }
 
 const LOOKUP_HEADERS = [
-  'x-client-ip',
-  'x-forwarded-for',
-  'forwarded-for',
-  'x-forwarded',
-  'x-real-ip',
-  'cf-connecting-ip',
-  'true-client-ip',
-  'x-cluster-client-ip',
-  'fastly-client-ip',
-  'x-appengine-user-ip',
-  'cf-pseudo-ipv4',
+  "x-client-ip",
+  "x-forwarded-for",
+  "forwarded-for",
+  "x-forwarded",
+  "x-real-ip",
+  "cf-connecting-ip",
+  "true-client-ip",
+  "x-cluster-client-ip",
+  "fastly-client-ip",
+  "x-appengine-user-ip",
+  "cf-pseudo-ipv4",
 ];
 
 function $extractIpFromHeaders(req: Request): NoneEmptyArray<string> | null {
@@ -35,10 +35,10 @@ function $extractIpFromHeaders(req: Request): NoneEmptyArray<string> | null {
       if (filteredIps.length > 0) return filteredIps.map((item) => item.trim()) as NoneEmptyArray<string>;
     }
 
-    if (typeof ip === 'string') {
+    if (typeof ip === "string") {
       if ($isIP(ip.trim())) return [ip.trim()];
-      if (!ip.includes(',')) continue;
-      const filteredIps = ip.split(',').filter((ip) => $isIP(ip.trim()));
+      if (!ip.includes(",")) continue;
+      const filteredIps = ip.split(",").filter((ip) => $isIP(ip.trim()));
       if (filteredIps.length > 0) {
         return filteredIps.map((item) => item.trim()) as NoneEmptyArray<string>;
       }
@@ -84,7 +84,7 @@ function $extractIpFromHeaders(req: Request): NoneEmptyArray<string> | null {
  * });
  */
 export function getClientIp(req: Request, res?: Response, next?: NextFunction): string | undefined {
-  if (!req) throw new Error('Request is undefined');
+  if (!req) throw new Error("Request is undefined");
 
   const ips = $extractIpFromHeaders(req);
   if (ips && ips.length > 0) {

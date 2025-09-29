@@ -1,5 +1,5 @@
-import type { Buffer } from 'node:buffer';
-import { $fmtResultErr, type Result } from '~/helpers/error';
+import type { Buffer } from "node:buffer";
+import { $fmtResultErr, type Result } from "~/helpers/error";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -9,9 +9,9 @@ import type {
   HashPasswordOptions,
   SecretKey,
   VerifyPasswordOptions,
-} from '~/helpers/types';
-import { $isSecretKey } from '~/helpers/validate';
-import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from './node-encode';
+} from "~/helpers/types";
+import { $isSecretKey } from "~/helpers/validate";
+import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from "./node-encode";
 import {
   $createSecretKey,
   $decrypt,
@@ -22,7 +22,7 @@ import {
   $hash,
   $hashPassword,
   $verifyPassword,
-} from './node-encrypt';
+} from "./node-encrypt";
 
 /**
  * Type guard to check if the provided value is a SecretKey object for Node.js environment.
@@ -33,8 +33,8 @@ import {
  * @param x - The value to check.
  * @returns True if the value is a SecretKey object for Node.js, false otherwise.
  */
-export function isNodeSecretKey(x: unknown): x is SecretKey<'node'> {
-  return $isSecretKey(x, 'node') !== null;
+export function isNodeSecretKey(x: unknown): x is SecretKey<"node"> {
+  return $isSecretKey(x, "node") !== null;
 }
 
 /**
@@ -85,7 +85,7 @@ export function generateUuid(): string {
 export function tryCreateSecretKey(
   secret: string,
   options: CreateSecretKeyOptions = {},
-): Result<{ result: SecretKey<'node'> }> {
+): Result<{ result: SecretKey<"node"> }> {
   return $createSecretKey(secret, options);
 }
 
@@ -106,7 +106,7 @@ export function tryCreateSecretKey(
  * @returns The derived `SecretKey`.
  * @throws {Error} If key derivation fails.
  */
-export function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): SecretKey<'node'> {
+export function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): SecretKey<"node"> {
   const { result, error } = $createSecretKey(secret, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -126,7 +126,7 @@ export function createSecretKey(secret: string, options: CreateSecretKeyOptions 
  * @param options.encoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A `Result` containing the encrypted string in the specified format or an error.
  */
-export function tryEncrypt(data: string, secretKey: SecretKey<'node'>, options: EncryptOptions = {}): Result<string> {
+export function tryEncrypt(data: string, secretKey: SecretKey<"node">, options: EncryptOptions = {}): Result<string> {
   return $encrypt(data, secretKey, options);
 }
 
@@ -145,7 +145,7 @@ export function tryEncrypt(data: string, secretKey: SecretKey<'node'>, options: 
  * @returns The encrypted string in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
  */
-export function encrypt(data: string, secretKey: SecretKey<'node'>, options: EncryptOptions = {}): string {
+export function encrypt(data: string, secretKey: SecretKey<"node">, options: EncryptOptions = {}): string {
   const { result, error } = $encrypt(data, secretKey, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -167,7 +167,7 @@ export function encrypt(data: string, secretKey: SecretKey<'node'>, options: Enc
  */
 export function tryDecrypt(
   encrypted: string,
-  secretKey: SecretKey<'node'>,
+  secretKey: SecretKey<"node">,
   options: DecryptOptions = {},
 ): Result<string> {
   return $decrypt(encrypted, secretKey, options);
@@ -188,7 +188,7 @@ export function tryDecrypt(
  * @returns The decrypted UTF-8 string.
  * @throws {Error} If the input data or key is invalid, or if decryption fails.
  */
-export function decrypt(encrypted: string, secretKey: SecretKey<'node'>, options: DecryptOptions = {}): string {
+export function decrypt(encrypted: string, secretKey: SecretKey<"node">, options: DecryptOptions = {}): string {
   const { result, error } = $decrypt(encrypted, secretKey, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -213,7 +213,7 @@ export function decrypt(encrypted: string, secretKey: SecretKey<'node'>, options
  */
 export function tryEncryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: SecretKey<'node'>,
+  secretKey: SecretKey<"node">,
   options: EncryptOptions = {},
 ): Result<string> {
   return $encryptObj(data, secretKey, options);
@@ -239,7 +239,7 @@ export function tryEncryptObj<T extends object = Record<string, unknown>>(
  */
 export function encryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: SecretKey<'node'>,
+  secretKey: SecretKey<"node">,
   options: EncryptOptions = {},
 ): string {
   const { result, error } = $encryptObj(data, secretKey, options);
@@ -264,7 +264,7 @@ export function encryptObj<T extends object = Record<string, unknown>>(
  */
 export function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<'node'>,
+  secretKey: SecretKey<"node">,
   options: DecryptOptions = {},
 ): Result<{ result: T }> {
   return $decryptObj<T>(encrypted, secretKey, options);
@@ -288,7 +288,7 @@ export function tryDecryptObj<T extends object = Record<string, unknown>>(
  */
 export function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<'node'>,
+  secretKey: SecretKey<"node">,
   options: DecryptOptions = {},
 ): T {
   const { result, error } = $decryptObj<T>(encrypted, secretKey, options);
@@ -426,7 +426,7 @@ export function verifyPassword(
  * @param inputEncoding - The encoding of the input string (default: `'utf8'`).
  * @returns A `Result` with `{ result: Buffer }` or an error.
  */
-export function tryConvertStrToBytes(data: string, inputEncoding: Encoding = 'utf8'): Result<{ result: Buffer }> {
+export function tryConvertStrToBytes(data: string, inputEncoding: Encoding = "utf8"): Result<{ result: Buffer }> {
   return $convertStrToBytes(data, inputEncoding);
 }
 
@@ -443,7 +443,7 @@ export function tryConvertStrToBytes(data: string, inputEncoding: Encoding = 'ut
  * @returns A `Buffer` containing the bytes.
  * @throws {Error} If input is invalid or conversion fails.
  */
-export function convertStrToBytes(data: string, inputEncoding: Encoding = 'utf8'): Buffer {
+export function convertStrToBytes(data: string, inputEncoding: Encoding = "utf8"): Buffer {
   const { result, error } = $convertStrToBytes(data, inputEncoding);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -461,7 +461,7 @@ export function convertStrToBytes(data: string, inputEncoding: Encoding = 'utf8'
  * @param outputEncoding - The output encoding (default: `'utf8'`).
  * @returns A `Result` with the string or an error.
  */
-export function tryConvertBytesToStr(data: Buffer, outputEncoding: Encoding = 'utf8'): Result<string> {
+export function tryConvertBytesToStr(data: Buffer, outputEncoding: Encoding = "utf8"): Result<string> {
   return $convertBytesToStr(data, outputEncoding);
 }
 
@@ -478,7 +478,7 @@ export function tryConvertBytesToStr(data: Buffer, outputEncoding: Encoding = 'u
  * @returns The encoded string.
  * @throws {Error} If input is invalid or conversion fails.
  */
-export function convertBytesToStr(data: Buffer, outputEncoding: Encoding = 'utf8'): string {
+export function convertBytesToStr(data: Buffer, outputEncoding: Encoding = "utf8"): string {
   const { result, error } = $convertBytesToStr(data, outputEncoding);
   if (error) throw new Error($fmtResultErr(error));
   return result;

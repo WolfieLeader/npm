@@ -1,10 +1,10 @@
-import { defineConfig, type Options } from 'tsup';
+import { defineConfig, type Options } from "tsup";
 
 export default defineConfig((options: Options) => ({
-  name: 'get-client-ip',
-  entry: ['src/index.ts'],
-  outDir: 'dist',
-  format: ['cjs', 'esm'],
+  name: "get-client-ip",
+  entry: ["src/index.ts"],
+  outDir: "dist",
+  format: ["cjs", "esm"],
   clean: true,
   dts: true,
   sourcemap: true,
@@ -12,8 +12,8 @@ export default defineConfig((options: Options) => ({
   splitting: true,
   minify: false,
   cjsInterop: true,
-  tsconfig: 'tsconfig.json',
+  tsconfig: "tsconfig.json",
   skipNodeModulesBundle: true,
-  external: ['express'],
+  external: ["express"],
   ...options,
 }));

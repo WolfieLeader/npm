@@ -1,12 +1,12 @@
-import { $err, $fmtError, $fmtResultErr, $ok, type Result } from './error';
-import { $isObj, $isStr } from './validate';
+import { $err, $fmtError, $fmtResultErr, $ok, type Result } from "./error";
+import { $isObj, $isStr } from "./validate";
 
 export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
   try {
-    if (!$isObj(obj)) return $err({ msg: 'Invalid object', desc: 'Input is not a plain object' });
+    if (!$isObj(obj)) return $err({ msg: "Invalid object", desc: "Input is not a plain object" });
     return $ok(JSON.stringify(obj));
   } catch (error) {
-    return $err({ msg: 'Utility: Stringify error', desc: $fmtError(error) });
+    return $err({ msg: "Utility: Stringify error", desc: $fmtError(error) });
   }
 }
 
@@ -70,13 +70,13 @@ export function stringifyObj<T extends object = Record<string, unknown>>(obj: T)
 
 export function $parseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
   try {
-    if (!$isStr(str)) return $err({ msg: 'Utility: Invalid input', desc: 'Input is not a valid string' });
+    if (!$isStr(str)) return $err({ msg: "Utility: Invalid input", desc: "Input is not a valid string" });
     const obj = JSON.parse(str);
 
-    if (!$isObj(obj)) return $err({ msg: 'Utility: Invalid object format', desc: 'Parsed data is not a plain object' });
+    if (!$isObj(obj)) return $err({ msg: "Utility: Invalid object format", desc: "Parsed data is not a plain object" });
     return $ok({ result: obj as T });
   } catch (error) {
-    return $err({ msg: 'Utility: Invalid format', desc: $fmtError(error) });
+    return $err({ msg: "Utility: Invalid format", desc: $fmtError(error) });
   }
 }
 

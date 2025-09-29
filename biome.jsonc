@@ -54,7 +54,7 @@
   "javascript": {
     "formatter": {
       "enabled": true,
-      "quoteStyle": "single",
+      "quoteStyle": "double",
       "arrowParentheses": "always",
       "bracketSameLine": true,
       "bracketSpacing": true

@@ -1,4 +1,4 @@
-import { $isObj } from './validate';
+import { $isObj } from "./validate";
 
 /**
  * Standardized error object for the `Result` type.
@@ -54,23 +54,23 @@ export function $err(err: { msg: string; desc: string } | ResultErr): Result<nev
   return {
     success: false,
     error: {
-      message: 'msg' in err ? err.msg : err.message,
-      description: 'desc' in err ? err.desc : err.description,
+      message: "msg" in err ? err.msg : err.message,
+      description: "desc" in err ? err.desc : err.description,
     },
   } as Result<never, ResultErr>;
 }
 
 export function $fmtError(error: unknown): string {
-  if (typeof error === 'string') return error;
+  if (typeof error === "string") return error;
   if (error instanceof Error) return error.message;
   return String(error);
 }
 
 export function $fmtResultErr(err: ResultErr | undefined): string {
-  if (!err) return 'Unknown error';
+  if (!err) return "Unknown error";
   return `${err.message} - ${err.description}`;
 }
 
-export function title(platform: 'web' | 'node', title: string): string {
-  return `${platform === 'web' ? 'Crypto Web API' : 'Crypto NodeJS API'} - ${title}`;
+export function title(platform: "web" | "node", title: string): string {
+  return `${platform === "web" ? "Crypto Web API" : "Crypto NodeJS API"} - ${title}`;
 }

@@ -1,4 +1,4 @@
-import { $fmtResultErr, type Result } from '~/helpers/error';
+import { $fmtResultErr, type Result } from "~/helpers/error";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -8,9 +8,9 @@ import type {
   HashPasswordOptions,
   SecretKey,
   VerifyPasswordOptions,
-} from '~/helpers/types';
-import { $isSecretKey } from '~/helpers/validate';
-import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from './web-encode';
+} from "~/helpers/types";
+import { $isSecretKey } from "~/helpers/validate";
+import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from "./web-encode";
 import {
   $createSecretKey,
   $decrypt,
@@ -21,7 +21,7 @@ import {
   $hash,
   $hashPassword,
   $verifyPassword,
-} from './web-encrypt';
+} from "./web-encrypt";
 
 /**
  * Type guard to check if the provided value is a SecretKey object for Web (Deno, Bun, Cloudflare included) environment.
@@ -32,8 +32,8 @@ import {
  * @param x - The value to check.
  * @returns True if the value is a SecretKey object for Web, false otherwise.
  */
-export function isWebSecretKey(x: unknown): x is SecretKey<'web'> {
-  return $isSecretKey(x, 'web') !== null;
+export function isWebSecretKey(x: unknown): x is SecretKey<"web"> {
+  return $isSecretKey(x, "web") !== null;
 }
 
 /**
@@ -84,7 +84,7 @@ export function generateUuid(): string {
 export async function tryCreateSecretKey(
   secret: string,
   options: CreateSecretKeyOptions = {},
-): Promise<Result<{ result: SecretKey<'web'> }>> {
+): Promise<Result<{ result: SecretKey<"web"> }>> {
   return await $createSecretKey(secret, options);
 }
 
@@ -105,7 +105,7 @@ export async function tryCreateSecretKey(
  * @returns A promise of the derived `SecretKey`.
  * @throws {Error} If key derivation fails.
  */
-export async function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): Promise<SecretKey<'web'>> {
+export async function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): Promise<SecretKey<"web">> {
   const { result, error } = await $createSecretKey(secret, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -127,7 +127,7 @@ export async function createSecretKey(secret: string, options: CreateSecretKeyOp
  */
 export async function tryEncrypt(
   data: string,
-  secretKey: SecretKey<'web'>,
+  secretKey: SecretKey<"web">,
   options: EncryptOptions = {},
 ): Promise<Result<string>> {
   return await $encrypt(data, secretKey, options);
@@ -150,7 +150,7 @@ export async function tryEncrypt(
  */
 export async function encrypt(
   data: string,
-  secretKey: SecretKey<'web'>,
+  secretKey: SecretKey<"web">,
   options: EncryptOptions = {},
 ): Promise<string> {
   const { result, error } = await $encrypt(data, secretKey, options);
@@ -174,7 +174,7 @@ export async function encrypt(
  */
 export async function tryDecrypt(
   encrypted: string,
-  secretKey: SecretKey<'web'>,
+  secretKey: SecretKey<"web">,
   options: DecryptOptions = {},
 ): Promise<Result<string>> {
   return await $decrypt(encrypted, secretKey, options);
@@ -197,7 +197,7 @@ export async function tryDecrypt(
  */
 export async function decrypt(
   encrypted: string,
-  secretKey: SecretKey<'web'>,
+  secretKey: SecretKey<"web">,
   options: DecryptOptions = {},
 ): Promise<string> {
   const { result, error } = await $decrypt(encrypted, secretKey, options);
@@ -224,7 +224,7 @@ export async function decrypt(
  */
 export async function tryEncryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: SecretKey<'web'>,
+  secretKey: SecretKey<"web">,
   options: EncryptOptions = {},
 ): Promise<Result<string>> {
   return await $encryptObj(data, secretKey, options);
@@ -250,7 +250,7 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
  */
 export async function encryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: SecretKey<'web'>,
+  secretKey: SecretKey<"web">,
   options: EncryptOptions = {},
 ): Promise<string> {
   const { result, error } = await $encryptObj(data, secretKey, options);
@@ -275,7 +275,7 @@ export async function encryptObj<T extends object = Record<string, unknown>>(
  */
 export async function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<'web'>,
+  secretKey: SecretKey<"web">,
   options: DecryptOptions = {},
 ): Promise<Result<{ result: T }>> {
   return await $decryptObj<T>(encrypted, secretKey, options);
@@ -299,7 +299,7 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
  */
 export async function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<'web'>,
+  secretKey: SecretKey<"web">,
   options: DecryptOptions = {},
 ): Promise<T> {
   const { result, error } = await $decryptObj<T>(encrypted, secretKey, options);
@@ -442,7 +442,7 @@ export async function verifyPassword(
  */
 export function tryConvertStrToBytes(
   data: string,
-  inputEncoding: Encoding = 'utf8',
+  inputEncoding: Encoding = "utf8",
 ): Result<{ result: Uint8Array<ArrayBuffer> }> {
   return $convertStrToBytes(data, inputEncoding);
 }
@@ -460,7 +460,7 @@ export function tryConvertStrToBytes(
  * @returns A `Uint8Array` containing the bytes.
  * @throws {Error} If input is invalid or conversion fails.
  */
-export function convertStrToBytes(data: string, inputEncoding: Encoding = 'utf8'): Uint8Array<ArrayBuffer> {
+export function convertStrToBytes(data: string, inputEncoding: Encoding = "utf8"): Uint8Array<ArrayBuffer> {
   const { result, error } = $convertStrToBytes(data, inputEncoding);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -480,7 +480,7 @@ export function convertStrToBytes(data: string, inputEncoding: Encoding = 'utf8'
  */
 export function tryConvertBytesToStr(
   data: Uint8Array | ArrayBuffer,
-  outputEncoding: Encoding = 'utf8',
+  outputEncoding: Encoding = "utf8",
 ): Result<string> {
   return $convertBytesToStr(data, outputEncoding);
 }
@@ -498,7 +498,7 @@ export function tryConvertBytesToStr(
  * @returns The encoded string.
  * @throws {Error} If input is invalid or conversion fails.
  */
-export function convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding: Encoding = 'utf8'): string {
+export function convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding: Encoding = "utf8"): string {
   const { result, error } = $convertBytesToStr(data, outputEncoding);
   if (error) throw new Error($fmtResultErr(error));
   return result;

@@ -1,14 +1,14 @@
-import { defineConfig, type Options } from 'tsup';
+import { defineConfig, type Options } from "tsup";
 
 export default defineConfig((options: Options) => ({
-  name: 'cipher-kit',
+  name: "cipher-kit",
   entry: {
-    index: 'src/export.ts',
-    node: 'src/node/export.ts',
-    'web-api': 'src/web/export.ts',
+    index: "src/export.ts",
+    node: "src/node/export.ts",
+    "web-api": "src/web/export.ts",
   },
-  outDir: 'dist',
-  format: ['cjs', 'esm'],
+  outDir: "dist",
+  format: ["cjs", "esm"],
   clean: true,
   dts: true,
   sourcemap: true,
@@ -16,7 +16,7 @@ export default defineConfig((options: Options) => ({
   splitting: true,
   minify: false,
   cjsInterop: true,
-  tsconfig: 'tsconfig.json',
+  tsconfig: "tsconfig.json",
   skipNodeModulesBundle: true,
   ...options,
 }));

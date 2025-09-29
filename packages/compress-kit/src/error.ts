@@ -1,4 +1,4 @@
-import { $isObj } from './utils';
+import { $isObj } from "./utils";
 
 export interface ResultErr {
   readonly message: string;
@@ -24,14 +24,14 @@ export function $err(err: { msg: string; desc: string } | ResultErr): Result<nev
   return {
     success: false,
     error: {
-      message: 'msg' in err ? err.msg : err.message,
-      description: 'desc' in err ? err.desc : err.description,
+      message: "msg" in err ? err.msg : err.message,
+      description: "desc" in err ? err.desc : err.description,
     },
   } as Result<never, ResultErr>;
 }
 
 export function $stringifyError(error: unknown): string {
   if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
+  if (typeof error === "string") return error;
   return String(error);
 }

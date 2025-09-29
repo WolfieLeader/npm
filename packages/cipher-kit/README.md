@@ -11,7 +11,7 @@
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
 <a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/v/cipher-kit?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/dy/cipher-kit.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/dt/cipher-kit.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
 
 </div>
@@ -21,10 +21,10 @@
 - 🛡️ **Secure and Flexible** - Uses best practices and modern cryptographic techniques, while providing a flexible and simple API.
 - 📦 **All-in-One Toolkit** – Combines encryption, hashing, encoding, serialization, and more into a single package.
 - 🌐 **Cross-Platform** – Works seamlessly across Web, Node.js, Deno, Bun, and Cloudflare Workers.
-- 💡 **Typed and Ergonomic** - Type safe and provides throwing and non-throwing (`Result`) APIs.
-- 🌳 **Tree-Shakable** - import root or platform-specific modules to reduce bundle size.
+- 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
+- 🌳 **Tree-Shakable** - Import from the root or from platform-specific entry points to keep bundles lean.
 - 🚫 **Zero Dependencies** – Fully self-contained, no external libraries required.
-- 🍼 **Explain like I'm five** - Newbie-friendly explanations and documentation.
+- 🍼 **Explain Like I'm Five** - Newbie-friendly explanations and documentation.
 
 ## Installation 🔥
 
@@ -38,6 +38,20 @@ pnpm install cipher-kit@latest
 bun add cipher-kit@latest
 ```
 
+## Quick Start 🚀
+
+```typescript
+import { createSecretKey, encrypt, decrypt } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
+
+const secretKey = createSecretKey('my-passphrase');
+
+const encrypted = encrypt('Hello, World!', secretKey);
+console.log(`Encrypted: ${encrypted}`); // Encrypted: <ciphertext>
+
+const decrypted = decrypt(encrypted, secretKey);
+console.log(`Decrypted: ${decrypted}`); // Decrypted: Hello, World!
+```
+
 ## Usage 🪛
 
 Table of Contents:
@@ -48,6 +62,7 @@ Table of Contents:
   - [Secret Key Creation](#secret-key-creation-)
   - [Encrypting Data](#encrypting-data-)
   - [Decrypting Data](#decrypting-data-)
+  - [Encrypting & Decrypting Objects](#encrypting--decrypting-objects-)
 - [Hashing](#hashing-)
 - [UUID Generation](#uuid-generation-)
 - [Password Hashing & Verification](#password-hashing--verification-)
@@ -62,14 +77,16 @@ The `webKit` and `nodeKit` objects provide platform-specific implementations for
 You can also import them directly from `cipher-kit/web-api` and `cipher-kit/node` for smaller bundle sizes.
 
 ```typescript
-import { webKit, nodeKit } from 'cipher-kit';
+// Option A: import helpers directly
 import { isNodeSecretKey } from 'cipher-kit/node';
 import { isWebSecretKey } from 'cipher-kit/web-api';
 
-// These are the same:
 function isSecretKey(key: unknown): boolean {
   return isNodeSecretKey(key) || isWebSecretKey(key);
 }
+
+// Option B: via kits from the root export
+import { webKit, nodeKit } from 'cipher-kit';
 
 function isSecretKey(key: unknown): boolean {
   return nodeKit.isNodeSecretKey(key) || webKit.isWebSecretKey(key);
@@ -84,23 +101,24 @@ This is useful in scenarios where you want to handle errors gracefully without u
 
 ```typescript
 // Throwing version - simpler but requires try/catch
-const message = encrypt('Secret message', secretKey);
-console.log(`Encrypted message: ${message}`);
+const msg = encrypt('Secret message', secretKey);
+console.log(`Encrypted message: ${msg}`);
 
 // Non-throwing version - returns a Result<T> object
-const message = tryEncrypt('Secret message', secretKey);
-if (message.success) {
-  console.log(`Encrypted message: ${message.result}`);
-} else {
-  console.error(`Encryption failed: ${message.error.message} - ${message.error.description}`);
-}
+const msg = tryEncrypt('Secret message', secretKey);
+
+// Either check for success status
+if (msg.success) console.log(`Encrypted message: ${msg.result}`);
+else console.error(`${msg.error.message} - ${msg.error.description}`);
+
+// Or Check that there is no error
+if (!msg.error) console.log(`Encrypted message: ${msg.result}`);
+else console.error(`${msg.error.message} - ${msg.error.description}`);
 ```
 
 ### Encryption & Decryption 🤫
 
 Encryption is the process of converting readable plaintext into unreadable ciphertext using an algorithm and a secret key to protect its confidentiality. Decryption is the reverse process, using the same algorithm and the correct key to convert the ciphertext back into its original, readable plaintext form.
-
-The package provides functions for both encryption and decryption. On top of that the function provides `encryptObj` and `decryptObj` functions that work the same way but for objects (using JSON serialization).
 
 #### _Secret Key Creation_ 🔑
 
@@ -109,9 +127,15 @@ Before encrypting or decrypting data, you need to create a secret key.
 Each key is tied to a specific platform (Web or Node.js) and cannot be used interchangeably.
 
 ```typescript
-import { createSecretKey } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
+// Node.js example
+import { createSecretKey } from 'cipher-kit/node';
 
-const secretKey = createSecretKey('my-passphrase');
+const nodeSecretKey = createSecretKey('my-passphrase');
+
+// Web example
+import { createSecretKey } from 'cipher-kit/web-api';
+
+const webSecretKey = await createSecretKey('my-passphrase');
 ```
 
 The function accepts an optional `options` as well, which allows you to customize the key derivation process.
@@ -134,10 +158,24 @@ interface CreateSecretKeyOptions {
 
 #### _Encrypting Data_ 🔐
 
-```typescript
-import { encrypt } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
+Ciphertext formats differ between Web and Node.js platforms.
 
-const encrypted = encrypt('Hello, World!', secretKey);
+| Platform | Format                        |
+| -------- | ----------------------------- |
+| Node.js  | `iv.cipher.tag.` (3 parts)    |
+| Web      | `iv.cipherWithTag.` (2 parts) |
+
+```typescript
+// Node.js example
+import { encrypt } from 'cipher-kit/node';
+
+const encrypted = encrypt('Hello, World!', nodeSecretKey);
+console.log(`Encrypted: ${encrypted}`);
+
+// Web example
+import { encrypt } from 'cipher-kit/web-api';
+
+const encrypted = await encrypt('Hello, World!', webSecretKey);
 console.log(`Encrypted: ${encrypted}`);
 ```
 
@@ -152,10 +190,19 @@ interface EncryptOptions {
 
 #### _Decrypting Data_ 🔓
 
-```typescript
-import { decrypt } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
+Since ciphertext formats differ between Web and Node.js platforms, make sure to use the correct `decrypt` function for the platform where the data was encrypted.
 
-const decrypted = decrypt(encrypted, secretKey);
+```typescript
+// Node.js example
+import { decrypt } from 'cipher-kit/node';
+
+const decrypted = decrypt(encrypted, nodeSecretKey);
+console.log(`Decrypted: ${decrypted}`);
+
+// Web example
+import { decrypt } from 'cipher-kit/web-api';
+
+const decrypted = await decrypt(encrypted, webSecretKey);
 console.log(`Decrypted: ${decrypted}`);
 ```
 
@@ -170,14 +217,47 @@ interface DecryptOptions {
 }
 ```
 
+#### _Encrypting & Decrypting Objects_ 🧬
+
+```typescript
+// Node.js example
+import { encryptObj, decryptObj } from 'cipher-kit/node';
+
+const obj = { name: 'Alice', age: 30, city: 'Wonderland' };
+
+const encryptedObj = encryptObj(obj, nodeSecretKey);
+
+const decryptedObj = decryptObj<typeof obj>(encryptedObj, nodeSecretKey);
+console.log(`Decrypted Object:`, decryptedObj);
+
+// Web example
+import { encryptObj, decryptObj } from 'cipher-kit/web-api';
+
+const obj = { name: 'Alice', age: 30, city: 'Wonderland' };
+
+const encryptedObj = await encryptObj(obj, webSecretKey);
+
+const decryptedObj = await decryptObj<typeof obj>(encryptedObj, webSecretKey);
+console.log(`Decrypted Object:`, decryptedObj);
+```
+
+The `encryptObj` and `decryptObj` functions accept the same `options` parameters as `encrypt` and `decrypt`, respectively.
+
 ### Hashing 🪄
 
 Hashing is a one-way process that uses an algorithm to transform data of any size into a fixed-length string of characters, called a hash value or digest. It serves as a digital fingerprint for the data, enabling quick data retrieval in hash tables, password storage, and file integrity checks. Key features include its irreversibility (you can't get the original data back from the hash).
 
 ```typescript
-import { hash } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
+// Node.js example
+import { hash } from 'cipher-kit/node';
 
 const hashed = hash('Hello, World!');
+console.log(`Hashed: ${hashed}`);
+
+// Web example
+import { hash } from 'cipher-kit/web-api';
+
+const hashed = await hash('Hello, World!');
 console.log(`Hashed: ${hashed}`);
 ```
 
@@ -198,9 +278,16 @@ interface HashOptions {
 UUID (Universally Unique Identifier) is a 128-bit identifier used to uniquely identify information in computer systems. It is designed to be globally unique, meaning that no two UUIDs should be the same, even if generated on different systems or at different times. UUIDs are commonly used in databases, distributed systems, and applications where unique identification is crucial.
 
 ```typescript
-import { generateUUID } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
+// Node.js example
+import { generateUuid } from 'cipher-kit/node';
 
-const uuid = generateUUID();
+const uuid = generateUuid();
+console.log(`Generated UUID: ${uuid}`);
+
+// Web example
+import { generateUuid } from 'cipher-kit/web-api';
+
+const uuid = generateUuid();
 console.log(`Generated UUID: ${uuid}`);
 ```
 
@@ -213,13 +300,22 @@ Password hashing is different from general-purpose hashing because it often invo
 To verify a password, the same hashing process is applied to the input password, and the resulting hash is compared to the stored hash, in a time-safe manner to prevent timing attacks.
 
 ```typescript
-import { hashPassword, verifyPassword } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
+// Node.js example
+import { hashPassword, verifyPassword } from 'cipher-kit/node';
 
-const password = 'my-secure-password';
-const hashedPassword = hashPassword(password);
-console.log(`Hashed Password: ${hashedPassword}`);
+const { hash, salt } = hashPassword('some-secure-password');
+console.log(`Hashed Password: ${hash}`);
 
-const isMatch = verifyPassword(password, hashedPassword);
+const isMatch = verifyPassword('some-secure-password', hash, salt);
+console.log(`Password match: ${isMatch}`);
+
+// Web example
+import { hashPassword, verifyPassword } from 'cipher-kit/web-api';
+
+const { hash, salt } = await hashPassword('some-secure-password');
+console.log(`Hashed Password: ${hash}`);
+
+const isMatch = await verifyPassword('some-secure-password', hash, salt);
 console.log(`Password match: ${isMatch}`);
 ```
 
@@ -263,18 +359,19 @@ interface VerifyPasswordOptions {
 Encoding and decoding are processes used to convert data into a specific format for efficient transmission, storage, or representation. Encoding transforms data into a different format using a specific scheme, while decoding reverses this process to retrieve the original data. Common encoding schemes include Base64, Base64URL, and Hexadecimal (Hex).
 
 ```typescript
-import { convertStrToBytes, convertBytesToStr, convertEncoding } from 'cipher-kit/web'; // or 'cipher-kit/node'
+// Node.js and Web example - works the same in both
+import { convertStrToBytes, convertBytesToStr, convertEncoding } from 'cipher-kit/node'; // or 'cipher-kit/web-api'
 
 // Encoding
-const buffer = convertStrToBytes('Hello World!', 'utf-8'); // the input encoding
+const buffer = convertStrToBytes('Hello World!', 'utf8'); // the input encoding
 console.log(`Encoded: ${buffer}`);
 
 // Decoding
-const str = convertBytesToStr(buffer, 'utf-8'); // the output encoding
+const str = convertBytesToStr(buffer, 'utf8'); // the output encoding
 console.log(`Decoded: ${str}`);
 
 // Convert between encodings
-const base64 = convertEncoding('Hello World!', 'utf-8', 'base64');
+const base64 = convertEncoding('Hello World!', 'utf8', 'base64');
 console.log(`Base64: ${base64}`);
 ```
 
@@ -298,7 +395,7 @@ console.log(`Deserialized:`, parsedObj);
 
 Regular expressions (regex) are sequences of characters that form search patterns, used for pattern matching within strings.
 
-Before we try to decrypt a message we should validate that it is in the correct format. (already done internally in the decrypt function, but here is how you can do it manually)
+Before decrypting, you can validate the format (decryption functions already validate internally).
 
 ```typescript
 import { ENCRYPTED_REGEX, matchPattern } from 'cipher-kit'; // works in both 'cipher-kit/web-api' and 'cipher-kit/node'
@@ -326,4 +423,8 @@ Want to contribute or suggest a feature?
 
 This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
-Thank you!
+<div align="center">
+<br/>
+<p style="font-size: 14px; font-weight:bold;">Made by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></p>
+<p style="font-size: 12px; font-style: italic;">Thank you!</p>
+</div>

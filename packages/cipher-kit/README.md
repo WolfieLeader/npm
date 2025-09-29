@@ -42,20 +42,20 @@ bun add cipher-kit@latest
 
 Table of Contents:
 
-- [The `webKit` and `nodeKit` Objects 📦](#the-webkit-and-nodekit-objects-)
-- [The `try` Prefix (Non-Throwing `Result` API) 🤔](#the-try-prefix-non-throwing-result-api-)
-- [Encryption and Decryption 🤫](#encryption-and-decryption-)
-  - [Secret Key Creation 🔑](#_secret-key-creation-)
-  - [Encrypting Data 🔐](#_encrypting-data-)
-  - [Decrypting Data 🔓](#_decrypting-data-)
-- [Hashing 🪄](#hashing-)
-- [UUID Generation 🪪](#uuid-generation-)
-- [Password Hashing and Verification 💎](#password-hashing-and-verification-)
-- [Encoding and Decoding 🧩](#encoding-and-decoding-)
-- [Object Serialization and Deserialization 🧬](#object-serialization-and-deserialization-)
-- [Regex Utilities 🔍](#regex-utilities-)
+- [`webKit` and `nodeKit`](#webkit-and-nodekit-objects-)
+- [The `try` Prefix](#the-try-prefix-non-throwing-result-api-)
+- [Encryption & Decryption](#encryption--decryption-)
+  - [Secret Key Creation](#_secret-key-creation-)
+  - [Encrypting Data](#_encrypting-data-)
+  - [Decrypting Data](#_decrypting-data-)
+- [Hashing](#hashing-)
+- [UUID Generation](#uuid-generation-)
+- [Password Hashing & Verification](#password-hashing--verification-)
+- [Encoding & Decoding](#encoding--decoding-)
+- [Object Serialization & Deserialization](#object-serialization--deserialization-)
+- [Regex Utilities](#regex-utilities-)
 
-### The `webKit` and `nodeKit` Objects 📦
+### `webKit` and `nodeKit` Objects 📦
 
 The `webKit` and `nodeKit` objects provide platform-specific implementations for Web (including Deno, Bun, and Cloudflare Workers) and Node.js environments, respectively.
 
@@ -96,7 +96,7 @@ if (message.success) {
 }
 ```
 
-### Encryption and Decryption 🤫
+### Encryption & Decryption 🤫
 
 Encryption is the process of converting readable plaintext into unreadable ciphertext using an algorithm and a secret key to protect its confidentiality. Decryption is the reverse process, using the same algorithm and the correct key to convert the ciphertext back into its original, readable plaintext form.
 
@@ -204,7 +204,7 @@ const uuid = generateUUID();
 console.log(`Generated UUID: ${uuid}`);
 ```
 
-### Password Hashing and Verification 💎
+### Password Hashing & Verification 💎
 
 Password hashing is a one-way process that transforms a plaintext password into a fixed-length hash. Password hashing is crucial for securely storing passwords in databases, as it protects user credentials from being exposed in case of a data breach.
 
@@ -258,7 +258,7 @@ interface VerifyPasswordOptions {
 }
 ```
 
-### Encoding and Decoding 🧩
+### Encoding & Decoding 🧩
 
 Encoding and decoding are processes used to convert data into a specific format for efficient transmission, storage, or representation. Encoding transforms data into a different format using a specific scheme, while decoding reverses this process to retrieve the original data. Common encoding schemes include Base64, Base64URL, and Hexadecimal (Hex).
 
@@ -278,7 +278,7 @@ const base64 = convertEncoding('Hello World!', 'utf-8', 'base64');
 console.log(`Base64: ${base64}`);
 ```
 
-### Object Serialization and Deserialization 🧬
+### Object Serialization & Deserialization 🧬
 
 Object serialization in JavaScript is the process of converting objects or arrays into a JSON string representation, that can be easily stored or transmitted. Deserialization is the reverse process, where the JSON string is parsed back into its original object or array structure.
 

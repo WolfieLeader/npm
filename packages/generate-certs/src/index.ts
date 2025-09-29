@@ -1,6 +1,6 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { $generateCerts } from './generate';
+import fs from "node:fs";
+import path from "node:path";
+import { $generateCerts } from "./generate";
 
 /** Options for generating self-signed HTTPS certificates. */
 export interface GenerateCertsOptions {
@@ -45,24 +45,24 @@ export function generateCerts({ certsPath, activateLogs = true }: GenerateCertsO
   try {
     $generateCerts(certsPath);
     if (activateLogs) {
-      console.log('🔐 Certificates for HTTPS have been generated successfully!');
+      console.log("🔐 Certificates for HTTPS have been generated successfully!");
       console.log(`🛑 Please visit the URL, click on 'Advanced' -> 'Proceed to localhost(unsafe)' to continue.`);
     }
-    return { key: $readFile(certsPath, 'key.pem'), cert: $readFile(certsPath, 'cert.pem') };
+    return { key: $readFile(certsPath, "key.pem"), cert: $readFile(certsPath, "cert.pem") };
   } catch (err) {
-    throw new Error(`❌ Error generating certificates: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    throw new Error(`❌ Error generating certificates: ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }
 
 function $checkForCerts({ certsPath, activateLogs: log = true }: GenerateCertsOptions) {
   try {
-    if ($isFileExists(certsPath, 'key.pem') && $isFileExists(certsPath, 'cert.pem')) {
-      if (log) console.log('🔍 Found existing certificates for HTTPS.');
-      return { key: $readFile(certsPath, 'key.pem'), cert: $readFile(certsPath, 'cert.pem') };
+    if ($isFileExists(certsPath, "key.pem") && $isFileExists(certsPath, "cert.pem")) {
+      if (log) console.log("🔍 Found existing certificates for HTTPS.");
+      return { key: $readFile(certsPath, "key.pem"), cert: $readFile(certsPath, "cert.pem") };
     }
   } catch (err) {
     throw new Error(
-      `❌ Error checking for existing certificates: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      `❌ Error checking for existing certificates: ${err instanceof Error ? err.message : "Unknown error"}`,
     );
   }
 }
@@ -73,5 +73,5 @@ export function $isFileExists(dir: string, fileName: string) {
 
 export function $readFile(dir: string, fileName: string) {
   if (!$isFileExists(dir, fileName)) throw new Error(`"${fileName}" not found.`);
-  return fs.readFileSync(path.join(dir, fileName), 'utf8');
+  return fs.readFileSync(path.join(dir, fileName), "utf8");
 }

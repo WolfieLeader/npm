@@ -1,5 +1,5 @@
-import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException } from '@nestjs/common';
-import type { HttpAdapterHost } from '@nestjs/core';
+import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException } from "@nestjs/common";
+import type { HttpAdapterHost } from "@nestjs/core";
 
 @Catch()
 export class ErrorCatcher implements ExceptionFilter {
@@ -11,11 +11,11 @@ export class ErrorCatcher implements ExceptionFilter {
     const ctx = host.switchToHttp();
 
     let statusCode = 500;
-    let message = 'Something went wrong...';
+    let message = "Something went wrong...";
     let description: string | undefined;
 
     switch (true) {
-      case typeof exception === 'string': {
+      case typeof exception === "string": {
         message = exception;
         break;
       }
@@ -26,16 +26,16 @@ export class ErrorCatcher implements ExceptionFilter {
       }
       case exception instanceof Error: {
         message = exception.message;
-        if (exception.name === 'SyntaxError') {
-          message = 'Invalid Syntax';
+        if (exception.name === "SyntaxError") {
+          message = "Invalid Syntax";
           statusCode = 400;
         }
         break;
       }
-      case typeof exception === 'object' && exception !== null: {
+      case typeof exception === "object" && exception !== null: {
         const error = exception as { message?: string; statusCode?: number };
-        if (error.message && typeof error.message === 'string') message = error.message;
-        if (error.statusCode && typeof error.statusCode === 'number') statusCode = error.statusCode;
+        if (error.message && typeof error.message === "string") message = error.message;
+        if (error.statusCode && typeof error.statusCode === "number") statusCode = error.statusCode;
         break;
       }
     }

@@ -1,5 +1,5 @@
-import { parse, serialize } from 'cookie';
-import type { Request, Response } from 'express';
+import { parse, serialize } from "cookie";
+import type { Request, Response } from "express";
 
 /**
  * Represents options for setting cookies.
@@ -11,7 +11,7 @@ export interface CookieOptions {
   /** Specifies the `Secure` attribute for the cookie. */
   secure?: boolean;
   /** Specifies the `SameSite` attribute for the cookie. */
-  sameSite?: 'strict' | 'lax' | 'none';
+  sameSite?: "strict" | "lax" | "none";
   /** Specifies the `number` (in seconds) the cookie will be valid for. */
   maxAge?: number;
   /** Specifies the exact date/time when the cookie expires (`Expires`). */
@@ -21,7 +21,7 @@ export interface CookieOptions {
   /** Specifies the `Domain` attribute for the cookie. */
   domain?: string;
   /** Specifies the `Priority` attribute for the cookie. */
-  priority?: 'low' | 'medium' | 'high';
+  priority?: "low" | "medium" | "high";
 }
 
 /**
@@ -34,7 +34,7 @@ export interface CookieOptions {
  */
 export function getCookie(req: Request, name: string, logError = false): string | undefined {
   try {
-    const header = req.get('cookie');
+    const header = req.get("cookie");
     if (!header) return undefined;
     const cookies = parse(header);
     return cookies[name];
@@ -66,16 +66,16 @@ export function setCookie(
   logError = false,
 ): boolean {
   try {
-    let cookieOptions = { ...options, path: options.path || '/' };
+    let cookieOptions = { ...options, path: options.path || "/" };
 
-    if (name.startsWith('__Secure-')) {
+    if (name.startsWith("__Secure-")) {
       cookieOptions = { ...cookieOptions, secure: true };
-    } else if (name.startsWith('__Host-')) {
+    } else if (name.startsWith("__Host-")) {
       cookieOptions = { ...cookieOptions, secure: true, domain: undefined };
     }
 
     const serialized = serialize(name, value, cookieOptions);
-    res.append('Set-Cookie', serialized);
+    res.append("Set-Cookie", serialized);
     return true;
   } catch (error) {
     if (logError) {
@@ -97,5 +97,5 @@ export function setCookie(
  * @returns `true` if the deletion request was added successfully, otherwise `false`.
  */
 export function deleteCookie(res: Response, name: string, options: CookieOptions, logError = false): boolean {
-  return setCookie(res, name, '', { ...options, maxAge: 0 }, logError);
+  return setCookie(res, name, "", { ...options, maxAge: 0 }, logError);
 }

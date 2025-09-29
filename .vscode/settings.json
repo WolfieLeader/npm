@@ -52,5 +52,6 @@
   },
   "[vue]": {
     "editor.defaultFormatter": "biomejs.biome"
-  }
+  },
+  "cSpell.words": ["ciphertext"]
 }

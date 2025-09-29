@@ -1,8 +1,8 @@
-import { $isObj } from './validate';
+import { $isObj } from "./validate";
 
 /**
- * Standardized error object for Result type.
- * Includes a `message` and a `description`.
+ * Standardized error object for the `Result` type.
+ * Always has a brief `message` and a more detailed `description`.
  */
 export interface ResultErr {
   readonly message: string;
@@ -10,38 +10,29 @@ export interface ResultErr {
 }
 
 /**
- * Result type for functions that can succeed or fail.
+ * Discriminated union for functions that can succeed or fail.
  *
- * On success, returns an object with `success: true` and the result data.
- * On failure, returns an object with `success: false` and an error object.
- *
- * If the result type `T` is an object, its properties are merged into the success result.
- * Otherwise, the result is returned under the `result` key.
+ * - On **success**:
+ *   - If `T` is an object - properties of `T` are **spread** into the result
+ *     along with `success: true`.
+ *   - Otherwise - `{ success: true, result: T }`.
+ * - On **failure**: `{ success: false, error: E }`.
  *
  * @example
  * ```ts
- * function returnNumber(): Result<number> {
- *   return $ok(123);
+ * // Primitive result
+ * function getNum(): Result<number> {
+ *   return $ok(42);
  * }
+ * const r1 = getNum();
+ * if (r1.success) console.log(r1.result); // 42
  *
- * function returnObject(): Result<{ a: number; b: string }> {
- *  return $ok({ a: 1, b: 'a' });
+ * // Object result (spread)
+ * function getObject(): Result<{ name: string; age: number }> {
+ *   return $ok({ name: 'Alice', age: 30 });
  * }
- *
- * function example() {
- *  const res = returnNumber();
- *  if (res.success) {
- *   console.log(res.result); // 123
- *  } else {
- *   console.error(res.error);
- *  }
- *
- * const {a, b, success, error} = returnObject();
- * if (success) {
- *   console.log(a, b); // 1 'a'
- * } else {
- *   console.error(error);
- * }
+ * const r2 = getObject();
+ * if (r2.success) console.log(r2.name, r2.age); // 'Alice' 30
  * ```
  */
 export type Result<T, E = ResultErr> = T extends object
@@ -63,23 +54,23 @@ export function $err(err: { msg: string; desc: string } | ResultErr): Result<nev
   return {
     success: false,
     error: {
-      message: 'msg' in err ? err.msg : err.message,
-      description: 'desc' in err ? err.desc : err.description,
+      message: "msg" in err ? err.msg : err.message,
+      description: "desc" in err ? err.desc : err.description,
     },
   } as Result<never, ResultErr>;
 }
 
 export function $fmtError(error: unknown): string {
-  if (typeof error === 'string') return error;
+  if (typeof error === "string") return error;
   if (error instanceof Error) return error.message;
   return String(error);
 }
 
 export function $fmtResultErr(err: ResultErr | undefined): string {
-  if (!err) return 'Unknown error';
+  if (!err) return "Unknown error";
   return `${err.message} - ${err.description}`;
 }
 
-export function title(platform: 'web' | 'node', title: string): string {
-  return `${platform === 'web' ? 'Crypto Web API' : 'Crypto NodeJS API'} - ${title}`;
+export function title(platform: "web" | "node", title: string): string {
+  return `${platform === "web" ? "Crypto Web API" : "Crypto NodeJS API"} - ${title}`;
 }

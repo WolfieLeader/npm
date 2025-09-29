@@ -1,12 +1,12 @@
-import { defineConfig, type Options } from 'tsup';
+import { defineConfig, type Options } from "tsup";
 
 export default defineConfig((options: Options) => ({
-  entryPoints: ['src/index.ts'],
+  entryPoints: ["src/index.ts"],
   clean: true,
-  format: ['cjs'],
-  tsconfig: 'tsconfig.json',
+  format: ["cjs"],
+  tsconfig: "tsconfig.json",
   sourcemap: true,
   minify: true,
-  external: ['oauth-entra-id'],
+  external: ["oauth-entra-id"],
   ...options,
 }));

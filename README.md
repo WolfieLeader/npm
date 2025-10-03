@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner.svg" align="center" alt="banner" />
+<img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner.svg" align="center" alt="banner" /><br/><br/>
 
 <p align="center">
   A monorepo for developer-focused <br/>

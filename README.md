@@ -1,27 +1,33 @@
 <div align="center">
-<picture>
-    <source srcset="./assets/repo-banner-dark.svg" media="(prefers-color-scheme: dark)">
-    <source srcset="./assets/repo-banner-light.svg" media="(prefers-color-scheme: light)">
-    <img src="./assets/repo-banner-dark.svg" alt="banner">
-  </picture>
+<img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner.svg" align="center" alt="banner" />
 
 <h1 align="center" style="font-weight:900;">NPM Packages</h1>
 
 <p align="center">
   A monorepo for developer-focused <br/>
-  NPM packages built for performance, security, and simplicity.
+  NPM packages built for performance,<br/>
+  security, and simplicity.
 </p>
 
-<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
-<a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
+<p align="center">
+  <a href="https://github.com/WolfieLeader/npm/blob/main/packages/cipher-kit/README.md">
+    <img alt="cipher-kit" src="https://img.shields.io/badge/cipher--kit-791AFF?style=for-the-badge&logoColor=white">
+  </a>
+  <a href="https://github.com/WolfieLeader/npm/blob/main/packages/compress-kit/README.md">
+    <img alt="compress-kit" src="https://img.shields.io/badge/compress--kit-14B814?style=for-the-badge&logoColor=white">
+  </a>
+  <a href="https://github.com/WolfieLeader/npm/blob/main/packages/get-client-ip/README.md">
+    <img alt="get-client-ip" src="https://img.shields.io/badge/get--client--ip-FF453A?style=for-the-badge&logoColor=white">
+  </a>
+  <a href="https://github.com/WolfieLeader/npm/blob/main/packages/generate-certs/README.md">
+    <img alt="generate-certs" src="https://img.shields.io/badge/generate--certs-FF9F1A?style=for-the-badge&logoColor=white">
+  </a>
+  <a href="https://github.com/WolfieLeader/npm/blob/main/packages/modern-cookies/README.md">
+    <img alt="modern-cookies" src="https://img.shields.io/badge/modern--cookies-CF6317?style=for-the-badge&logoColor=white">
+  </a>
+</p>
 
 </div>
-
-## About 📖
-
-This monorepo contains a collection of high-quality, modern NPM packages built to improve the developer experience in JavaScript and TypeScript Ecosystems.
-
-Each package is fast, type-safe, and production-ready — written in TypeScript with native typings — and works seamlessly in both **ESM** and **CommonJS** runtimes.
 
 ## Packages 📦
 

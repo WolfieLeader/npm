@@ -41,7 +41,7 @@ bun add cipher-kit@latest
 ## Quick Start 🚀
 
 ```typescript
-// Node.js Quick Start
+// Node.js
 import { createSecretKey, encrypt, decrypt } from "cipher-kit/node";
 
 const nodeSecretKey = createSecretKey("my-passphrase");
@@ -49,7 +49,7 @@ const encrypted = encrypt("Hello World!", nodeSecretKey);
 const decrypted = decrypt(encrypted, nodeSecretKey);
 console.log(decrypted); // "Hello World!"
 
-// Web Quick Start
+// Web - including Deno, Bun, Cloudflare Workers
 import { createSecretKey, encrypt, decrypt } from "cipher-kit/web-api";
 
 const webSecretKey = await createSecretKey("my-passphrase");

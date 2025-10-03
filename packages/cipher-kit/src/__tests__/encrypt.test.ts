@@ -4,9 +4,9 @@ import { matchPattern, nodeKit, type SecretKey, webKit } from "~/export";
 const secret = "Secret0123456789Secret0123456789";
 const data = "🦊 secret stuff ~ !@#$%^&*()_+";
 
-describe("Encryption", () => {
-  test("Encrypt Data Default", async () => {
-    // biome-ignore lint/style/useConst: ignore
+describe("Integration Tests - Full Workflow", () => {
+  test("Complete encryption workflow with default options", async () => {
+    // Node workflow
     let nodeSecretKey: SecretKey<"node">;
     const nodeKey = nodeKit.tryCreateSecretKey(secret);
     expect(nodeKey.success).toBe(true);
@@ -14,7 +14,7 @@ describe("Encryption", () => {
     expect(nodeKit.isNodeSecretKey(nodeKey.result)).toBe(true);
     nodeSecretKey = nodeKey.result as SecretKey<"node">;
 
-    // biome-ignore lint/style/useConst: ignore
+    // Web workflow
     let webSecretKey: SecretKey<"web">;
     const webKey = await webKit.tryCreateSecretKey(secret);
     expect(webKey.success).toBe(true);
@@ -75,8 +75,8 @@ describe("Encryption", () => {
     expect(decryptedObjWeb.result).toEqual(largeObj);
   });
 
-  test("Encrypt Data AES128GCM", async () => {
-    // biome-ignore lint/style/useConst: ignore
+  test("Complete encryption workflow with AES-128-GCM", async () => {
+    // Node workflow
     let nodeSecretKey: SecretKey<"node">;
     const nodeKey = nodeKit.tryCreateSecretKey(secret, { algorithm: "aes128gcm" });
     expect(nodeKey.success).toBe(true);
@@ -84,7 +84,7 @@ describe("Encryption", () => {
     expect(nodeKit.isNodeSecretKey(nodeKey.result)).toBe(true);
     nodeSecretKey = nodeKey.result as SecretKey<"node">;
 
-    // biome-ignore lint/style/useConst: ignore
+    // Web workflow
     let webSecretKey: SecretKey<"web">;
     const webKey = await webKit.tryCreateSecretKey(secret, { algorithm: "aes128gcm" });
     expect(webKey.success).toBe(true);
@@ -151,20 +151,20 @@ describe("Encryption", () => {
     expect(decryptedObjWeb.result).toEqual(largeObj);
   });
 
-  test("Encoding Test", () => {
+  test("Encoding conversion consistency", () => {
     expect(nodeKit.convertEncoding(data, "utf8", "base64")).toBe(webKit.convertEncoding(data, "utf8", "base64"));
     expect(nodeKit.convertEncoding(data, "utf8", "hex")).toBe(webKit.convertEncoding(data, "utf8", "hex"));
     expect(nodeKit.convertEncoding(data, "utf8", "base64url")).toBe(webKit.convertEncoding(data, "utf8", "base64url"));
     expect(nodeKit.convertEncoding(data, "utf8", "latin1")).toBe(webKit.convertEncoding(data, "utf8", "latin1"));
   });
 
-  test("Hash Test", async () => {
+  test("Hash consistency across platforms", async () => {
     expect(nodeKit.hash(data, { digest: "sha256" })).toBe(await webKit.hash(data, { digest: "sha256" }));
     expect(nodeKit.hash(data, { digest: "sha384" })).toBe(await webKit.hash(data, { digest: "sha384" }));
     expect(nodeKit.hash(data, { digest: "sha512" })).toBe(await webKit.hash(data, { digest: "sha512" }));
   });
 
-  test("Password Hash Test", async () => {
+  test("Password hashing and verification workflow", async () => {
     const password = "SuperSecretPassword!";
 
     const nodeHash = nodeKit.tryHashPassword(password);

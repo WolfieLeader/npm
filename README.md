@@ -1,8 +1,6 @@
 <div align="center">
 <img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner.svg" align="center" alt="banner" />
 
-<h1 align="center" style="font-weight:900;">NPM Packages</h1>
-
 <p align="center">
   A monorepo for developer-focused <br/>
   NPM packages built for performance,<br/>

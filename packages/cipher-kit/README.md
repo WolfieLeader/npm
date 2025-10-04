@@ -404,10 +404,10 @@ Regular expressions (regex) are sequences of characters that form search pattern
 Before decrypting, you can validate the format (decryption functions already validate internally).
 
 ```typescript
-import { ENCRYPTED_REGEX, matchPattern } from "cipher-kit"; // works in both "cipher-kit/web-api" and "cipher-kit/node"
+import { ENCRYPTED_REGEX, matchEncryptedPattern } from "cipher-kit"; // works in both "cipher-kit/web-api" and "cipher-kit/node"
 
 function isEncryptedFormat(message: string): boolean {
-  return matchPattern(message, "general"); // or "node" or "web"
+  return matchEncryptedPattern(message, "general"); // or "node" or "web"
 }
 
 // or

@@ -10,7 +10,7 @@ import type {
   SecretKey,
   VerifyPasswordOptions,
 } from "~/helpers/types";
-import { $isSecretKey, $isStr, matchPattern } from "~/helpers/validate";
+import { $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate";
 import { $convertBytesToStr, $convertStrToBytes, textEncoder } from "./web-encode";
 
 export function $generateUuid(): Result<string> {
@@ -156,7 +156,7 @@ export async function $decrypt(
   secretKey: SecretKey<"web">,
   options: DecryptOptions = {},
 ): Promise<Result<string>> {
-  if (matchPattern(encrypted, "web") === false) {
+  if (matchEncryptedPattern(encrypted, "web") === false) {
     return $err({
       msg: `${title("web", "Decryption")}: Invalid encrypted data format`,
       desc: 'Encrypted data must be in the format "iv.cipherWithTag."',

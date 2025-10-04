@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { matchPattern, nodeKit, type SecretKey, webKit } from "~/export";
+import { matchEncryptedPattern, nodeKit, type SecretKey, webKit } from "~/export";
 
 const secret = "Secret0123456789Secret0123456789";
 const data = "🦊 secret stuff ~ !@#$%^&*()_+";
@@ -25,12 +25,12 @@ describe("Encryption", () => {
     const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey);
     expect(encryptedNode.success).toBe(true);
     expect(encryptedNode.result).toBeDefined();
-    expect(matchPattern(encryptedNode.result as string, "node")).toBe(true);
+    expect(matchEncryptedPattern(encryptedNode.result as string, "node")).toBe(true);
 
     const encryptedWeb = await webKit.tryEncrypt(data, webSecretKey);
     expect(encryptedWeb.success).toBe(true);
     expect(encryptedWeb.result).toBeDefined();
-    expect(matchPattern(encryptedWeb.result as string, "web")).toBe(true);
+    expect(matchEncryptedPattern(encryptedWeb.result as string, "web")).toBe(true);
 
     expect(encryptedNode.result).not.toBe(encryptedWeb.result);
 
@@ -57,12 +57,12 @@ describe("Encryption", () => {
     const encryptedObjNode = nodeKit.tryEncryptObj(largeObj, nodeSecretKey);
     expect(encryptedObjNode.success).toBe(true);
     expect(encryptedObjNode.result).toBeDefined();
-    expect(matchPattern(encryptedObjNode.result as string, "node")).toBe(true);
+    expect(matchEncryptedPattern(encryptedObjNode.result as string, "node")).toBe(true);
 
     const encryptedObjWeb = await webKit.tryEncryptObj(largeObj, webSecretKey);
     expect(encryptedObjWeb.success).toBe(true);
     expect(encryptedObjWeb.result).toBeDefined();
-    expect(matchPattern(encryptedObjWeb.result as string, "web")).toBe(true);
+    expect(matchEncryptedPattern(encryptedObjWeb.result as string, "web")).toBe(true);
 
     expect(encryptedObjNode.result).not.toBe(encryptedObjWeb.result);
 
@@ -95,12 +95,12 @@ describe("Encryption", () => {
     const encryptedNode = nodeKit.tryEncrypt(data, nodeSecretKey, { encoding: "hex" });
     expect(encryptedNode.success).toBe(true);
     expect(encryptedNode.result).toBeDefined();
-    expect(matchPattern(encryptedNode.result as string, "node")).toBe(true);
+    expect(matchEncryptedPattern(encryptedNode.result as string, "node")).toBe(true);
 
     const encryptedWeb = await webKit.tryEncrypt(data, webSecretKey, { encoding: "hex" });
     expect(encryptedWeb.success).toBe(true);
     expect(encryptedWeb.result).toBeDefined();
-    expect(matchPattern(encryptedWeb.result as string, "web")).toBe(true);
+    expect(matchEncryptedPattern(encryptedWeb.result as string, "web")).toBe(true);
 
     expect(encryptedNode.result).not.toBe(encryptedWeb.result);
 
@@ -127,12 +127,12 @@ describe("Encryption", () => {
     const encryptedObjNode = nodeKit.tryEncryptObj(largeObj, nodeSecretKey, { encoding: "base64" });
     expect(encryptedObjNode.success).toBe(true);
     expect(encryptedObjNode.result).toBeDefined();
-    expect(matchPattern(encryptedObjNode.result as string, "node")).toBe(true);
+    expect(matchEncryptedPattern(encryptedObjNode.result as string, "node")).toBe(true);
 
     const encryptedObjWeb = await webKit.tryEncryptObj(largeObj, webSecretKey, { encoding: "base64" });
     expect(encryptedObjWeb.success).toBe(true);
     expect(encryptedObjWeb.result).toBeDefined();
-    expect(matchPattern(encryptedObjWeb.result as string, "web")).toBe(true);
+    expect(matchEncryptedPattern(encryptedObjWeb.result as string, "web")).toBe(true);
 
     expect(encryptedObjNode.result).not.toBe(encryptedObjWeb.result);
 

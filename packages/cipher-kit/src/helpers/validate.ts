@@ -111,13 +111,13 @@ export const ENCRYPTED_REGEX = Object.freeze({
  *
  * @example
  * ```ts
- * matchPattern("abc.def.ghi.", "node");    // true
- * matchPattern("abc.def.", "web");         // true
- * matchPattern("abc.def.", "node");        // false
- * matchPattern("abc.def.ghi.", "general"); // true
+ * matchEncryptedPattern("abc.def.ghi.", "node");    // true
+ * matchEncryptedPattern("abc.def.", "web");         // true
+ * matchEncryptedPattern("abc.def.", "node");        // false
+ * matchEncryptedPattern("abc.def.ghi.", "general"); // true
  * ```
  */
-export function matchPattern(data: string, format: "general" | "node" | "web"): boolean {
+export function matchEncryptedPattern(data: string, format: "general" | "node" | "web"): boolean {
   if (typeof data !== "string") return false;
   if (!(format in ENCRYPTED_REGEX)) throw new Error(`Unknown format: ${format}`);
   return ENCRYPTED_REGEX[format].test(data);

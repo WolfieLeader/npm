@@ -75,7 +75,7 @@ export function generateUuid(): string {
  * Imagine you want to create a special key for future use to lock your treasure box (data).
  * So, you stir in some secret ingredients (like salt and info) to make sure your key is one-of-a-kind.
  *
- * @param secret - The input string to derive the `SecretKey` from.
+ * @param secret - The input string to derive the `SecretKey` from, must be at least 8 characters.
  * @param options.algorithm - The encryption algorithm to use (default: `'aes256gcm'`).
  * @param options.digest - The hash algorithm for HKDF (default: `'sha256'`).
  * @param options.salt - A salt string (default: `'cipher-kit-salt'`, must be ≥ 8 chars).
@@ -98,7 +98,7 @@ export function tryCreateSecretKey(
  * Imagine you want to create a special key for future use to lock your treasure box (data).
  * So, you stir in some secret ingredients (like salt and info) to make sure your key is one-of-a-kind.
  *
- * @param secret - The input string to derive the `SecretKey` from.
+ * @param secret - The input string to derive the `SecretKey` from, must be at least 8 characters.
  * @param options.algorithm - The encryption algorithm to use (default: `'aes256gcm'`).
  * @param options.digest - The hash algorithm for HKDF (default: `'sha256'`).
  * @param options.salt - A salt string (default: `'cipher-kit-salt'`, must be ≥ 8 chars).

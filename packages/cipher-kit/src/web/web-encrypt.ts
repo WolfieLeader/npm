@@ -10,7 +10,7 @@ import type {
   SecretKey,
   VerifyPasswordOptions,
 } from "~/helpers/types";
-import { $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate";
+import { $isObj, $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate";
 import { $convertBytesToStr, $convertStrToBytes, textEncoder } from "./web-encode";
 
 export function $generateUuid(): Result<string> {
@@ -25,8 +25,18 @@ export async function $createSecretKey(
   secret: string,
   options: CreateSecretKeyOptions = {},
 ): Promise<Result<{ result: SecretKey<"web"> }>> {
-  if (!$isStr(secret)) {
-    return $err({ msg: `${title("web", "Key Generation")}: Empty Secret`, desc: "Secret must be a non-empty string" });
+  if (!$isStr(secret, 8)) {
+    return $err({
+      msg: `${title("web", "Key Generation")}: Empty Secret`,
+      desc: "Secret must be a non-empty string with at least 8 characters",
+    });
+  }
+
+  if (!$isObj<CreateSecretKeyOptions>(options)) {
+    return $err({
+      msg: `${title("web", "Key Generation")}: Invalid options`,
+      desc: "Options must be an object",
+    });
   }
 
   const algorithm = options.algorithm ?? "aes256gcm";

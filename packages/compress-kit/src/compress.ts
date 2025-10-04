@@ -6,7 +6,7 @@ import { $isStr, isInCompressionFormat } from "./utils";
 const COMPRESSION_OPTIONS: DeflateFunctionOptions = {
   level: 6,
   windowBits: 15,
-  memLevel: 7,
+  memLevel: 8,
   strategy: 0,
   raw: false,
 };

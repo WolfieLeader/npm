@@ -44,17 +44,17 @@ bun add cipher-kit@latest
 // Node.js
 import { createSecretKey, encrypt, decrypt } from "cipher-kit/node";
 
-const nodeSecretKey = createSecretKey("my-passphrase");
-const encrypted = encrypt("Hello World!", nodeSecretKey);
-const decrypted = decrypt(encrypted, nodeSecretKey);
+const secretKey = createSecretKey("my-passphrase");
+const encrypted = encrypt("Hello World!", secretKey);
+const decrypted = decrypt(encrypted, secretKey);
 console.log(decrypted); // "Hello World!"
 
 // Web - including Deno, Bun, Cloudflare Workers
 import { createSecretKey, encrypt, decrypt } from "cipher-kit/web-api";
 
-const webSecretKey = await createSecretKey("my-passphrase");
-const encrypted = await encrypt("Hello World!", webSecretKey);
-const decrypted = await decrypt(encrypted, webSecretKey);
+const secretKey = await createSecretKey("my-passphrase");
+const encrypted = await encrypt("Hello World!", secretKey);
+const decrypted = await decrypt(encrypted, secretKey);
 console.log(decrypted); // "Hello World!"
 ```
 
@@ -129,6 +129,7 @@ Encryption is the process of converting readable plaintext into unreadable ciphe
 #### _Secret Key Creation_ 🔑
 
 Before encrypting or decrypting data, you need to create a secret key.
+The key must be at least 8 characters long.
 
 Each key is tied to a specific platform (Web or Node.js) and cannot be used interchangeably.
 
@@ -425,12 +426,9 @@ Want to contribute or suggest a feature?
 - Submit a PR to improve the packages or add new ones
 - Star ⭐ the repo if you like what you see
 
-## License 📜
-
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
-
 <div align="center">
 <br/>
 <div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
-<div style="font-size: 12px; font-style: italic;">Thank you!</div>
+<p style="font-size: 12px; font-style: italic;">This project is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="nofollow">MIT License</a>.</p>
+<div style="font-size: 12px; font-style: italic; font-weight: 600;">Thank you!</div>
 </div>

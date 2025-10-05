@@ -6,13 +6,13 @@ export function $isStr(x: unknown, min = 1): x is string {
   return x !== null && x !== undefined && typeof x === "string" && x.trim().length >= min;
 }
 
-export function $isObj<T extends object = Record<string, unknown>>(x: unknown): x is T {
+export function $isPlainObj<T extends object = Record<string, unknown>>(x: unknown): x is T {
   if (typeof x !== "object" || x === null || x === undefined) return false;
   const proto = Object.getPrototypeOf(x);
   return proto === Object.prototype || proto === null;
 }
 
-export function $isLooseObj(x: unknown): x is Record<string, unknown> {
+export function $isObj(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && x !== undefined;
 }
 
@@ -26,7 +26,7 @@ export function $isSecretKey<Platform extends "node" | "web">(
   x: unknown,
   platform: Platform,
 ): InjectedSecretKey<Platform> | null {
-  if (!$isLooseObj(x) || (platform !== "node" && platform !== "web") || x.platform !== platform) return null;
+  if (!$isObj(x) || (platform !== "node" && platform !== "web") || x.platform !== platform) return null;
 
   const keys = Object.keys(x);
   if (keys.length !== expectedKeys.size) return null;
@@ -38,7 +38,7 @@ export function $isSecretKey<Platform extends "node" | "web">(
     !(x.digest in DIGEST_ALGORITHMS) ||
     typeof x.algorithm !== "string" ||
     !(x.algorithm in ENCRYPTION_ALGORITHMS) ||
-    !$isLooseObj(x.key) ||
+    !$isObj(x.key) ||
     x.key.type !== "secret"
   ) {
     return null;
@@ -57,7 +57,7 @@ export function $isSecretKey<Platform extends "node" | "web">(
   }
 
   if (
-    !$isLooseObj(x.key.algorithm) ||
+    !$isObj(x.key.algorithm) ||
     x.key.algorithm.name !== algorithm.web ||
     (typeof x.key.algorithm.length === "number" && x.key.algorithm.length !== algorithm.keyBytes * 8) ||
     typeof x.key.extractable !== "boolean" ||

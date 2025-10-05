@@ -69,11 +69,11 @@ export interface CreateSecretKeyOptions {
  * ### 🍼 Explain Like I'm Five
  * After locking your message, how should we write the locked message down?
  *
- * - `encoding`: output ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
+ * - `outputEncoding`: output ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
  */
 export interface EncryptOptions {
   /** Encoding format for the output ciphertext (default: `'base64url'`). */
-  encoding?: CipherEncoding;
+  outputEncoding?: CipherEncoding;
 }
 
 /**
@@ -82,11 +82,11 @@ export interface EncryptOptions {
  * ### 🍼 Explain Like I'm Five
  * To unlock the message, we must know how it was written down.
  *
- * - `encoding`: input ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
+ * - `inputEncoding`: input ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
  */
 export interface DecryptOptions {
   /** Encoding format for the input ciphertext (default: `'base64url'`). */
-  encoding?: CipherEncoding;
+  inputEncoding?: CipherEncoding;
 }
 
 /**
@@ -97,13 +97,13 @@ export interface DecryptOptions {
  * You can choose how to create the fingerprint (digest) and how to write it down (encoding).
  *
  * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha256'`)
- * - `encoding`: output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
+ * - `outputEncoding`: output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
  */
 export interface HashOptions {
   /** Digest algorithm to use (default: `'sha256'`). */
   digest?: DigestAlgorithm;
   /** Encoding format for the output hash (default: `'base64url'`). */
-  encoding?: CipherEncoding;
+  outputEncoding?: CipherEncoding;
 }
 
 /**
@@ -114,7 +114,7 @@ export interface HashOptions {
  * stirring many times (iterations), and making a long result (keyLength).
  *
  * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha512'`)
- * - `encoding`: output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
+ * - `outputEncoding`: output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
  * - `saltLength`: size of the random salt in bytes (default: `16` bytes)
  * - `iterations`: number of iterations (default: `320000`)
  * - `keyLength`: length of the derived key in bytes (default: `64` bytes)
@@ -123,7 +123,7 @@ export interface HashPasswordOptions {
   /** Digest algorithm to use (default: `'sha512'`). */
   digest?: DigestAlgorithm;
   /** Encoding format for the output hash (default: `'base64url'`). */
-  encoding?: CipherEncoding;
+  outputEncoding?: CipherEncoding;
   /** Length of the salt in bytes (default: `16` bytes, min: `8` bytes). */
   saltLength?: number;
   /** Number of iterations for key derivation (default: `320000`, min: `1000`). */
@@ -140,7 +140,7 @@ export interface HashPasswordOptions {
  * same size—so the new result matches the old one.
  *
  * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha512'`)
- * - `encoding`: input ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
+ * - `inputEncoding`: input ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
  * - `iterations`: number of iterations (default: `320000`)
  * - `keyLength`: length of the derived key in bytes (default: `64` bytes)
  */
@@ -148,7 +148,7 @@ export interface VerifyPasswordOptions {
   /** Digest algorithm to use (default: `'sha512'`). */
   digest?: DigestAlgorithm;
   /** Encoding format of the input hash (default: `'base64url'`). */
-  encoding?: CipherEncoding;
+  inputEncoding?: CipherEncoding;
   /** Number of iterations for key derivation (default: `320000`). */
   iterations?: number;
   /** Length of the derived key in bytes (default: `64` bytes). */

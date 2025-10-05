@@ -122,7 +122,7 @@ export async function createSecretKey(secret: string, options: CreateSecretKeyOp
  *
  * @param data - A UTF-8 string to encrypt.
  * @param secretKey - The `SecretKey` object used for encryption.
- * @param options.encoding - The encoding format for the output ciphertext (default: `'base64url'`).
+ * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A `Result` promise containing the encrypted string in the specified format or an error.
  */
 export async function tryEncrypt(
@@ -144,7 +144,7 @@ export async function tryEncrypt(
  *
  * @param data - A UTF-8 string to encrypt.
  * @param secretKey - The `SecretKey` object used for encryption.
- * @param options.encoding - The encoding format for the output ciphertext (default: `'base64url'`).
+ * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A promise with the encrypted string in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
  */
@@ -169,7 +169,7 @@ export async function encrypt(
  *
  * @param encrypted - The input string to decrypt, in the format "iv.cipherWithTag.".
  * @param secretKey - The `SecretKey` object used for decryption.
- * @param options.encoding - The encoding format for the input ciphertext (default: `'base64url'`).
+ * @param options.inputEncoding - The encoding format for the input ciphertext (default: `'base64url'`).
  * @returns A `Result` promise containing the decrypted UTF-8 string or an error.
  */
 export async function tryDecrypt(
@@ -191,7 +191,7 @@ export async function tryDecrypt(
  *
  * @param encrypted - The input string to decrypt, in the format "iv.cipherWithTag.".
  * @param secretKey - The `SecretKey` object used for decryption.
- * @param options.encoding - The encoding format for the input ciphertext (default: `'base64url'`).
+ * @param options.inputEncoding - The encoding format for the input ciphertext (default: `'base64url'`).
  * @returns A promise with the decrypted UTF-8 string.
  * @throws {Error} If the input data or key is invalid, or if decryption fails.
  */
@@ -219,7 +219,7 @@ export async function decrypt(
  *
  * @param data - A plain object to encrypt.
  * @param secretKey - The `SecretKey` object used for encryption.
- * @param options.encoding - The encoding format for the output ciphertext (default: `'base64url'`).
+ * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A `Result` promise containing the encrypted string in the specified format or an error.
  */
 export async function tryEncryptObj<T extends object = Record<string, unknown>>(
@@ -244,7 +244,7 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
  *
  * @param data - A plain object to encrypt.
  * @param secretKey - The `SecretKey` object used for encryption.
- * @param options.encoding - The encoding format for the output ciphertext (default: `'base64url'`).
+ * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A promise with the encrypted string in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
  */
@@ -270,7 +270,7 @@ export async function encryptObj<T extends object = Record<string, unknown>>(
  * @template T - The expected shape of the decrypted object.
  * @param encrypted - The encrypted string (format: `"iv.cipherWithTag."`).
  * @param secretKey - The `SecretKey` used for decryption.
- * @param options.encoding - Input ciphertext encoding (default: `'base64url'`).
+ * @param options.inputEncoding - Input ciphertext encoding (default: `'base64url'`).
  * @returns A `Result` promise with the decrypted object on success, or an error.
  */
 export async function tryDecryptObj<T extends object = Record<string, unknown>>(
@@ -293,7 +293,7 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
  * @template T - The expected shape of the decrypted object.
  * @param encrypted - The encrypted string (format: `"iv.cipherWithTag."`).
  * @param secretKey - The `SecretKey` used for decryption.
- * @param options.encoding - Input ciphertext encoding (default: `'base64url'`).
+ * @param options.inputEncoding - Input ciphertext encoding (default: `'base64url'`).
  * @returns A promise with the decrypted object.
  * @throws {Error} If decryption or JSON parsing fails.
  */
@@ -319,7 +319,7 @@ export async function decryptObj<T extends object = Record<string, unknown>>(
  *
  * @param data - The input string to hash.
  * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`, default: `'sha256'`).
- * @param options.encoding - Output encoding (`'base64' | 'base64url' | 'hex'`, default: `'base64url'`).
+ * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`, default: `'base64url'`).
  * @returns A `Result` promise with the hash string or an error.
  */
 export async function tryHash(data: string, options: HashOptions = {}): Promise<Result<string>> {
@@ -338,7 +338,7 @@ export async function tryHash(data: string, options: HashOptions = {}): Promise<
  *
  * @param data - The input string to hash.
  * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`, default: `'sha256'`).
- * @param options.encoding - Output encoding (`'base64' | 'base64url' | 'hex'`, default: `'base64url'`).
+ * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`, default: `'base64url'`).
  * @returns A promise of the hashed string.
  * @throws {Error} If input is invalid or hashing fails.
  */
@@ -360,7 +360,7 @@ export async function hash(data: string, options: HashOptions = {}): Promise<str
  *
  * @param password - The password to hash.
  * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`; default: `'sha512'`).
- * @param options.encoding - Output encoding (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
+ * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
  * @param options.saltLength - Length of the random salt in bytes (default: `16` bytes, min: `8` bytes).
  * @param options.iterations - Number of iterations (default: `320000`, min: `1000`).
  * @param options.keyLength - Length of the derived key in bytes (default: `64` bytes, min: `16` bytes).
@@ -385,7 +385,7 @@ export async function tryHashPassword(
  *
  * @param password - The password to hash.
  * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`; default: `'sha512'`).
- * @param options.encoding - Output encoding (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
+ * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
  * @param options.saltLength - Length of the random salt in bytes (default: `16` bytes, min: `8` bytes).
  * @param options.iterations - Number of iterations (default: `320000`, min: `1000`).
  * @param options.keyLength - Length of the derived key in bytes (default: `64` bytes, min: `16` bytes).
@@ -414,7 +414,7 @@ export async function hashPassword(
  * @param hashedPassword - The stored hash (encoded).
  * @param salt - The stored salt (encoded).
  * @param options.digest - Hash algorithm used during hashing (`'sha256' | 'sha384' | 'sha512'`; default: `'sha512'`).
- * @param options.encoding - Encoding of the stored hash and salt (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
+ * @param options.inputEncoding - Encoding of the stored hash and salt (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
  * @param options.iterations - Number of iterations used during hashing (default: `320000`).
  * @param options.keyLength - Length of the derived key in bytes used during hashing (default: `64` bytes).
  * @returns A promise of boolean, `true` if the password matches, otherwise `false`.

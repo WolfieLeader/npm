@@ -545,6 +545,7 @@ export async function hashPassword(
  * @returns A promise of boolean, `true` if the password matches, otherwise `false`.
  *
  * @example
+ * ```ts
  * const {result, salt} = await hashPassword("my-password");
  *
  * await verifyPassword("my-password", result, salt); // true

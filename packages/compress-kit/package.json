@@ -42,14 +42,14 @@
     "test": "vitest"
   },
   "dependencies": {
-    "cipher-kit": "^1.0.1",
+    "cipher-kit": "^2.1.0",
     "pako": "^2.1.0"
   },
   "devDependencies": {
-    "@types/node": "^24.5.2",
+    "@types/node": "^24.6.2",
     "@types/pako": "^2.0.4",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
   "author": "WolfieLeader",

@@ -297,7 +297,7 @@ export async function $hash(data: string, options?: HashOptions): Promise<Result
 export async function $hashPassword(
   password: string,
   options?: HashPasswordOptions,
-): Promise<Result<{ hash: string; salt: string }>> {
+): Promise<Result<{ result: string; salt: string }>> {
   if (!$isStr(password)) {
     return $err({
       msg: `${title("web", "Password Hashing")}: Empty password`,
@@ -374,7 +374,7 @@ export async function $hashPassword(
     const hashedPasswordStr = $convertBytesToStr(bits, outputEncoding);
     if (hashedPasswordStr.error) return $err(hashedPasswordStr.error);
 
-    return $ok({ hash: hashedPasswordStr.result, salt: saltStr.result });
+    return $ok({ result: hashedPasswordStr.result, salt: saltStr.result });
   } catch (error) {
     return $err({ msg: `${title("web", "Password Hashing")}: Failed to hash password`, desc: $fmtError(error) });
   }

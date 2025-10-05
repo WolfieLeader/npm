@@ -189,7 +189,7 @@ The function accepts an optional `options` parameter to customize the output enc
 ```typescript
 interface EncryptOptions {
   // Output ciphertext encoding(default: "base64url")
-  encoding?: "base64url" | "base64" | "hex";
+  outputEncoding?: "base64url" | "base64" | "hex";
 }
 ```
 
@@ -218,7 +218,7 @@ Make sure to use the same encoding that was used during encryption.
 ```typescript
 interface DecryptOptions {
   // Input ciphertext encoding (default: "base64url")
-  encoding?: "base64url" | "base64" | "hex";
+  inputEncoding?: "base64url" | "base64" | "hex";
 }
 ```
 
@@ -276,7 +276,7 @@ interface HashOptions {
   digest?: "sha256" | "sha384" | "sha512";
 
   // Output encoding (default: "base64url").
-  encoding?: "base64url" | "base64" | "hex";
+  outputEncoding?: "base64url" | "base64" | "hex";
 }
 ```
 
@@ -310,19 +310,19 @@ To verify a password, the same hashing process is applied to the input password,
 // Node.js example
 import { hashPassword, verifyPassword } from "cipher-kit/node";
 
-const { hash, salt } = hashPassword("some-secure-password");
-console.log(`Hashed Password: ${hash}`);
+const { result, salt } = hashPassword("some-secure-password");
+console.log(`Hashed Password: ${result}`);
 
-const isMatch = verifyPassword("some-secure-password", hash, salt);
+const isMatch = verifyPassword("some-secure-password", result, salt);
 console.log(`Password match: ${isMatch}`);
 
 // Web example
 import { hashPassword, verifyPassword } from "cipher-kit/web-api";
 
-const { hash, salt } = await hashPassword("some-secure-password");
-console.log(`Hashed Password: ${hash}`);
+const { result, salt } = await hashPassword("some-secure-password");
+console.log(`Hashed Password: ${result}`);
 
-const isMatch = await verifyPassword("some-secure-password", hash, salt);
+const isMatch = await verifyPassword("some-secure-password", result, salt);
 console.log(`Password match: ${isMatch}`);
 ```
 
@@ -334,7 +334,7 @@ interface HashPasswordOptions {
   digest?: "sha256" | "sha384" | "sha512";
 
   // Encoding format for the output hash (default: "base64url").
-  encoding?: "base64url" | "base64" | "hex";
+  outputEncoding?: "base64url" | "base64" | "hex";
 
   // Length of the salt in bytes (default: 16 bytes, min: 8 bytes).
   saltLength?: number;
@@ -351,7 +351,7 @@ interface VerifyPasswordOptions {
   digest?: "sha256" | "sha384" | "sha512";
 
   // Encoding format used during the original hashing (default: `'base64url'`).
-  encoding?: "base64url" | "base64" | "hex";
+  inputEncoding?: "base64url" | "base64" | "hex";
 
   // Number of iterations used during the original hashing (default: `320000`).
   iterations?: number;
@@ -420,7 +420,7 @@ function isEncryptedFormat(message: string): boolean {
 
 ## Contributions 🤝
 
-Want to contribute or suggest a feature?
+Want to contribute or suggest a feature or improvement?
 
 - Open an issue or feature request
 - Submit a PR to improve the packages or add new ones

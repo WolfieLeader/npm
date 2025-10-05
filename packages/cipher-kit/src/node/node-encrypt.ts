@@ -278,7 +278,10 @@ export function $hash(data: string, options: HashOptions = {}): Result<string> {
   }
 }
 
-export function $hashPassword(password: string, options?: HashPasswordOptions): Result<{ hash: string; salt: string }> {
+export function $hashPassword(
+  password: string,
+  options?: HashPasswordOptions,
+): Result<{ result: string; salt: string }> {
   if (!$isStr(password)) {
     return $err({
       msg: `${title("node", "Password Hashing")}: Empty password for hashing`,
@@ -338,7 +341,7 @@ export function $hashPassword(password: string, options?: HashPasswordOptions): 
     const salt = nodeCrypto.randomBytes(saltLength);
     const hash = nodeCrypto.pbkdf2Sync(password.normalize("NFKC"), salt, iterations, keyLength, digestAlgo.node);
 
-    return $ok({ salt: salt.toString(outputEncoding), hash: hash.toString(outputEncoding) });
+    return $ok({ result: hash.toString(outputEncoding), salt: salt.toString(outputEncoding) });
   } catch (error) {
     return $err({ msg: `${title("node", "Password Hashing")}: Failed to hash password`, desc: $fmtError(error) });
   }

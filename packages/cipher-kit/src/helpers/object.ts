@@ -10,6 +10,19 @@ export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T
   }
 }
 
+export function $parseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
+  try {
+    if (!$isStr(str)) return $err({ msg: "Utility: Invalid input", desc: "Input is not a valid string" });
+    const obj = JSON.parse(str);
+
+    if (!$isPlainObj(obj))
+      return $err({ msg: "Utility: Invalid object format", desc: "Parsed data is not a plain object" });
+    return $ok({ result: obj as T });
+  } catch (error) {
+    return $err({ msg: "Utility: Invalid format", desc: $fmtError(error) });
+  }
+}
+
 /**
  * Safely serializes a plain object to JSON without throwing.
  *
@@ -26,12 +39,10 @@ export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T
  *
  * @example
  * ```ts
- * const res = tryStringifyObj({ a: 1 });
- * if (res.success) {
- *   console.log(res.result); // {"a":1}
- * } else {
- *   console.error(res.error.message, res.error.description);
- * }
+ * const { result, error, success } = tryStringifyObj({ a: 1 });
+ *
+ * if (success) console.log(result); // "{\"a\":1}"
+ * else console.error(error); // { message: "...", description: "..." }
  * ```
  */
 export function tryStringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
@@ -55,30 +66,13 @@ export function tryStringifyObj<T extends object = Record<string, unknown>>(obj:
  *
  * @example
  * ```ts
- * try {
- * const json = stringifyObj({ a: 1 }); // {"a":1}
- * } catch (error: unknown) {
- *   console.error(error);
- * }
+ * const json = stringifyObj({ a: 1 }); // "{\"a\":1}"
  * ```
  */
 export function stringifyObj<T extends object = Record<string, unknown>>(obj: T): string {
   const { result, error } = $stringifyObj(obj);
   if (error) throw new Error($fmtResultErr(error));
   return result;
-}
-
-export function $parseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
-  try {
-    if (!$isStr(str)) return $err({ msg: "Utility: Invalid input", desc: "Input is not a valid string" });
-    const obj = JSON.parse(str);
-
-    if (!$isPlainObj(obj))
-      return $err({ msg: "Utility: Invalid object format", desc: "Parsed data is not a plain object" });
-    return $ok({ result: obj as T });
-  } catch (error) {
-    return $err({ msg: "Utility: Invalid format", desc: $fmtError(error) });
-  }
 }
 
 /**
@@ -95,12 +89,10 @@ export function $parseToObj<T extends object = Record<string, unknown>>(str: str
  *
  * @example
  * ```ts
- * const res = tryParseToObj<{ a: number }>('{"a":1}');
- * if (res.success) {
- *   console.log(res.result.a); // 1
- * } else {
- *   console.error(res.error.message, res.error.description);
- * }
+ * const {result, error, success} = tryParseToObj<{ a: number }>('{"a":1}');
+ *
+ * if (success) console.log(result); // { a: 1 }
+ * else console.error(error) // { message: "...", description: "..." }
  * ```
  */
 export function tryParseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
@@ -122,11 +114,7 @@ export function tryParseToObj<T extends object = Record<string, unknown>>(str: s
  *
  * @example
  * ```ts
- * try {
- *   const obj = parseToObj<{ a: number }>('{"a":1}'); // obj.a === 1
- * } catch (error: unknown) {
- *   console.error(error);
- * }
+ * const obj = parseToObj<{ a: number }>('{"a":1}'); // obj.a === 1
  * ```
  */
 export function parseToObj<T extends object = Record<string, unknown>>(str: string): T {

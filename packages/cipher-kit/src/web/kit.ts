@@ -31,6 +31,13 @@ import {
  *
  * @param x - The value to check.
  * @returns True if the value is a SecretKey object for Web, false otherwise.
+ *
+ * @example
+ * ```ts
+ * isWebSecretKey(webKey); // true
+ * isWebSecretKey(nodeKey); // false
+ * isWebSecretKey({}); // false
+ * ```
  */
 export function isWebSecretKey(x: unknown): x is SecretKey<"web"> {
   return $isSecretKey(x, "web") !== null;
@@ -44,6 +51,14 @@ export function isWebSecretKey(x: unknown): x is SecretKey<"web"> {
  * The chance of two pets getting the same name tag is practically zero, and it's very hard to guess!
  *
  * @returns A `Result` containing the UUID string or an error.
+ *
+ * @example
+ * ```ts
+ * const {result, error, success} = tryGenerateUuid();
+ *
+ * if (success) console.log(result); // "..." (a UUID string)
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export function tryGenerateUuid(): Result<string> {
   return $generateUuid();
@@ -58,6 +73,11 @@ export function tryGenerateUuid(): Result<string> {
  *
  * @returns A UUID string.
  * @throws {Error} If UUID generation fails.
+ *
+ * @example
+ * ```ts
+ * const uuid = generateUuid(); // "..." (a UUID string)
+ * ```
  */
 export function generateUuid(): string {
   const { result, error } = $generateUuid();
@@ -80,6 +100,14 @@ export function generateUuid(): string {
  * @param options.salt - A salt string (default: `'cipher-kit-salt'`, must be ≥ 8 chars).
  * @param options.info - An info string (default: `'cipher-kit'`).
  * @returns A `Result` promise containing the derived `SecretKey` or an error.
+ *
+ * @example
+ * ```ts
+ * const {result, error, success} = await tryCreateSecretKey("my-secret");
+ *
+ * if (success) console.log(result); // SecretKey object
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export async function tryCreateSecretKey(
   secret: string,
@@ -104,6 +132,11 @@ export async function tryCreateSecretKey(
  * @param options.info - An info string (default: `'cipher-kit'`).
  * @returns A promise of the derived `SecretKey`.
  * @throws {Error} If key derivation fails.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret"); // SecretKey object
+ * ```
  */
 export async function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): Promise<SecretKey<"web">> {
   const { result, error } = await $createSecretKey(secret, options);
@@ -124,6 +157,15 @@ export async function createSecretKey(secret: string, options: CreateSecretKeyOp
  * @param secretKey - The `SecretKey` object used for encryption.
  * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A `Result` promise containing the encrypted string in the specified format or an error.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret");
+ * const {result, error, success} = await tryEncrypt("Hello, World!", secretKey);
+ *
+ * if (success) console.log(result); // "iv.cipherWithTag." (Encrypted string)
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export async function tryEncrypt(
   data: string,
@@ -147,6 +189,12 @@ export async function tryEncrypt(
  * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A promise with the encrypted string in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret");
+ * const encrypted = await encrypt("Hello, World!", secretKey); // "iv.cipherWithTag." (Encrypted string)
+ * ```
  */
 export async function encrypt(
   data: string,
@@ -171,6 +219,16 @@ export async function encrypt(
  * @param secretKey - The `SecretKey` object used for decryption.
  * @param options.inputEncoding - The encoding format for the input ciphertext (default: `'base64url'`).
  * @returns A `Result` promise containing the decrypted UTF-8 string or an error.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret");
+ * const encrypted = await encrypt("Hello, World!", secretKey);
+ * const {result, error, success} = await tryDecrypt(encrypted, secretKey);
+ *
+ * if (success) console.log(result); // "Hello, World!"
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export async function tryDecrypt(
   encrypted: string,
@@ -194,6 +252,13 @@ export async function tryDecrypt(
  * @param options.inputEncoding - The encoding format for the input ciphertext (default: `'base64url'`).
  * @returns A promise with the decrypted UTF-8 string.
  * @throws {Error} If the input data or key is invalid, or if decryption fails.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret");
+ * const encrypted = await encrypt("Hello, World!", secretKey);
+ * const decrypted = await decrypt(encrypted, secretKey); // "Hello, World!"
+ * ```
  */
 export async function decrypt(
   encrypted: string,
@@ -217,10 +282,20 @@ export async function decrypt(
  * So, you take a picture of your toy box (convert it to JSON), and scramble that with
  * your special key, creating a jumbled code that only someone with the right key can read.
  *
+ * @template T - The type of the plain object to encrypt.
  * @param data - A plain object to encrypt.
  * @param secretKey - The `SecretKey` object used for encryption.
  * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A `Result` promise containing the encrypted string in the specified format or an error.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret");
+ * const {result, error, success} = await tryEncryptObj({ a: 1 }, secretKey);
+ *
+ * if (success) console.log(result); // "iv.cipherWithTag." (Encrypted string)
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export async function tryEncryptObj<T extends object = Record<string, unknown>>(
   data: T,
@@ -242,11 +317,18 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
  * So, you take a picture of your toy box (convert it to JSON), and scramble that with
  * your special key, creating a jumbled code that only someone with the right key can read.
  *
+ * @template T - The type of the plain object to encrypt.
  * @param data - A plain object to encrypt.
  * @param secretKey - The `SecretKey` object used for encryption.
  * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A promise with the encrypted string in the specified format.
  * @throws {Error} If the input data or key is invalid, or if encryption fails.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret");
+ * const encrypted = await encryptObj({ a: 1 }, secretKey); // "iv.cipherWithTag." (Encrypted string)
+ * ```
  */
 export async function encryptObj<T extends object = Record<string, unknown>>(
   data: T,
@@ -272,6 +354,16 @@ export async function encryptObj<T extends object = Record<string, unknown>>(
  * @param secretKey - The `SecretKey` used for decryption.
  * @param options.inputEncoding - Input ciphertext encoding (default: `'base64url'`).
  * @returns A `Result` promise with the decrypted object on success, or an error.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret");
+ * const encrypted = await encryptObj({ a: 1 }, secretKey);
+ * const {result, error, success} = await tryDecryptObj<{ a: number }>(encrypted, secretKey);
+ *
+ * if (success) console.log(result); // { a: 1 }
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export async function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
@@ -296,6 +388,13 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
  * @param options.inputEncoding - Input ciphertext encoding (default: `'base64url'`).
  * @returns A promise with the decrypted object.
  * @throws {Error} If decryption or JSON parsing fails.
+ *
+ * @example
+ * ```ts
+ * const secretKey = await createSecretKey("my-secret");
+ * const encrypted = await encryptObj({ a: 1 }, secretKey);
+ * const obj = await decryptObj<{ a: number }>(encrypted, secretKey); // obj.a === 1
+ * ```
  */
 export async function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
@@ -321,6 +420,14 @@ export async function decryptObj<T extends object = Record<string, unknown>>(
  * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`, default: `'sha256'`).
  * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`, default: `'base64url'`).
  * @returns A `Result` promise with the hash string or an error.
+ *
+ * @example
+ * ```ts
+ * const {result, error, success} = await tryHash("my data");
+ *
+ * if (success) console.log(result); // "..." (Hashed string)
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export async function tryHash(data: string, options: HashOptions = {}): Promise<Result<string>> {
   return await $hash(data, options);
@@ -341,6 +448,11 @@ export async function tryHash(data: string, options: HashOptions = {}): Promise<
  * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`, default: `'base64url'`).
  * @returns A promise of the hashed string.
  * @throws {Error} If input is invalid or hashing fails.
+ *
+ * @example
+ * ```ts
+ * const hashed = await hash("my data"); // "..." (Hashed string)
+ * ```
  */
 export async function hash(data: string, options: HashOptions = {}): Promise<string> {
   const { result, error } = await $hash(data, options);
@@ -364,12 +476,20 @@ export async function hash(data: string, options: HashOptions = {}): Promise<str
  * @param options.saltLength - Length of the random salt in bytes (default: `16` bytes, min: `8` bytes).
  * @param options.iterations - Number of iterations (default: `320000`, min: `1000`).
  * @param options.keyLength - Length of the derived key in bytes (default: `64` bytes, min: `16` bytes).
- * @returns A `Result` promise with `{ hash, salt }` or an error.
+ * @returns A `Result` promise with `{ result, salt }` or an error.
+ *
+ * @example
+ * ```ts
+ * const {result, error, success} = await tryHashPassword("my-password");
+ *
+ * if (success) console.log(result, salt); // "..." (hashed password), "..." (salt)
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export async function tryHashPassword(
   password: string,
   options: HashPasswordOptions = {},
-): Promise<Result<{ hash: string; salt: string }>> {
+): Promise<Result<{ result: string; salt: string }>> {
   return await $hashPassword(password, options);
 }
 
@@ -389,16 +509,21 @@ export async function tryHashPassword(
  * @param options.saltLength - Length of the random salt in bytes (default: `16` bytes, min: `8` bytes).
  * @param options.iterations - Number of iterations (default: `320000`, min: `1000`).
  * @param options.keyLength - Length of the derived key in bytes (default: `64` bytes, min: `16` bytes).
- * @returns A promise with `{ hash, salt }` for storage.
+ * @returns A promise with `{ result, salt }` for storage.
  * @throws {Error} If inputs are invalid or hashing fails.
+ *
+ * @example
+ * ```ts
+ * const {result, salt} = await hashPassword("my-password"); // "..." (hashed password), "..." (salt)
+ * ```
  */
 export async function hashPassword(
   password: string,
   options: HashPasswordOptions = {},
-): Promise<{ hash: string; salt: string }> {
-  const { hash, salt, error } = await $hashPassword(password, options);
+): Promise<{ result: string; salt: string }> {
+  const { result, salt, error } = await $hashPassword(password, options);
   if (error) throw new Error($fmtResultErr(error));
-  return { hash, salt };
+  return { result, salt };
 }
 
 /**
@@ -418,6 +543,13 @@ export async function hashPassword(
  * @param options.iterations - Number of iterations used during hashing (default: `320000`).
  * @param options.keyLength - Length of the derived key in bytes used during hashing (default: `64` bytes).
  * @returns A promise of boolean, `true` if the password matches, otherwise `false`.
+ *
+ * @example
+ * const {result, salt} = await hashPassword("my-password");
+ *
+ * await verifyPassword("my-password", result, salt); // true
+ * await verifyPassword("wrong-password", result, salt); // false
+ * ```
  */
 export async function verifyPassword(
   password: string,
@@ -439,6 +571,14 @@ export async function verifyPassword(
  * @param data - The input string to convert.
  * @param inputEncoding - The encoding of the input string (default: `'utf8'`).
  * @returns A `Result` with `{ result: Uint8Array }` or an error.
+ *
+ * @example
+ * ```ts
+ * const {result, error, success} = tryConvertStrToBytes("Hello", "utf8");
+ *
+ * if (success) console.log(result); // Uint8Array([...])
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export function tryConvertStrToBytes(
   data: string,
@@ -459,6 +599,11 @@ export function tryConvertStrToBytes(
  * @param inputEncoding - The encoding of the input string (default: `'utf8'`).
  * @returns A `Uint8Array` containing the bytes.
  * @throws {Error} If input is invalid or conversion fails.
+ *
+ * @example
+ * ```ts
+ * const bytes = convertStrToBytes("Hello", "utf8"); // Uint8Array([...])
+ * ```
  */
 export function convertStrToBytes(data: string, inputEncoding: Encoding = "utf8"): Uint8Array<ArrayBuffer> {
   const { result, error } = $convertStrToBytes(data, inputEncoding);
@@ -477,6 +622,15 @@ export function convertStrToBytes(data: string, inputEncoding: Encoding = "utf8"
  * @param data - The `Uint8Array` or `ArrayBuffer` to convert.
  * @param outputEncoding - The output encoding (default: `'utf8'`).
  * @returns A `Result` with the string or an error.
+ *
+ * @example
+ * ```ts
+ * const bytes = convertStrToBytes("Hello", "utf8"); // Uint8Array([...])
+ * const {result, error, success} = tryConvertBytesToStr(bytes, "utf8");
+ *
+ * if (success) console.log(result); // "Hello"
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export function tryConvertBytesToStr(
   data: Uint8Array | ArrayBuffer,
@@ -497,6 +651,12 @@ export function tryConvertBytesToStr(
  * @param outputEncoding - The output encoding (default: `'utf8'`).
  * @returns The encoded string.
  * @throws {Error} If input is invalid or conversion fails.
+ *
+ * @example
+ * ```ts
+ * const bytes = convertStrToBytes("Hello", "utf8"); // Uint8Array([...])
+ * const str = convertBytesToStr(bytes, "utf8"); // "Hello"
+ * ```
  */
 export function convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding: Encoding = "utf8"): string {
   const { result, error } = $convertBytesToStr(data, outputEncoding);
@@ -516,6 +676,14 @@ export function convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding
  * @param from - The current encoding of `data`.
  * @param to - The target encoding for `data`.
  * @returns A `Result` with a string or an error.
+ *
+ * @example
+ * ```ts
+ * const {result, error, success} = tryConvertEncoding("Hello", "utf8", "base64url");
+ *
+ * if (success) console.log(result); // "..." (Base64url encoded string)
+ * else console.error(error); // { message: "...", description: "..." }
+ * ```
  */
 export function tryConvertEncoding(data: string, from: Encoding, to: Encoding): Result<string> {
   return $convertEncoding(data, from, to);
@@ -534,6 +702,11 @@ export function tryConvertEncoding(data: string, from: Encoding, to: Encoding): 
  * @param to - The target encoding for `data`.
  * @returns The converted string.
  * @throws {Error} If encodings are invalid or conversion fails.
+ *
+ * @example
+ * ```ts
+ * const base64url = convertEncoding("Hello", "utf8", "base64url"); // "..." (Base64url encoded string)
+ * ```
  */
 export function convertEncoding(data: string, from: Encoding, to: Encoding): string {
   const { result, error } = $convertEncoding(data, from, to);

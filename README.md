@@ -17,13 +17,15 @@
 <a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/v/cipher-kit?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/dt/cipher-kit.svg?color=03C03C" alt="npm downloads"></a>
 
-Secure, Lightweight, and Cross-Platform Encryption & Decryption for Web, Node.js, Deno, and Bun
+Secure, Modern, and Cross-Platform Cryptography Helpers for Web, Node.js, Deno, Bun, and Cloudflare Workers.
 
-- 🛡️ **AES-GCM Encryption** – Secure and authenticated encryption with built-in integrity checks.
-- 🌐 **Cross-Platform** – Works in Web, Node.js, Deno, and Bun without code changes.
+- 🛡️ **Secure and Flexible** - Uses best practices and modern cryptographic techniques, while providing a flexible and simple API.
+- 📦 **All-in-One Toolkit** – Combines encryption, hashing, encoding, serialization, and more into a single package.
+- 🌐 **Cross-Platform** – Works seamlessly across Web, Node.js, Deno, Bun, and Cloudflare Workers.
+- 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
+- 🌳 **Tree-Shakable** - Import from the root or from platform-specific entry points to keep bundles lean.
 - 🚫 **Zero Dependencies** – Fully self-contained, no external libraries required.
-- 🔒 **SHA-256 Key Derivation** – Derives strong encryption keys from passwords.
-- 🧪 **Strict Validation & `Result<T>` Typing** – Unified return type with robust input validation.
+- 🍼 **Explain Like I'm Five** - Newbie-friendly explanations and documentation.
 
 📖 [View README →](./packages/cipher-kit/README.md)
 

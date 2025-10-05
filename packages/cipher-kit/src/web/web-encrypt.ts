@@ -10,7 +10,7 @@ import type {
   SecretKey,
   VerifyPasswordOptions,
 } from "~/helpers/types";
-import { $isSecretKey, $isStr, matchPattern } from "~/helpers/validate";
+import { $isPlainObj, $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate";
 import { $convertBytesToStr, $convertStrToBytes, textEncoder } from "./web-encode";
 
 export function $generateUuid(): Result<string> {
@@ -23,10 +23,20 @@ export function $generateUuid(): Result<string> {
 
 export async function $createSecretKey(
   secret: string,
-  options: CreateSecretKeyOptions = {},
+  options?: CreateSecretKeyOptions,
 ): Promise<Result<{ result: SecretKey<"web"> }>> {
-  if (!$isStr(secret)) {
-    return $err({ msg: `${title("web", "Key Generation")}: Empty Secret`, desc: "Secret must be a non-empty string" });
+  if (!$isStr(secret, 8)) {
+    return $err({
+      msg: `${title("web", "Key Generation")}: Empty Secret`,
+      desc: "Secret must be a non-empty string with at least 8 characters",
+    });
+  }
+
+  if (!$isPlainObj<CreateSecretKeyOptions>(options)) {
+    return $err({
+      msg: `${title("web", "Key Generation")}: Invalid options`,
+      desc: "Options must be an object",
+    });
   }
 
   const algorithm = options.algorithm ?? "aes256gcm";
@@ -99,7 +109,7 @@ export async function $createSecretKey(
 export async function $encrypt(
   data: string,
   secretKey: SecretKey<"web">,
-  options: EncryptOptions = {},
+  options?: EncryptOptions,
 ): Promise<Result<string>> {
   if (!$isStr(data)) {
     return $err({
@@ -108,10 +118,17 @@ export async function $encrypt(
     });
   }
 
-  const encoding = options.encoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(encoding)) {
+  if (!$isPlainObj<EncryptOptions>(options)) {
     return $err({
-      msg: `${title("web", "Encryption")}: Unsupported output encoding: ${encoding}`,
+      msg: `${title("web", "Encryption")}: Invalid options`,
+      desc: "Options must be an object",
+    });
+  }
+
+  const outputEncoding = options.outputEncoding ?? "base64url";
+  if (!CIPHER_ENCODING.includes(outputEncoding)) {
+    return $err({
+      msg: `${title("web", "Encryption")}: Unsupported output encoding: ${outputEncoding}`,
       desc: "Use base64, base64url, or hex",
     });
   }
@@ -135,8 +152,8 @@ export async function $encrypt(
       result,
     );
 
-    const ivStr = $convertBytesToStr(iv, encoding);
-    const cipherStr = $convertBytesToStr(cipherWithTag, encoding);
+    const ivStr = $convertBytesToStr(iv, outputEncoding);
+    const cipherStr = $convertBytesToStr(cipherWithTag, outputEncoding);
 
     if (ivStr.error || cipherStr.error) {
       return $err({
@@ -154,19 +171,26 @@ export async function $encrypt(
 export async function $decrypt(
   encrypted: string,
   secretKey: SecretKey<"web">,
-  options: DecryptOptions = {},
+  options?: DecryptOptions,
 ): Promise<Result<string>> {
-  if (matchPattern(encrypted, "web") === false) {
+  if (!matchEncryptedPattern(encrypted, "web")) {
     return $err({
       msg: `${title("web", "Decryption")}: Invalid encrypted data format`,
       desc: 'Encrypted data must be in the format "iv.cipherWithTag."',
     });
   }
 
-  const encoding = options.encoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(encoding)) {
+  if (!$isPlainObj<DecryptOptions>(options)) {
     return $err({
-      msg: `${title("web", "Decryption")}: Unsupported input encoding: ${encoding}`,
+      msg: `${title("web", "Decryption")}: Invalid options`,
+      desc: "Options must be an object",
+    });
+  }
+
+  const inputEncoding = options.inputEncoding ?? "base64url";
+  if (!CIPHER_ENCODING.includes(inputEncoding)) {
+    return $err({
+      msg: `${title("web", "Decryption")}: Unsupported input encoding: ${inputEncoding}`,
       desc: "Use base64, base64url, or hex",
     });
   }
@@ -187,8 +211,8 @@ export async function $decrypt(
     });
   }
 
-  const ivBytes = $convertStrToBytes(iv, encoding);
-  const cipherWithTagBytes = $convertStrToBytes(encryptedWithTag, encoding);
+  const ivBytes = $convertStrToBytes(iv, inputEncoding);
+  const cipherWithTagBytes = $convertStrToBytes(encryptedWithTag, inputEncoding);
 
   if (ivBytes.error || cipherWithTagBytes.error) {
     return $err({
@@ -213,7 +237,7 @@ export async function $decrypt(
 export async function $encryptObj<T extends object = Record<string, unknown>>(
   data: T,
   secretKey: SecretKey<"web">,
-  options: EncryptOptions = {},
+  options?: EncryptOptions,
 ): Promise<Result<string>> {
   const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
@@ -223,22 +247,29 @@ export async function $encryptObj<T extends object = Record<string, unknown>>(
 export async function $decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
   secretKey: SecretKey<"web">,
-  options: DecryptOptions = {},
+  options?: DecryptOptions,
 ): Promise<Result<{ result: T }>> {
   const { result, error } = await $decrypt(encrypted, secretKey, options);
   if (error) return $err(error);
   return $parseToObj<T>(result);
 }
 
-export async function $hash(data: string, options: HashOptions = {}): Promise<Result<string>> {
+export async function $hash(data: string, options?: HashOptions): Promise<Result<string>> {
   if (!$isStr(data)) {
     return $err({ msg: `${title("web", "Hashing")}: Empty data for hashing`, desc: "Data must be a non-empty string" });
   }
 
-  const encoding = options.encoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(encoding)) {
+  if (!$isPlainObj<HashOptions>(options)) {
     return $err({
-      msg: `${title("web", "Hashing")}: Unsupported output encoding: ${encoding}`,
+      msg: `${title("web", "Hashing")}: Invalid options`,
+      desc: "Options must be an object",
+    });
+  }
+
+  const outputEncoding = options.outputEncoding ?? "base64url";
+  if (!CIPHER_ENCODING.includes(outputEncoding)) {
+    return $err({
+      msg: `${title("web", "Hashing")}: Unsupported output encoding: ${outputEncoding}`,
       desc: "Use base64, base64url, or hex",
     });
   }
@@ -257,7 +288,7 @@ export async function $hash(data: string, options: HashOptions = {}): Promise<Re
 
   try {
     const hashed = await crypto.subtle.digest(digestAlgo.web, result);
-    return $convertBytesToStr(hashed, encoding);
+    return $convertBytesToStr(hashed, outputEncoding);
   } catch (error) {
     return $err({ msg: `${title("web", "Hashing")}: Failed to hash data`, desc: $fmtError(error) });
   }
@@ -265,12 +296,19 @@ export async function $hash(data: string, options: HashOptions = {}): Promise<Re
 
 export async function $hashPassword(
   password: string,
-  options: HashPasswordOptions = {},
-): Promise<Result<{ hash: string; salt: string }>> {
+  options?: HashPasswordOptions,
+): Promise<Result<{ result: string; salt: string }>> {
   if (!$isStr(password)) {
     return $err({
       msg: `${title("web", "Password Hashing")}: Empty password`,
       desc: "Password must be a non-empty string",
+    });
+  }
+
+  if (!$isPlainObj<HashPasswordOptions>(options)) {
+    return $err({
+      msg: `${title("web", "Password Hashing")}: Invalid options`,
+      desc: "Options must be an object",
     });
   }
 
@@ -283,10 +321,10 @@ export async function $hashPassword(
   }
   const digestAlgo = DIGEST_ALGORITHMS[digest];
 
-  const encoding = options.encoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(encoding)) {
+  const outputEncoding = options.outputEncoding ?? "base64url";
+  if (!CIPHER_ENCODING.includes(outputEncoding)) {
     return $err({
-      msg: `${title("web", "Password Hashing")}: Unsupported output encoding: ${encoding}`,
+      msg: `${title("web", "Password Hashing")}: Unsupported output encoding: ${outputEncoding}`,
       desc: "Use base64, base64url, or hex",
     });
   }
@@ -330,13 +368,13 @@ export async function $hashPassword(
       keyLength * 8,
     );
 
-    const saltStr = $convertBytesToStr(salt, encoding);
+    const saltStr = $convertBytesToStr(salt, outputEncoding);
     if (saltStr.error) return $err(saltStr.error);
 
-    const hashedPasswordStr = $convertBytesToStr(bits, encoding);
+    const hashedPasswordStr = $convertBytesToStr(bits, outputEncoding);
     if (hashedPasswordStr.error) return $err(hashedPasswordStr.error);
 
-    return $ok({ hash: hashedPasswordStr.result, salt: saltStr.result });
+    return $ok({ result: hashedPasswordStr.result, salt: saltStr.result });
   } catch (error) {
     return $err({ msg: `${title("web", "Password Hashing")}: Failed to hash password`, desc: $fmtError(error) });
   }
@@ -346,16 +384,18 @@ export async function $verifyPassword(
   password: string,
   hashedPassword: string,
   salt: string,
-  options: VerifyPasswordOptions = {},
+  options?: VerifyPasswordOptions,
 ): Promise<boolean> {
-  if (!$isStr(password) || !$isStr(hashedPassword) || !$isStr(salt)) return false;
+  if (!$isStr(password) || !$isStr(hashedPassword) || !$isStr(salt) || !$isPlainObj<VerifyPasswordOptions>(options)) {
+    return false;
+  }
 
   const digest = options.digest ?? "sha512";
   if (!(digest in DIGEST_ALGORITHMS)) return false;
   const digestAlgo = DIGEST_ALGORITHMS[digest];
 
-  const encoding = options.encoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(encoding)) return false;
+  const inputEncoding = options.inputEncoding ?? "base64url";
+  if (!CIPHER_ENCODING.includes(inputEncoding)) return false;
 
   const iterations = options.iterations ?? 320_000;
   if (typeof iterations !== "number" || iterations < 1000) return false;
@@ -363,10 +403,10 @@ export async function $verifyPassword(
   const keyLength = options.keyLength ?? 64;
   if (typeof keyLength !== "number" || keyLength < 16) return false;
 
-  const saltBytes = $convertStrToBytes(salt, encoding);
+  const saltBytes = $convertStrToBytes(salt, inputEncoding);
   if (saltBytes.error) return false;
 
-  const hashedPasswordBytes = $convertStrToBytes(hashedPassword, encoding);
+  const hashedPasswordBytes = $convertStrToBytes(hashedPassword, inputEncoding);
   if (hashedPasswordBytes.error) return false;
 
   try {

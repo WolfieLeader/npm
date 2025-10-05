@@ -9,7 +9,7 @@ export {
 } from "~/helpers/object";
 export {
   ENCRYPTED_REGEX,
-  matchPattern,
+  matchEncryptedPattern,
 } from "~/helpers/validate";
 export type * from "./helpers/types";
 

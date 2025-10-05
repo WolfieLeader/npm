@@ -6,13 +6,13 @@ export function $isStr(x: unknown, min = 1): x is string {
   return x !== null && x !== undefined && typeof x === "string" && x.trim().length >= min;
 }
 
-export function $isObj(x: unknown): x is Record<string, unknown> {
+export function $isPlainObj<T extends object = Record<string, unknown>>(x: unknown): x is T {
   if (typeof x !== "object" || x === null || x === undefined) return false;
   const proto = Object.getPrototypeOf(x);
   return proto === Object.prototype || proto === null;
 }
 
-export function $isLooseObj(x: unknown): x is Record<string, unknown> {
+export function $isObj(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && x !== undefined;
 }
 
@@ -26,7 +26,7 @@ export function $isSecretKey<Platform extends "node" | "web">(
   x: unknown,
   platform: Platform,
 ): InjectedSecretKey<Platform> | null {
-  if (!$isLooseObj(x) || (platform !== "node" && platform !== "web") || x.platform !== platform) return null;
+  if (!$isObj(x) || (platform !== "node" && platform !== "web") || x.platform !== platform) return null;
 
   const keys = Object.keys(x);
   if (keys.length !== expectedKeys.size) return null;
@@ -38,7 +38,7 @@ export function $isSecretKey<Platform extends "node" | "web">(
     !(x.digest in DIGEST_ALGORITHMS) ||
     typeof x.algorithm !== "string" ||
     !(x.algorithm in ENCRYPTION_ALGORITHMS) ||
-    !$isLooseObj(x.key) ||
+    !$isObj(x.key) ||
     x.key.type !== "secret"
   ) {
     return null;
@@ -57,7 +57,7 @@ export function $isSecretKey<Platform extends "node" | "web">(
   }
 
   if (
-    !$isLooseObj(x.key.algorithm) ||
+    !$isObj(x.key.algorithm) ||
     x.key.algorithm.name !== algorithm.web ||
     (typeof x.key.algorithm.length === "number" && x.key.algorithm.length !== algorithm.keyBytes * 8) ||
     typeof x.key.extractable !== "boolean" ||
@@ -111,13 +111,13 @@ export const ENCRYPTED_REGEX = Object.freeze({
  *
  * @example
  * ```ts
- * matchPattern("abc.def.ghi.", "node");    // true
- * matchPattern("abc.def.", "web");         // true
- * matchPattern("abc.def.", "node");        // false
- * matchPattern("abc.def.ghi.", "general"); // true
+ * matchEncryptedPattern("abc.def.ghi.", "node");    // true
+ * matchEncryptedPattern("abc.def.", "web");         // true
+ * matchEncryptedPattern("abc.def.", "node");        // false
+ * matchEncryptedPattern("abc.def.ghi.", "general"); // true
  * ```
  */
-export function matchPattern(data: string, format: "general" | "node" | "web"): boolean {
+export function matchEncryptedPattern(data: string, format: "general" | "node" | "web"): boolean {
   if (typeof data !== "string") return false;
   if (!(format in ENCRYPTED_REGEX)) throw new Error(`Unknown format: ${format}`);
   return ENCRYPTED_REGEX[format].test(data);

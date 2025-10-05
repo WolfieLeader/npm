@@ -1,6 +1,6 @@
 {
   "name": "cipher-kit",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "🔐 Secure, Modern, and Cross-Platform Cryptography Helpers for Web, Node.js, Deno, Bun, and Cloudflare Workers",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/cipher-kit#readme",
   "repository": {
@@ -68,9 +68,9 @@
     "test": "vitest"
   },
   "devDependencies": {
-    "@types/node": "^24.5.2",
+    "@types/node": "^24.6.2",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
   "author": "WolfieLeader",
@@ -81,13 +81,12 @@
     "cipher",
     "security",
     "hash",
-    "aes",
+    "password",
+    "uuid",
     "web",
     "node",
     "deno",
     "bun",
-    "cloudflare",
-    "workers",
-    "password"
+    "cloudflare"
   ]
 }

@@ -44,17 +44,17 @@ bun add cipher-kit@latest
 // Node.js
 import { createSecretKey, encrypt, decrypt } from "cipher-kit/node";
 
-const nodeSecretKey = createSecretKey("my-passphrase");
-const encrypted = encrypt("Hello World!", nodeSecretKey);
-const decrypted = decrypt(encrypted, nodeSecretKey);
+const secretKey = createSecretKey("my-passphrase");
+const encrypted = encrypt("Hello World!", secretKey);
+const decrypted = decrypt(encrypted, secretKey);
 console.log(decrypted); // "Hello World!"
 
 // Web - including Deno, Bun, Cloudflare Workers
 import { createSecretKey, encrypt, decrypt } from "cipher-kit/web-api";
 
-const webSecretKey = await createSecretKey("my-passphrase");
-const encrypted = await encrypt("Hello World!", webSecretKey);
-const decrypted = await decrypt(encrypted, webSecretKey);
+const secretKey = await createSecretKey("my-passphrase");
+const encrypted = await encrypt("Hello World!", secretKey);
+const decrypted = await decrypt(encrypted, secretKey);
 console.log(decrypted); // "Hello World!"
 ```
 
@@ -129,6 +129,7 @@ Encryption is the process of converting readable plaintext into unreadable ciphe
 #### _Secret Key Creation_ 🔑
 
 Before encrypting or decrypting data, you need to create a secret key.
+The key must be at least 8 characters long.
 
 Each key is tied to a specific platform (Web or Node.js) and cannot be used interchangeably.
 
@@ -188,7 +189,7 @@ The function accepts an optional `options` parameter to customize the output enc
 ```typescript
 interface EncryptOptions {
   // Output ciphertext encoding(default: "base64url")
-  encoding?: "base64url" | "base64" | "hex";
+  outputEncoding?: "base64url" | "base64" | "hex";
 }
 ```
 
@@ -217,7 +218,7 @@ Make sure to use the same encoding that was used during encryption.
 ```typescript
 interface DecryptOptions {
   // Input ciphertext encoding (default: "base64url")
-  encoding?: "base64url" | "base64" | "hex";
+  inputEncoding?: "base64url" | "base64" | "hex";
 }
 ```
 
@@ -275,7 +276,7 @@ interface HashOptions {
   digest?: "sha256" | "sha384" | "sha512";
 
   // Output encoding (default: "base64url").
-  encoding?: "base64url" | "base64" | "hex";
+  outputEncoding?: "base64url" | "base64" | "hex";
 }
 ```
 
@@ -309,19 +310,19 @@ To verify a password, the same hashing process is applied to the input password,
 // Node.js example
 import { hashPassword, verifyPassword } from "cipher-kit/node";
 
-const { hash, salt } = hashPassword("some-secure-password");
-console.log(`Hashed Password: ${hash}`);
+const { result, salt } = hashPassword("some-secure-password");
+console.log(`Hashed Password: ${result}`);
 
-const isMatch = verifyPassword("some-secure-password", hash, salt);
+const isMatch = verifyPassword("some-secure-password", result, salt);
 console.log(`Password match: ${isMatch}`);
 
 // Web example
 import { hashPassword, verifyPassword } from "cipher-kit/web-api";
 
-const { hash, salt } = await hashPassword("some-secure-password");
-console.log(`Hashed Password: ${hash}`);
+const { result, salt } = await hashPassword("some-secure-password");
+console.log(`Hashed Password: ${result}`);
 
-const isMatch = await verifyPassword("some-secure-password", hash, salt);
+const isMatch = await verifyPassword("some-secure-password", result, salt);
 console.log(`Password match: ${isMatch}`);
 ```
 
@@ -333,7 +334,7 @@ interface HashPasswordOptions {
   digest?: "sha256" | "sha384" | "sha512";
 
   // Encoding format for the output hash (default: "base64url").
-  encoding?: "base64url" | "base64" | "hex";
+  outputEncoding?: "base64url" | "base64" | "hex";
 
   // Length of the salt in bytes (default: 16 bytes, min: 8 bytes).
   saltLength?: number;
@@ -350,7 +351,7 @@ interface VerifyPasswordOptions {
   digest?: "sha256" | "sha384" | "sha512";
 
   // Encoding format used during the original hashing (default: `'base64url'`).
-  encoding?: "base64url" | "base64" | "hex";
+  inputEncoding?: "base64url" | "base64" | "hex";
 
   // Number of iterations used during the original hashing (default: `320000`).
   iterations?: number;
@@ -404,10 +405,10 @@ Regular expressions (regex) are sequences of characters that form search pattern
 Before decrypting, you can validate the format (decryption functions already validate internally).
 
 ```typescript
-import { ENCRYPTED_REGEX, matchPattern } from "cipher-kit"; // works in both "cipher-kit/web-api" and "cipher-kit/node"
+import { ENCRYPTED_REGEX, matchEncryptedPattern } from "cipher-kit"; // works in both "cipher-kit/web-api" and "cipher-kit/node"
 
 function isEncryptedFormat(message: string): boolean {
-  return matchPattern(message, "general"); // or "node" or "web"
+  return matchEncryptedPattern(message, "general"); // or "node" or "web"
 }
 
 // or
@@ -419,18 +420,15 @@ function isEncryptedFormat(message: string): boolean {
 
 ## Contributions 🤝
 
-Want to contribute or suggest a feature?
+Want to contribute or suggest a feature or improvement?
 
 - Open an issue or feature request
 - Submit a PR to improve the packages or add new ones
 - Star ⭐ the repo if you like what you see
 
-## License 📜
-
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
-
 <div align="center">
 <br/>
 <div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
-<div style="font-size: 12px; font-style: italic;">Thank you!</div>
+<p style="font-size: 12px; font-style: italic;">This project is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="nofollow">MIT License</a>.</p>
+<div style="font-size: 12px; font-style: italic; font-weight: 600;">Thank you!</div>
 </div>

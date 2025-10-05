@@ -1,12 +1,16 @@
 import { describe, expect, test } from "vitest";
 import { nodeKit, webKit } from "~/export";
-import { data } from "./__helpers__";
+import { data, repeated } from "./__helpers__";
 
 describe("Hashing", () => {
   test("Hash Test", async () => {
     expect(nodeKit.hash(data, { digest: "sha256" })).toBe(await webKit.hash(data, { digest: "sha256" }));
     expect(nodeKit.hash(data, { digest: "sha384" })).toBe(await webKit.hash(data, { digest: "sha384" }));
     expect(nodeKit.hash(data, { digest: "sha512" })).toBe(await webKit.hash(data, { digest: "sha512" }));
+
+    expect(nodeKit.hash(repeated, { digest: "sha256" })).toBe(await webKit.hash(repeated, { digest: "sha256" }));
+    expect(nodeKit.hash(repeated, { digest: "sha384" })).toBe(await webKit.hash(repeated, { digest: "sha384" }));
+    expect(nodeKit.hash(repeated, { digest: "sha512" })).toBe(await webKit.hash(repeated, { digest: "sha512" }));
   });
 
   test("Password Hash Test", async () => {

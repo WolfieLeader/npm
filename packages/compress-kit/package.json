@@ -42,7 +42,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "cipher-kit": "^2.1.0",
     "pako": "^2.1.0"
   },
   "devDependencies": {

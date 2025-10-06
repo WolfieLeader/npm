@@ -117,7 +117,7 @@ export const ENCRYPTED_REGEX = Object.freeze({
  * matchEncryptedPattern("abc.def.ghi.", "general"); // true
  * ```
  */
-export function matchEncryptedPattern(data: string, format: "general" | "node" | "web"): boolean {
+export function matchEncryptedPattern(data: string, format: "node" | "web" | "general"): boolean {
   if (typeof data !== "string") return false;
   if (!(format in ENCRYPTED_REGEX)) throw new Error(`Unknown format: ${format}`);
   return ENCRYPTED_REGEX[format].test(data);

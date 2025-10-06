@@ -79,7 +79,3 @@ export function $fmtResultErr(err: ErrorStruct | undefined): string {
   if (!err) return "Unknown error";
   return `${err.message} - ${err.description}`;
 }
-
-export function title(platform: "web" | "node", title: string): string {
-  return `${platform === "web" ? "Crypto Web API" : "Crypto NodeJS API"} - ${title}`;
-}

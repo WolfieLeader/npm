@@ -34,13 +34,14 @@ Secure, Modern, and Cross-Platform Cryptography Helpers for Web, Node.js, Deno, 
 <a href="https://www.npmjs.com/package/compress-kit" rel="nofollow"><img src="https://img.shields.io/npm/v/compress-kit?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/compress-kit" rel="nofollow"><img src="https://img.shields.io/npm/dt/compress-kit.svg?color=03C03C" alt="npm downloads"></a>
 
-Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, and Bun
+Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, Bun and Cloudflare Workers
 
-- 📉 **Strong Compression** – Achieves size reductions of ~30% to 90% on typical text and JSON data using the Deflate algorithm via [pako](https://www.npmjs.com/package/pako).
-- 🧠 **Smart Compression** – Automatically detects whether to store data compressed or uncompressed for optimal efficiency.
-- 🌐 **Cross-Platform** – Works seamlessly in Web, Node.js, Deno, and Bun with no code changes.
+- 📉 **Strong Compression** – Achieves size reductions of ~30% to 90% on typical text and JSON data using the Deflate algorithm via [`pako`](https://www.npmjs.com/package/pako).
 - 🔁 **Lossless Algorithms** – Ensures perfect reconstruction of the original data.
-- 🧪 **Strict Validation & `Result<T>` Typing** – Unified return type and robust input checks for predictable results.
+- 🧪 **Strict Validation** - Robust input checks and type validation for predictable results.
+- 🌐 **Cross-Platform** – Works seamlessly in Web, Node.js, Deno, Bun and Cloudflare Workers.
+- 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
+- 🍼 **Explain Like I'm Five** - Newbie-friendly explanations and documentation.
 
 📖 [View README →](./packages/compress-kit/README.md)
 

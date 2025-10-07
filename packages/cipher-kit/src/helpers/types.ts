@@ -47,10 +47,10 @@ export type DigestAlgorithm = keyof typeof DIGEST_ALGORITHMS;
  * You can choose how strong the lock is (algorithm), how to make the key (digest),
  * and add some extra secret stuff (salt and info) to make your key unique.
  *
- * - `algorithm` (default: `'aes256gcm'`)
- * - `digest` (HKDF hash; default: `'sha256'`)
- * - `salt` (default: `'cipher-kit-salt'`, must be ≥ 8 chars)
- * - `info` (default: `'cipher-kit'`)
+ * - `algorithm`: Encryption algorithm to use (default: `'aes256gcm'`)
+ * - `digest`: Digest algorithm for HKDF (default: `'sha256'`)
+ * - `salt`: Salt for HKDF (default: `'cipher-kit-salt'`, must be ≥ 8 chars)
+ * - `info`: Added context for HKDF (default: `'cipher-kit'`)
  */
 export interface CreateSecretKeyOptions {
   /** Encryption algorithm to use (default: `'aes256gcm'`). */
@@ -69,7 +69,7 @@ export interface CreateSecretKeyOptions {
  * ### 🍼 Explain Like I'm Five
  * After locking your message, how should we write the locked message down?
  *
- * - `outputEncoding`: output ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
+ * - `outputEncoding`: Output ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
  */
 export interface EncryptOptions {
   /** Encoding format for the output ciphertext (default: `'base64url'`). */
@@ -82,7 +82,7 @@ export interface EncryptOptions {
  * ### 🍼 Explain Like I'm Five
  * To unlock the message, we must know how it was written down.
  *
- * - `inputEncoding`: input ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
+ * - `inputEncoding`: Input ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
  */
 export interface DecryptOptions {
   /** Encoding format for the input ciphertext (default: `'base64url'`). */
@@ -97,7 +97,7 @@ export interface DecryptOptions {
  * You can choose how to create the fingerprint (digest) and how to write it down (encoding).
  *
  * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha256'`)
- * - `outputEncoding`: output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
+ * - `outputEncoding`: Output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
  */
 export interface HashOptions {
   /** Digest algorithm to use (default: `'sha256'`). */
@@ -114,10 +114,10 @@ export interface HashOptions {
  * stirring many times (iterations), and making a long result (keyLength).
  *
  * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha512'`)
- * - `outputEncoding`: output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
- * - `saltLength`: size of the random salt in bytes (default: `16` bytes)
- * - `iterations`: number of iterations (default: `320000`)
- * - `keyLength`: length of the derived key in bytes (default: `64` bytes)
+ * - `outputEncoding`: Output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
+ * - `saltLength`: Size of the random salt in bytes (default: `16` bytes)
+ * - `iterations`: Number of iterations (default: `320000`)
+ * - `keyLength`: Length of the derived key in bytes (default: `64` bytes)
  */
 export interface HashPasswordOptions {
   /** Digest algorithm to use (default: `'sha512'`). */
@@ -140,9 +140,9 @@ export interface HashPasswordOptions {
  * same size—so the new result matches the old one.
  *
  * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha512'`)
- * - `inputEncoding`: input ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
- * - `iterations`: number of iterations (default: `320000`)
- * - `keyLength`: length of the derived key in bytes (default: `64` bytes)
+ * - `inputEncoding`: Input ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
+ * - `iterations`: Number of iterations (default: `320000`)
+ * - `keyLength`: Length of the derived key in bytes (default: `64` bytes)
  */
 export interface VerifyPasswordOptions {
   /** Digest algorithm to use (default: `'sha512'`). */

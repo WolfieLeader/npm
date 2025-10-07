@@ -5,7 +5,7 @@ import { $parseToObj, $stringifyObj } from "./helpers/object";
 import type { CompressOptions, DecompressOptions, EightToFifteen, OneToNine } from "./helpers/types";
 import { $isIntIn, $isPlainObj, $isStr } from "./helpers/validate";
 
-export const STRATEGIES = Object.freeze({
+const STRATEGIES = Object.freeze({
   default: pako.constants.Z_DEFAULT_STRATEGY,
   filtered: pako.constants.Z_FILTERED,
   huffmanOnly: pako.constants.Z_HUFFMAN_ONLY,
@@ -13,7 +13,7 @@ export const STRATEGIES = Object.freeze({
   fixed: pako.constants.Z_FIXED,
 } as const);
 
-function $compress(data: string, options?: CompressOptions): Result<string> {
+export function $compress(data: string, options?: CompressOptions): Result<string> {
   if (!$isStr(data)) {
     return $err({ msg: "Compression: Empty string", desc: "Cannot compress null or undefined string" });
   }
@@ -82,8 +82,8 @@ function $compress(data: string, options?: CompressOptions): Result<string> {
   }
 }
 
-function $decompress(data: string, options?: DecompressOptions): Result<string> {
-  if (!$isStr(data, 4) || (!data.endsWith(".0.") && !data.endsWith(".1."))) {
+export function $decompress(compressed: string, options?: DecompressOptions): Result<string> {
+  if (!$isStr(compressed, 4) || (!compressed.endsWith(".0.") && !compressed.endsWith(".1."))) {
     return $err({ msg: "Decompression: Invalid format", desc: "String does not match expected compressed format" });
   }
 
@@ -104,10 +104,10 @@ function $decompress(data: string, options?: DecompressOptions): Result<string> 
     return $err({ msg: "Decompression: Invalid windowBits", desc: "windowBits must be an integer between 8 and 15" });
   }
 
-  const bytes = $convertStrToBytes(data.slice(0, -3), inputEncoding);
+  const bytes = $convertStrToBytes(compressed.slice(0, -3), inputEncoding);
   if (bytes.error) return $err(bytes.error);
 
-  if (data.endsWith(".0.")) {
+  if (compressed.endsWith(".0.")) {
     return $convertBytesToStr(bytes.result, "utf8");
   }
 
@@ -118,14 +118,20 @@ function $decompress(data: string, options?: DecompressOptions): Result<string> 
   }
 }
 
-export function $compressObj<T extends object = Record<string, unknown>>(data: T): Result<string> {
-  const { result, error } = $stringifyObj(data);
+export function $compressObj<T extends object = Record<string, unknown>>(
+  obj: T,
+  options?: CompressOptions,
+): Result<string> {
+  const { result, error } = $stringifyObj(obj);
   if (error) return $err(error);
-  return $compress(result);
+  return $compress(result, options);
 }
 
-export function $decompressObj<T extends object = Record<string, unknown>>(data: string): Result<{ result: T }> {
-  const { result, error } = $decompress(data);
+export function $decompressObj<T extends object = Record<string, unknown>>(
+  compressed: string,
+  options?: DecompressOptions,
+): Result<{ result: T }> {
+  const { result, error } = $decompress(compressed, options);
   if (error) return $err(error);
   return $parseToObj<T>(result);
 }

@@ -17,7 +17,7 @@ export type EightToFifteen = 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
  * You can choose how tightly to pack them (level), the size of the box (windowBits),
  * how much memory to use while packing (memLevel), and the method of packing (strategy).
  *
- * - `outputEncoding`: output compressed data encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
+ * - `outputEncoding`: Output compressed data encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
  * - `level`: Speed vs. compression trade-off (1-9; default: 6)
  * - `windowBits`: Size of the compression window: 2^windowBits (8-15; default: 15)
  * - `memLevel`: Memory usage for compression match finder (1-9; default: 8)
@@ -51,7 +51,7 @@ export interface CompressOptions {
  * You want to unpack your toys (data) from a smaller box (compressed data) to play with them again.
  * You can choose how much memory to use while unpacking (memLevel) and the method of unpacking (strategy).
  *
- * - `inputEncoding`: input compressed data encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
+ * - `inputEncoding`: Input compressed data encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
  * - `windowBits`: Size of the compression window: 2^windowBits (8-15; default: 15)
  */
 export interface DecompressOptions {

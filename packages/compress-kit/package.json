@@ -1,7 +1,7 @@
 {
   "name": "compress-kit",
-  "version": "1.1.0",
-  "description": "🔬 Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, and Bun",
+  "version": "2.0.0",
+  "description": "🔬 Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, Bun and Cloudflare Workers",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/compress-kit#readme",
   "repository": {
     "type": "git",
@@ -53,5 +53,13 @@
   },
   "author": "WolfieLeader",
   "license": "MIT",
-  "keywords": []
+  "keywords": [
+    "compress",
+    "compression",
+    "web",
+    "node",
+    "deno",
+    "bun",
+    "cloudflare"
+  ]
 }

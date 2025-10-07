@@ -10,7 +10,7 @@
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
 <a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/v/generate-certs?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/dy/generate-certs.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/dt/generate-certs.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
 
 </div>
@@ -43,27 +43,27 @@ npm install -D generate-certs@latest
 ### Basic Example 🐣
 
 ```typescript
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { generateCerts } from 'generate-certs';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { generateCerts } from "generate-certs";
 
 // If you are using ESM do the following, otherwise you can skip this part
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
+const certs = generateCerts({ certsPath: path.resolve(__dirname, "../certs") });
 ```
 
 ### Express 📫
 
 ```typescript
-import https from 'node:https';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { generateCerts } from 'generate-certs';
-import express from 'express';
-import { env } from './env';
+import https from "node:https";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { generateCerts } from "generate-certs";
+import express from "express";
+import { env } from "./env";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
+const certs = generateCerts({ certsPath: path.resolve(__dirname, "../certs") });
 
 function bootstrap() {
   const app = express();
@@ -79,14 +79,14 @@ bootstrap();
 ### NestJS 🪺
 
 ```typescript
-import path from 'node:path';
-import { NestFactory } from '@nestjs/core';
-import { generateCerts } from 'generate-certs';
-import { AppModule } from './app.module';
-import { env } from './env';
+import path from "node:path";
+import { NestFactory } from "@nestjs/core";
+import { generateCerts } from "generate-certs";
+import { AppModule } from "./app.module";
+import { env } from "./env";
 
 // NestJS commonly uses CommonJS, so you can skip the ESM import part
-const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
+const certs = generateCerts({ certsPath: path.resolve(__dirname, "../certs") });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -103,16 +103,16 @@ bootstrap();
 ### HonoJS 🔥
 
 ```typescript
-import { createSecureServer } from 'node:http2';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { serve } from '@hono/node-server';
-import { generateCerts } from 'generate-certs';
-import { Hono } from 'hono';
-import { env } from './env';
+import { createSecureServer } from "node:http2";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { serve } from "@hono/node-server";
+import { generateCerts } from "generate-certs";
+import { Hono } from "hono";
+import { env } from "./env";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
+const certs = generateCerts({ certsPath: path.resolve(__dirname, "../certs") });
 
 function bootstrap() {
   const app = new Hono();
@@ -136,19 +136,19 @@ bootstrap();
 ### Fastify ⚡
 
 ```typescript
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import Fastify from 'fastify';
-import { generateCerts } from 'generate-certs';
-import { env } from './env';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import Fastify from "fastify";
+import { generateCerts } from "generate-certs";
+import { env } from "./env";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const certs = generateCerts({ certsPath: path.resolve(__dirname, '../certs') });
+const certs = generateCerts({ certsPath: path.resolve(__dirname, "../certs") });
 
 async function bootstrap() {
   const app = new Fastify({ https: certs });
 
-  await app.listen({ port: env.PORT || 3443, host: '0.0.0.0' });
+  await app.listen({ port: env.PORT || 3443, host: "0.0.0.0" });
   console.log(`🚀 Fastify server running on: https://localhost:${env.PORT || 3443}`);
 }
 

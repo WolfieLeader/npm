@@ -55,7 +55,6 @@ A Lightweight Utility for Extracting the Real Client IP Address from Incoming HT
 - 🧠 **Smart Parsing** – Handles multiple IPs, comma-separated values, and arrays.
 - 🧩 **Middleware-Compatible** – Use as drop-in Express/NestJS middleware.
 - 💪🏽 **Works in Standalone Mode** – Can be used as a simple function.
-- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 📖 [View README →](./packages/get-client-ip/README.md)
 

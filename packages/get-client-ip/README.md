@@ -16,32 +16,24 @@
 
 </div>
 
-## About 📖
-
-`get-client-ip` is a lightweight utility that extracts the real client IP address from an incoming HTTP request in Node.js.
-
-It supports common proxy headers (`x-forwarded-for`, `x-real-ip`, etc.) and works seamlessly as both:
-
-- a **standalone utility function**, and
-- **Express-compatible middleware**.
-
-It adds `req.clientIp` and `req.clientIps` to the request object when used as middleware — no setup required.
-
-## Features 🌟
+## Why `get-client-ip`? 🤔
 
 - 🌐 **Header-Aware Detection** – Parses standard and cloud-specific proxy headers.
 - 🧠 **Smart Parsing** – Handles multiple IPs, comma-separated values, and arrays.
 - 🧩 **Middleware-Compatible** – Use as drop-in Express/NestJS middleware.
 - 💪🏽 **Works in Standalone Mode** – Can be used as a simple function.
-- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 ## Installation 🔥
 
 ```bash
 npm install get-client-ip@latest
+# or
+yarn add get-client-ip@latest
+# or
+pnpm install get-client-ip@latest
+# or
+bun add get-client-ip@latest
 ```
-
-> 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.
 
 ## Usage 🪛
 
@@ -124,18 +116,19 @@ req.connection.remoteAddress;
 
 ## Credit 💪🏽
 
-We want to thank [Petar Bojinov](https://github.com/pbojinov) for the inspiration.
+Huge credit to [Petar Bojinov](https://github.com/pbojinov) for the inspiration.
 
 ## Contributions 🤝
 
-Want to contribute or suggest a feature?
+Want to contribute or suggest a feature or improvement?
 
 - Open an issue or feature request
 - Submit a PR to improve the packages or add new ones
 - Star ⭐ the repo if you like what you see
 
-## License 📜
-
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
-
-Thank you!
+<div align="center">
+<br/>
+<div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
+<p style="font-size: 12px; font-style: italic;">This project is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="nofollow">MIT License</a>.</p>
+<div style="font-size: 12px; font-style: italic; font-weight: 600;">Thank you!</div>
+</div>

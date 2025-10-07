@@ -10,7 +10,7 @@
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
 <a href="https://www.npmjs.com/package/modern-cookies" rel="nofollow"><img src="https://img.shields.io/npm/v/modern-cookies?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/modern-cookies" rel="nofollow"><img src="https://img.shields.io/npm/dy/modern-cookies.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/modern-cookies" rel="nofollow"><img src="https://img.shields.io/npm/dt/modern-cookies.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
 
 </div>
@@ -41,9 +41,9 @@ npm install modern-cookies@latest
 ### Express 📫
 
 ```typescript
-import express from 'express';
-import { getCookie, setCookie, deleteCookie } from 'modern-cookies';
-import { env } from './env';
+import express from "express";
+import { getCookie, setCookie, deleteCookie } from "modern-cookies";
+import { env } from "./env";
 
 function bootstrap() {
   const app = express();
@@ -51,23 +51,23 @@ function bootstrap() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  app.get('/get-cookie', (req, res) => {
-    const cookieValue = getCookie(req, 'myCookie');
+  app.get("/get-cookie", (req, res) => {
+    const cookieValue = getCookie(req, "myCookie");
     res.json({ cookieValue });
   });
 
-  app.get('/set-cookie', (req, res) => {
-    const isSet = setCookie(res, 'myCookie', 'SomeValue123', {
+  app.get("/set-cookie", (req, res) => {
+    const isSet = setCookie(res, "myCookie", "SomeValue123", {
       httpOnly: true,
       maxAge: 60, // 1 minute
     });
 
-    res.json({ message: isSet ? 'Cookie set successfully' : 'Failed to set cookie' });
+    res.json({ message: isSet ? "Cookie set successfully" : "Failed to set cookie" });
   });
 
-  app.get('/delete-cookie', (req, res) => {
-    const isDeleted = deleteCookie(res, 'myCookie');
-    res.json({ message: isDeleted ? 'Cookie deleted successfully' : 'Failed to delete cookie' });
+  app.get("/delete-cookie", (req, res) => {
+    const isDeleted = deleteCookie(res, "myCookie");
+    res.json({ message: isDeleted ? "Cookie deleted successfully" : "Failed to delete cookie" });
   });
 
   app.listen(env.PORT || 3000, () => {
@@ -81,32 +81,32 @@ bootstrap();
 ### NestJS 🪺
 
 ```typescript
-import { Controller, Get, Req, Res } from '@nestjs/common';
-import type { Request, Response } from 'express';
-import { getCookie, setCookie, deleteCookie } from 'modern-cookies';
+import { Controller, Get, Req, Res } from "@nestjs/common";
+import type { Request, Response } from "express";
+import { getCookie, setCookie, deleteCookie } from "modern-cookies";
 
-@Controller('')
+@Controller("")
 export class PublicController {
-  @Get('get-cookie')
+  @Get("get-cookie")
   getCookie(@Req() req: Request) {
-    const cookieValue = getCookie(req, 'myCookie');
+    const cookieValue = getCookie(req, "myCookie");
     return { cookieValue };
   }
 
-  @Get('set-cookie')
+  @Get("set-cookie")
   setCookie(@Res() res: Response) {
-    const isSet = setCookie(res, 'myCookie', 'SomeValue123', {
+    const isSet = setCookie(res, "myCookie", "SomeValue123", {
       httpOnly: true,
       maxAge: 60, // 1 minute
     });
     // Since we used the `Res` we need to send the response manually
-    res.json({ message: isSet ? 'Cookie set successfully' : 'Failed to set cookie' });
+    res.json({ message: isSet ? "Cookie set successfully" : "Failed to set cookie" });
   }
 
-  @Get('delete-cookie')
+  @Get("delete-cookie")
   deleteCookie(@Res() res: Response) {
-    const isDeleted = deleteCookie(res, 'myCookie');
-    res.json({ message: isDeleted ? 'Cookie deleted successfully' : 'Failed to delete cookie' });
+    const isDeleted = deleteCookie(res, "myCookie");
+    res.json({ message: isDeleted ? "Cookie deleted successfully" : "Failed to delete cookie" });
   }
 }
 ```

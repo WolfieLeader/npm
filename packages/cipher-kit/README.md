@@ -58,7 +58,7 @@ const decrypted = await decrypt(encrypted, secretKey);
 console.log(decrypted); // "Hello World!"
 ```
 
-## Usage 🪛
+## API Reference 📚
 
 Table of Contents:
 

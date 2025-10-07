@@ -11,7 +11,7 @@
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
 <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/v/get-client-ip?color=0078D4" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dy/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dt/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
 <a href="https://github.com/WolfieLeader/npm" rel="nofollow"><img src="https://img.shields.io/github/stars/WolfieLeader/npm" alt="stars"></a>
 
 </div>
@@ -48,10 +48,10 @@ npm install get-client-ip@latest
 ### Express 📫
 
 ```typescript
-import http from 'node:http';
-import express from 'express';
-import { getClientIp } from 'get-client-ip';
-import { env } from './env';
+import http from "node:http";
+import express from "express";
+import { getClientIp } from "get-client-ip";
+import { env } from "./env";
 
 function bootstrap() {
   const app = express();
@@ -60,13 +60,13 @@ function bootstrap() {
   app.use(express.urlencoded({ extended: true }));
 
   // Standalone usage:
-  app.get('/standalone-ip', (req, res) => {
+  app.get("/standalone-ip", (req, res) => {
     const ip = getClientIp(req);
     res.status(200).json({ ip });
   });
 
   // Middleware usage:
-  app.get('/middleware-ip', getClientIp, (req, res) => {
+  app.get("/middleware-ip", getClientIp, (req, res) => {
     res.status(200).json({ ip: req.clientIp, ips: req.clientIps });
   });
 
@@ -81,13 +81,13 @@ bootstrap();
 ### NestJS 🪺
 
 ```typescript
-import { Controller, Get, Req } from '@nestjs/common';
-import type { Request } from 'express';
-import { getClientIp } from 'get-client-ip';
+import { Controller, Get, Req } from "@nestjs/common";
+import type { Request } from "express";
+import { getClientIp } from "get-client-ip";
 
-@Controller('')
+@Controller("")
 export class PublicController {
-  @Get('ip')
+  @Get("ip")
   getIp(@Req() req: Request) {
     const ip = getClientIp(req);
     return { ip };

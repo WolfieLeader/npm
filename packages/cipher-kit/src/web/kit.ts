@@ -283,7 +283,7 @@ export async function decrypt(
  * your special key, creating a jumbled code that only someone with the right key can read.
  *
  * @template T - The type of the plain object to encrypt.
- * @param data - A plain object to encrypt.
+ * @param obj - A plain object to encrypt.
  * @param secretKey - The `SecretKey` object used for encryption.
  * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A `Result` promise containing the encrypted string in the specified format or an error.
@@ -298,11 +298,11 @@ export async function decrypt(
  * ```
  */
 export async function tryEncryptObj<T extends object = Record<string, unknown>>(
-  data: T,
+  obj: T,
   secretKey: SecretKey<"web">,
   options: EncryptOptions = {},
 ): Promise<Result<string>> {
-  return await $encryptObj(data, secretKey, options);
+  return await $encryptObj(obj, secretKey, options);
 }
 
 /**
@@ -318,7 +318,7 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
  * your special key, creating a jumbled code that only someone with the right key can read.
  *
  * @template T - The type of the plain object to encrypt.
- * @param data - A plain object to encrypt.
+ * @param obj - A plain object to encrypt.
  * @param secretKey - The `SecretKey` object used for encryption.
  * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
  * @returns A promise with the encrypted string in the specified format.
@@ -331,17 +331,17 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
  * ```
  */
 export async function encryptObj<T extends object = Record<string, unknown>>(
-  data: T,
+  obj: T,
   secretKey: SecretKey<"web">,
   options: EncryptOptions = {},
 ): Promise<string> {
-  const { result, error } = await $encryptObj(data, secretKey, options);
+  const { result, error } = await $encryptObj(obj, secretKey, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
 }
 
 /**
- * Safely decrypts an encrypted JSON string into an object (non-throwing).
+ * Safely decrypts an encrypted JSON string into a plain object (non-throwing).
  *
  * Expects input in the format `"iv.cipherWithTag."` and returns a plain object.
  *
@@ -374,7 +374,7 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
 }
 
 /**
- * Decrypts an encrypted JSON string into an object (throwing).
+ * Decrypts an encrypted JSON string into a plain object (throwing).
  *
  * Expects input in the format `"iv.cipherWithTag."` and returns a plain object.
  *

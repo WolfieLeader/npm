@@ -84,7 +84,6 @@ A Lightweight and Modern Cookie Utility for Express and Nest.js
 - 🔨 **Built on Reliability** — Uses the proven [cookie](https://www.npmjs.com/package/cookie) library for RFC-compliant parsing and serialization.
 - ❌ **Graceful Error Handling** — Returns `false` on failures and provides a `logError` flag for optional console logging.
 - 🛡️ **Security-Aware Defaults** — Automatically enforces rules for special prefixes: `__Secure-` and `__Host-`.
-- ⚙️ **Type-Safe & Cross-Compatible** — Fully written in TypeScript with complete type definitions. Works in both ESM and CommonJS runtimes.
 
 📖 [View README →](./packages/modern-cookies/README.md)
 

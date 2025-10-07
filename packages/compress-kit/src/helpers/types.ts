@@ -49,7 +49,7 @@ export interface CompressOptions {
  *
  * ### 🍼 Explain Like I'm Five
  * You want to unpack your toys (data) from a smaller box (compressed data) to play with them again.
- * You can choose how much memory to use while unpacking (memLevel) and the method of unpacking (strategy).
+ * You can choose how to interpret the packed box (inputEncoding) and the size of the box (windowBits).
  *
  * - `inputEncoding`: Input compressed data encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
  * - `windowBits`: Size of the compression window: 2^windowBits (8-15; default: 15)

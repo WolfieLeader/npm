@@ -23,7 +23,7 @@ export function $generateUuid(): Result<string> {
 
 export async function $createSecretKey(
   secret: string,
-  options?: CreateSecretKeyOptions,
+  options: CreateSecretKeyOptions,
 ): Promise<Result<{ result: SecretKey<"web"> }>> {
   if (!$isStr(secret, 8)) {
     return $err({
@@ -109,7 +109,7 @@ export async function $createSecretKey(
 export async function $encrypt(
   data: string,
   secretKey: SecretKey<"web">,
-  options?: EncryptOptions,
+  options: EncryptOptions,
 ): Promise<Result<string>> {
   if (!$isStr(data)) {
     return $err({
@@ -171,7 +171,7 @@ export async function $encrypt(
 export async function $decrypt(
   encrypted: string,
   secretKey: SecretKey<"web">,
-  options?: DecryptOptions,
+  options: DecryptOptions,
 ): Promise<Result<string>> {
   if (!matchEncryptedPattern(encrypted, "web")) {
     return $err({
@@ -237,7 +237,7 @@ export async function $decrypt(
 export async function $encryptObj<T extends object = Record<string, unknown>>(
   data: T,
   secretKey: SecretKey<"web">,
-  options?: EncryptOptions,
+  options: EncryptOptions,
 ): Promise<Result<string>> {
   const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
@@ -247,14 +247,14 @@ export async function $encryptObj<T extends object = Record<string, unknown>>(
 export async function $decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
   secretKey: SecretKey<"web">,
-  options?: DecryptOptions,
+  options: DecryptOptions,
 ): Promise<Result<{ result: T }>> {
   const { result, error } = await $decrypt(encrypted, secretKey, options);
   if (error) return $err(error);
   return $parseToObj<T>(result);
 }
 
-export async function $hash(data: string, options?: HashOptions): Promise<Result<string>> {
+export async function $hash(data: string, options: HashOptions): Promise<Result<string>> {
   if (!$isStr(data)) {
     return $err({ msg: `${title("web", "Hashing")}: Empty data for hashing`, desc: "Data must be a non-empty string" });
   }
@@ -296,7 +296,7 @@ export async function $hash(data: string, options?: HashOptions): Promise<Result
 
 export async function $hashPassword(
   password: string,
-  options?: HashPasswordOptions,
+  options: HashPasswordOptions,
 ): Promise<Result<{ result: string; salt: string }>> {
   if (!$isStr(password)) {
     return $err({
@@ -384,7 +384,7 @@ export async function $verifyPassword(
   password: string,
   hashedPassword: string,
   salt: string,
-  options?: VerifyPasswordOptions,
+  options: VerifyPasswordOptions,
 ): Promise<boolean> {
   if (!$isStr(password) || !$isStr(hashedPassword) || !$isStr(salt) || !$isPlainObj<VerifyPasswordOptions>(options)) {
     return false;

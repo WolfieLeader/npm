@@ -25,7 +25,7 @@ export function $generateUuid(): Result<string> {
 
 export function $createSecretKey(
   secret: string,
-  options?: CreateSecretKeyOptions,
+  options: CreateSecretKeyOptions,
 ): Result<{ result: SecretKey<"node"> }> {
   if (!$isStr(secret, 8)) {
     return $err({
@@ -98,7 +98,7 @@ export function $createSecretKey(
   }
 }
 
-export function $encrypt(data: string, secretKey: SecretKey<"node">, options?: EncryptOptions): Result<string> {
+export function $encrypt(data: string, secretKey: SecretKey<"node">, options: EncryptOptions): Result<string> {
   if (!$isStr(data)) {
     return $err({
       msg: `${title("node", "Encryption")}: Empty data for encryption`,
@@ -155,7 +155,7 @@ export function $encrypt(data: string, secretKey: SecretKey<"node">, options?: E
   }
 }
 
-export function $decrypt(encrypted: string, secretKey: SecretKey<"node">, options?: DecryptOptions): Result<string> {
+export function $decrypt(encrypted: string, secretKey: SecretKey<"node">, options: DecryptOptions): Result<string> {
   if (!matchEncryptedPattern(encrypted, "node")) {
     return $err({
       msg: `${title("node", "Decryption")}: Invalid encrypted data format`,
@@ -218,7 +218,7 @@ export function $decrypt(encrypted: string, secretKey: SecretKey<"node">, option
 export function $encryptObj<T extends object = Record<string, unknown>>(
   data: T,
   secretKey: SecretKey<"node">,
-  options?: EncryptOptions,
+  options: EncryptOptions,
 ): Result<string> {
   const { result, error } = $stringifyObj(data);
   if (error) return $err(error);
@@ -228,7 +228,7 @@ export function $encryptObj<T extends object = Record<string, unknown>>(
 export function $decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
   secretKey: SecretKey<"node">,
-  options?: DecryptOptions,
+  options: DecryptOptions,
 ): Result<{ result: T }> {
   const { result, error } = $decrypt(encrypted, secretKey, options);
   if (error) return $err(error);
@@ -280,7 +280,7 @@ export function $hash(data: string, options: HashOptions = {}): Result<string> {
 
 export function $hashPassword(
   password: string,
-  options?: HashPasswordOptions,
+  options: HashPasswordOptions,
 ): Result<{ result: string; salt: string }> {
   if (!$isStr(password)) {
     return $err({
@@ -351,7 +351,7 @@ export function $verifyPassword(
   password: string,
   hashedPassword: string,
   salt: string,
-  options?: VerifyPasswordOptions,
+  options: VerifyPasswordOptions,
 ): boolean {
   if (!$isStr(password) || !$isStr(hashedPassword) || !$isStr(salt) || !$isPlainObj<VerifyPasswordOptions>(options)) {
     return false;

@@ -247,8 +247,8 @@ export function tryDecompressObj<T extends object = Record<string, unknown>>(
 export function decompressObj<T extends object = Record<string, unknown>>(
   compressed: string,
   options: DecompressOptions = {},
-): { result: T } {
+): T {
   const { result, error } = $decompressObj<T>(compressed, options);
   if (error) throw new Error($fmtResultErr(error));
-  return { result };
+  return result;
 }

@@ -13,7 +13,7 @@ const STRATEGIES = Object.freeze({
   fixed: pako.constants.Z_FIXED,
 } as const);
 
-export function $compress(data: string, options?: CompressOptions): Result<string> {
+export function $compress(data: string, options: CompressOptions): Result<string> {
   if (!$isStr(data)) {
     return $err({ msg: "Compression: Empty string", desc: "Cannot compress null or undefined string" });
   }
@@ -82,7 +82,7 @@ export function $compress(data: string, options?: CompressOptions): Result<strin
   }
 }
 
-export function $decompress(compressed: string, options?: DecompressOptions): Result<string> {
+export function $decompress(compressed: string, options: DecompressOptions): Result<string> {
   if (!$isStr(compressed, 4) || (!compressed.endsWith(".0.") && !compressed.endsWith(".1."))) {
     return $err({ msg: "Decompression: Invalid format", desc: "String does not match expected compressed format" });
   }
@@ -120,7 +120,7 @@ export function $decompress(compressed: string, options?: DecompressOptions): Re
 
 export function $compressObj<T extends object = Record<string, unknown>>(
   obj: T,
-  options?: CompressOptions,
+  options: CompressOptions,
 ): Result<string> {
   const { result, error } = $stringifyObj(obj);
   if (error) return $err(error);
@@ -129,7 +129,7 @@ export function $compressObj<T extends object = Record<string, unknown>>(
 
 export function $decompressObj<T extends object = Record<string, unknown>>(
   compressed: string,
-  options?: DecompressOptions,
+  options: DecompressOptions,
 ): Result<{ result: T }> {
   const { result, error } = $decompress(compressed, options);
   if (error) return $err(error);

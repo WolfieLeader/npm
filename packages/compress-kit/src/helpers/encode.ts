@@ -1,18 +1,12 @@
 import { $err, $fmtError, $ok, type Result } from "./error";
+import type { Encoding } from "./types";
 import { $isStr } from "./validate";
-
-export const ENCODING = Object.freeze(["base64", "base64url", "hex", "utf8", "latin1"] as const);
-
-export const CIPHER_ENCODING = Object.freeze(["base64", "base64url", "hex"] as const);
-
-/** Supported **cipher text** encodings for encrypted/hash outputs. */
-export type CipherEncoding = (typeof CIPHER_ENCODING)[number];
-
-/** Supported data encodings for **plain text/bytes** conversions. */
-export type Encoding = (typeof ENCODING)[number];
 
 export const textEncoder = new TextEncoder();
 export const textDecoder = new TextDecoder();
+
+export const ENCODING = Object.freeze(["base64", "base64url", "hex", "utf8", "latin1"] as const);
+export const CIPHER_ENCODING = Object.freeze(["base64", "base64url", "hex"] as const);
 
 export function $convertStrToBytes(
   data: string,
@@ -20,13 +14,13 @@ export function $convertStrToBytes(
 ): Result<{ result: Uint8Array<ArrayBuffer> }> {
   if (!$isStr(data)) {
     return $err({
-      msg: "Crypto Web API - String to Bytes: Empty data",
+      msg: "String to Bytes: Empty data",
       desc: "Data must be a non-empty string",
     });
   }
   if (!ENCODING.includes(inputEncoding)) {
     return $err({
-      msg: `Crypto Web API - String to Bytes: Unsupported encoding: ${inputEncoding}`,
+      msg: `String to Bytes: Unsupported encoding: ${inputEncoding}`,
       desc: "Use base64, base64url, hex, utf8, or latin1",
     });
   }
@@ -35,20 +29,20 @@ export function $convertStrToBytes(
     const bytes = strToBytes[inputEncoding](data);
     return $ok({ result: bytes });
   } catch (error) {
-    return $err({ msg: "Crypto Web API - String to Bytes: Failed to convert data", desc: $fmtError(error) });
+    return $err({ msg: "String to Bytes: Failed to convert data", desc: $fmtError(error) });
   }
 }
 
 export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding: Encoding = "utf8"): Result<string> {
   if (!(data instanceof ArrayBuffer || data instanceof Uint8Array)) {
     return $err({
-      msg: "Crypto Web API - Bytes to String: Invalid data type",
+      msg: "Bytes to String: Invalid data type",
       desc: "Data must be an ArrayBuffer or Uint8Array",
     });
   }
   if (!ENCODING.includes(outputEncoding)) {
     return $err({
-      msg: `Crypto Web API - Bytes to String: Unsupported encoding: ${outputEncoding}`,
+      msg: `Bytes to String: Unsupported encoding: ${outputEncoding}`,
       desc: "Use base64, base64url, hex, utf8, or latin1",
     });
   }
@@ -57,7 +51,7 @@ export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncodin
     const str = bytesToStr[outputEncoding](bytes);
     return $ok(str);
   } catch (error) {
-    return $err({ msg: "Crypto Web API - Bytes to String: Failed to convert data", desc: $fmtError(error) });
+    return $err({ msg: "Bytes to String: Failed to convert data", desc: $fmtError(error) });
   }
 }
 

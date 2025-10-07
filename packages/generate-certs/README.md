@@ -15,28 +15,25 @@
 
 </div>
 
-## About 📖
-
-`generate-certs` is a simple and developer-friendly utility for generating self-signed HTTPS certificates during local development.
-
-It streamlines the process of creating `key.pem` and `cert.pem` files, supports both CommonJS and ES Modules, and integrates seamlessly into frameworks like Express and NestJS.
-
-## Features 💡
+## Why `generate-certs`? 🤔
 
 - 🔐 **Automatic Certificate Generation** – Creates valid self-signed certificates for `localhost`.
 - 🔁 **Reusability** – Automatically detects and reuses existing certs if they exist.
 - 🧪 **Development-Ready** – Ideal for testing HTTPS locally without browser complaints.
 - 💡 **Minimal Setup** – No OpenSSL or third-party installations required.
 - 🧩 **Framework Friendly** – Easily integrates with Express, NestJS, and other Node.js frameworks.
-- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 ## Installation 🔥
 
 ```bash
 npm install -D generate-certs@latest
+# or
+yarn add -D generate-certs@latest
+# or
+pnpm install -D generate-certs@latest
+# or
+bun add -d generate-certs@latest
 ```
-
-> 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.
 
 ## Usage 🪛
 
@@ -164,14 +161,15 @@ bootstrap();
 
 ## Contributions 🤝
 
-Want to contribute or suggest a feature?
+Want to contribute or suggest a feature or improvement?
 
 - Open an issue or feature request
 - Submit a PR to improve the packages or add new ones
 - Star ⭐ the repo if you like what you see
 
-## License 📜
-
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
-
-Thank you!
+<div align="center">
+<br/>
+<div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
+<p style="font-size: 12px; font-style: italic;">This project is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="nofollow">MIT License</a>.</p>
+<div style="font-size: 12px; font-style: italic; font-weight: 600;">Thank you!</div>
+</div>

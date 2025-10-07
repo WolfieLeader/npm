@@ -71,7 +71,6 @@ Effortless HTTPS certificate generation for local development environments.
 - 🧪 **Development-Ready** – Ideal for testing HTTPS locally without browser complaints.
 - 💡 **Minimal Setup** – No OpenSSL or third-party installations required.
 - 🧩 **Framework Friendly** – Easily integrates with Express, NestJS, and other Node.js frameworks.
-- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 📖 [View README →](./packages/generate-certs/README.md)
 

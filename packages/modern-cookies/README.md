@@ -15,26 +15,24 @@
 
 </div>
 
-## About 📖
-
-`modern-cookies` is a simple, type-safe, and secure cookie management utility for Express and Nest.js applications.  
-It provides a minimal API for setting, getting, and deleting cookies — with security best practices built in.
-
-## Features 🌟
+## Why `modern-cookies`? 🤔
 
 - 💡 **Simple API** — Intuitive functions `setCookie`, `getCookie`, and `deleteCookie` for effortless cookie management.
 - 🔨 **Built on Reliability** — Uses the proven [cookie](https://www.npmjs.com/package/cookie) library for RFC-compliant parsing and serialization.
 - ❌ **Graceful Error Handling** — Returns `false` on failures and provides a `logError` flag for optional console logging.
 - 🛡️ **Security-Aware Defaults** — Automatically enforces rules for special prefixes: `__Secure-` and `__Host-`.
-- ⚙️ **Type-Safe & Cross-Compatible** — Fully written in TypeScript with complete type definitions. Works in both ESM and CommonJS runtimes.
 
 ## Installation 🔥
 
 ```bash
 npm install modern-cookies@latest
+# or
+yarn add modern-cookies@latest
+# or
+pnpm install modern-cookies@latest
+# or
+bun add modern-cookies@latest
 ```
-
-> 💡 Works with `npm`, `pnpm`, and `yarn`. You can use it in dev dependencies since it's typically used only for local HTTPS.
 
 ## Usage 🪛
 
@@ -113,18 +111,19 @@ export class PublicController {
 
 ## Credit 💪🏽
 
-We want to thank [Cookie NPM package](https://www.npmjs.com/package/cookie) for the cookie parsing and serialization used in this package.
+Huge credit to [Cookie NPM package](https://www.npmjs.com/package/cookie) for the cookie parsing and serialization used in this package.
 
 ## Contributions 🤝
 
-Want to contribute or suggest a feature?
+Want to contribute or suggest a feature or improvement?
 
 - Open an issue or feature request
 - Submit a PR to improve the packages or add new ones
 - Star ⭐ the repo if you like what you see
 
-## License 📜
-
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
-
-Thank you!
+<div align="center">
+<br/>
+<div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
+<p style="font-size: 12px; font-style: italic;">This project is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="nofollow">MIT License</a>.</p>
+<div style="font-size: 12px; font-style: italic; font-weight: 600;">Thank you!</div>
+</div>

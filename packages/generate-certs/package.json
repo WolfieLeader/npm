@@ -1,6 +1,6 @@
 {
   "name": "generate-certs",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "🗝️ Effortless HTTPS Certificate Generation for Local Development",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/generate-certs#readme",
   "repository": {

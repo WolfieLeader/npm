@@ -55,7 +55,6 @@ A Lightweight Utility for Extracting the Real Client IP Address from Incoming HT
 - 🧠 **Smart Parsing** – Handles multiple IPs, comma-separated values, and arrays.
 - 🧩 **Middleware-Compatible** – Use as drop-in Express/NestJS middleware.
 - 💪🏽 **Works in Standalone Mode** – Can be used as a simple function.
-- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 📖 [View README →](./packages/get-client-ip/README.md)
 
@@ -71,7 +70,6 @@ Effortless HTTPS certificate generation for local development environments.
 - 🧪 **Development-Ready** – Ideal for testing HTTPS locally without browser complaints.
 - 💡 **Minimal Setup** – No OpenSSL or third-party installations required.
 - 🧩 **Framework Friendly** – Easily integrates with Express, NestJS, and other Node.js frameworks.
-- ⚙️ **Type-Safe & Cross-Compatible** – Fully written in TypeScript with native types. Works in both ESM and CommonJS runtimes.
 
 📖 [View README →](./packages/generate-certs/README.md)
 
@@ -86,7 +84,6 @@ A Lightweight and Modern Cookie Utility for Express and Nest.js
 - 🔨 **Built on Reliability** — Uses the proven [cookie](https://www.npmjs.com/package/cookie) library for RFC-compliant parsing and serialization.
 - ❌ **Graceful Error Handling** — Returns `false` on failures and provides a `logError` flag for optional console logging.
 - 🛡️ **Security-Aware Defaults** — Automatically enforces rules for special prefixes: `__Secure-` and `__Host-`.
-- ⚙️ **Type-Safe & Cross-Compatible** — Fully written in TypeScript with complete type definitions. Works in both ESM and CommonJS runtimes.
 
 📖 [View README →](./packages/modern-cookies/README.md)
 

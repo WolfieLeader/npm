@@ -53,5 +53,8 @@
   "[vue]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
-  "cSpell.words": ["ciphertext"]
+  "cSpell.words": ["ciphertext"],
+  "files.associations": {
+    "justfile": "just"
+  }
 }

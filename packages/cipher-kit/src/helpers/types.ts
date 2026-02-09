@@ -1,5 +1,4 @@
 import type nodeCrypto from "node:crypto";
-import type { webcrypto } from "node:crypto";
 import type { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCODING, ENCRYPTION_ALGORITHMS } from "./consts";
 
 declare const __brand: unique symbol;
@@ -24,7 +23,7 @@ export type SecretKey<Platform extends "web" | "node"> = {
   /** The encryption algorithm used (e.g. 'aes256gcm'). */
   readonly algorithm: keyof typeof ENCRYPTION_ALGORITHMS;
   /** The actual secret key object (CryptoKey for web, KeyObject for node). */
-  readonly key: Platform extends "web" ? webcrypto.CryptoKey : nodeCrypto.KeyObject;
+  readonly key: Platform extends "web" ? CryptoKey : nodeCrypto.KeyObject;
 } & Brand<`secretKey-${Platform}`>;
 
 /** Supported **cipher text** encodings for encrypted/hash outputs. */

@@ -8,3 +8,7 @@ dist-ssr
 .env
 .cache
 certs
+.claude
+claude.md
+.opencode
+agents.md

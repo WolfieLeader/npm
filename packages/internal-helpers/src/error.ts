@@ -20,7 +20,13 @@ type ErrType<T> = {
 export type Result<T> = OkType<T> | ErrType<T>;
 
 export function $ok<T>(result: T): Result<T> {
-  if ($isPlainObj(result)) return { success: true, ...(result as T & object) } as Result<T>;
+  if ($isPlainObj(result)) {
+    const obj = result as Record<string, unknown>;
+    if (Object.hasOwn(obj, "success") || Object.hasOwn(obj, "error")) {
+      return { success: true, result } as Result<T>;
+    }
+    return { success: true, ...obj } as Result<T>;
+  }
   return { success: true, result } as Result<T>;
 }
 

@@ -112,9 +112,11 @@ export function $fromBase64Url(data: string): Uint8Array<ArrayBuffer> {
 }
 
 export function $toHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  let out = "";
+  for (let i = 0; i < bytes.length; i++) {
+    out += (bytes[i] as number).toString(16).padStart(2, "0");
+  }
+  return out;
 }
 
 export function $fromHex(data: string): Uint8Array<ArrayBuffer> {

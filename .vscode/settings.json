@@ -12,7 +12,8 @@
     "compress-kit": "repository",
     "generate-certs": "connection",
     "get-client-ip": "target",
-    "modern-cookies": "views"
+    "modern-cookies": "views",
+    "internal-helpers": "utils"
   },
 
   "css.lint.unknownAtRules": "ignore",

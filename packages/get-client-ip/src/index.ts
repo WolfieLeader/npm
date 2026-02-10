@@ -1,7 +1,7 @@
 import { isIP } from "node:net";
 import type { NextFunction, Request, Response } from "express";
 
-type NoneEmptyArray<T> = [T, ...T[]];
+type NonEmptyArray<T> = [T, ...T[]];
 
 function $isIP(ip: unknown): ip is string {
   return typeof ip === "string" && isIP(ip) !== 0;
@@ -21,18 +21,22 @@ const LOOKUP_HEADERS = [
   "cf-pseudo-ipv4",
 ];
 
-function $extractIpFromHeaders(req: Request): NoneEmptyArray<string> | null {
+function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
   if ($isIP(req.ip)) return [req.ip];
 
   if (!req.headers) return null;
-  if ($isIP(req.headers.forwarded)) return [req.headers.forwarded];
+
+  if (typeof req.headers.forwarded === "string") {
+    const match = req.headers.forwarded.match(/for="?\[?([^\]";,\s]+)/i);
+    if (match?.[1] && $isIP(match[1])) return [match[1]];
+  }
 
   for (let i = 0; i < LOOKUP_HEADERS.length; i++) {
     const ip = req.headers[LOOKUP_HEADERS[i] as string];
     if (!ip) continue;
     if (Array.isArray(ip)) {
       const filteredIps = ip.filter((item) => $isIP(item.trim()));
-      if (filteredIps.length > 0) return filteredIps.map((item) => item.trim()) as NoneEmptyArray<string>;
+      if (filteredIps.length > 0) return filteredIps.map((item) => item.trim()) as NonEmptyArray<string>;
     }
 
     if (typeof ip === "string") {
@@ -40,7 +44,7 @@ function $extractIpFromHeaders(req: Request): NoneEmptyArray<string> | null {
       if (!ip.includes(",")) continue;
       const filteredIps = ip.split(",").filter((ip) => $isIP(ip.trim()));
       if (filteredIps.length > 0) {
-        return filteredIps.map((item) => item.trim()) as NoneEmptyArray<string>;
+        return filteredIps.map((item) => item.trim()) as NonEmptyArray<string>;
       }
     }
   }
@@ -55,11 +59,17 @@ function $extractIpFromHeaders(req: Request): NoneEmptyArray<string> | null {
  * This function works both as a standalone utility and as Express middleware.
  * It attempts to detect the IP by inspecting common proxy-related headers
  * such as `x-forwarded-for`, `x-real-ip`, and others. If no valid IP is found
- * in the headers, it falls back to `req.socket.remoteAddress` or `req.connection.remoteAddress`.
+ * in the headers, it falls back to `req.socket.remoteAddress`.
  *
  * When used as middleware, it populates:
  * - `req.clientIp`: The first valid IP address found.
  * - `req.clientIps`: A non-empty array of all valid IPs found.
+ *
+ * **Security note — trust boundary:** This function checks `req.ip` first (which
+ * respects Express's `trust proxy` setting). When `req.ip` is falsy, it
+ * unconditionally reads all forwarding headers — any upstream client can forge
+ * them. In production behind a reverse proxy, configure Express's `trust proxy`
+ * so that `req.ip` is populated correctly and header fallback is avoided.
  *
  * @param req - The Express request object.
  * @param res - (Optional) The Express response object. Included to support middleware signature.
@@ -101,12 +111,7 @@ export function getClientIp(req: Request, res?: Response, next?: NextFunction): 
     return req.socket.remoteAddress;
   }
 
-  if ($isIP(req.connection.remoteAddress)) {
-    req.clientIp = req.connection.remoteAddress;
-    req.clientIps = [req.connection.remoteAddress];
-    next?.();
-    return req.connection.remoteAddress;
-  }
+  next?.();
 }
 
 // biome-ignore-end lint/correctness/noUnusedFunctionParameters: Needed for Express middleware signature
@@ -117,7 +122,7 @@ declare global {
       /** The first IP address extracted from the request headers */
       clientIp?: string;
       /** The array of all IP addresses extracted from the request headers */
-      clientIps?: NoneEmptyArray<string>;
+      clientIps?: NonEmptyArray<string>;
     }
   }
 }

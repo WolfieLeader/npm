@@ -1,5 +1,4 @@
 packages := "cipher-kit compress-kit generate-certs get-client-ip modern-cookies"
-examples := "server-express server-nestjs"
 
 _default:
   just --list
@@ -11,12 +10,14 @@ install:
   pnpm install
 
 [group('dev')]
-build:
-  pnpm build
-
-[group('dev')]
-dev server:
-  pnpm --filter server-{{ server }} dev
+build target="all":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if [ "{{ target }}" = "all" ]; then
+    pnpm build
+  else
+    pnpm --filter {{ target }} build
+  fi
 
 # ── Verify ───────────────────────────────────────
 
@@ -37,14 +38,37 @@ test target="all":
   #!/usr/bin/env bash
   set -euo pipefail
   if [ "{{ target }}" = "all" ]; then
+    pnpm --filter @internal/helpers test
     pnpm --filter cipher-kit test
     pnpm --filter compress-kit test
+    pnpm --filter get-client-ip test
+    pnpm --filter modern-cookies test
   else
     pnpm --filter {{ target }} test
   fi
 
 [group('verify')]
-verify: typecheck fmt lint
+smoke:
+  pnpm smoke
+
+[group('verify')]
+check:
+  pnpm check
+
+[group('verify')]
+fix:
+  pnpm check:fix
+
+[group('verify')]
+test-file package file:
+  pnpm --filter {{ package }} exec vitest run {{ file }}
+
+[group('verify')]
+attw:
+  pnpm attw
+
+[group('verify')]
+verify: typecheck fix
 
 # ── Deps ─────────────────────────────────────────
 
@@ -56,10 +80,6 @@ update target="all":
     for pkg in {{ packages }}; do
       echo "Updating packages/$pkg..."
       pnpm --filter "$pkg" update --latest
-    done
-    for ex in {{ examples }}; do
-      echo "Updating examples/$ex..."
-      pnpm --filter "$ex" update --latest
     done
     echo "Updating root..."
     pnpm update --latest
@@ -149,4 +169,4 @@ publish-beta package:
 
 clean:
   rm -rf node_modules .turbo
-  for dir in packages/* examples/*; do rm -rf "$dir/dist" "$dir/node_modules" "$dir/.turbo"; done
+  for dir in packages/*; do rm -rf "$dir/dist" "$dir/node_modules" "$dir/.turbo"; done

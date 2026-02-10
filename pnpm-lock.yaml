@@ -79,6 +79,9 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@25.2.2)(terser@5.46.0)(tsx@4.21.0)
 
   packages/get-client-ip:
     dependencies:

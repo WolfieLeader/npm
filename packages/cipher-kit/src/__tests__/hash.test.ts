@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { nodeKit, webKit } from "~/export";
-import { data, repeated } from "./__helpers__";
+import { nodeKit, webKit } from "~/export.js";
+import { data, repeated } from "./__helpers__.js";
 
 describe("Hashing", () => {
   test("Hash Test", async () => {

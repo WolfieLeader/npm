@@ -1,16 +1,8 @@
 import nodeCrypto from "node:crypto";
-import type { SecretKey } from "~/helpers/types";
-import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "./consts";
+import type { SecretKey } from "~/helpers/types.js";
+import { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "./consts.js";
 
-export function $isStr(x: unknown, min = 1): x is string {
-  return x !== null && x !== undefined && typeof x === "string" && x.trim().length >= min;
-}
-
-export function $isPlainObj<T extends object = Record<string, unknown>>(x: unknown): x is T {
-  if (typeof x !== "object" || x === null || x === undefined) return false;
-  const proto = Object.getPrototypeOf(x);
-  return proto === Object.prototype || proto === null;
-}
+export { $isPlainObj, $isStr } from "@internal/helpers";
 
 export function $isObj(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && x !== undefined;
@@ -60,7 +52,6 @@ export function $isSecretKey<Platform extends "node" | "web">(
     !$isObj(x.key.algorithm) ||
     x.key.algorithm.name !== algorithm.web ||
     (typeof x.key.algorithm.length === "number" && x.key.algorithm.length !== algorithm.keyBytes * 8) ||
-    typeof x.key.extractable !== "boolean" ||
     !Array.isArray(x.key.usages) ||
     x.key.usages.length !== 2 ||
     !(x.key.usages.includes("encrypt") && x.key.usages.includes("decrypt"))
@@ -73,15 +64,11 @@ export function $isSecretKey<Platform extends "node" | "web">(
 /**
  * Regular expressions for encrypted data patterns.
  *
- * - **node**: `"iv.cipher.tag."` (three dot-separated parts plus a trailing dot)
- * - **web**: `"iv.cipherWithTag."` (two parts plus a trailing dot)
- * - **general**: accepts both shapes (2 or 3 parts) with a trailing dot
+ * - **node**: `"iv.cipher.tag."` — three dot-separated parts plus trailing dot.
+ * - **web**: `"iv.cipherWithTag."` — two parts plus trailing dot.
+ * - **general**: accepts both shapes (2 or 3 parts) with trailing dot.
  *
- * Each part is any non-empty string without dots.
- *
- * ### 🍼 Explain Like I'm Five
- * You have a secret code you want to check. Before you check it,
- * you make sure it looks how a secret code should look.
+ * @see {@link matchEncryptedPattern} Convenience function wrapping these regexes.
  */
 export const ENCRYPTED_REGEX = Object.freeze({
   node: /^([^.]+)\.([^.]+)\.([^.]+)\.$/,
@@ -92,17 +79,8 @@ export const ENCRYPTED_REGEX = Object.freeze({
 /**
  * Checks if a string matches an expected encrypted payload shape.
  *
- * - **node**: `"iv.cipher.tag."` (three dot-separated parts plus a trailing dot)
- * - **web**: `"iv.cipherWithTag."` (two parts plus a trailing dot)
- * - **general**: accepts both shapes (2 or 3 parts) with a trailing dot
- *
- * Each part is any non-empty string without dots.
- *
- * This validates only the **shape**, not whether content is valid base64/hex, etc.
- *
- * ### 🍼 Explain Like I'm Five
- * You have a secret code you want to check. Before you check it,
- * you make sure it looks how a secret code should look.
+ * @remarks
+ * Validates only the structural shape, not whether content is valid base64/hex.
  *
  * @param data - The string to test.
  * @param format - Which layout to check: `'node'`, `'web'`, or `'general'`.
@@ -114,8 +92,9 @@ export const ENCRYPTED_REGEX = Object.freeze({
  * matchEncryptedPattern("abc.def.ghi.", "node");    // true
  * matchEncryptedPattern("abc.def.", "web");         // true
  * matchEncryptedPattern("abc.def.", "node");        // false
- * matchEncryptedPattern("abc.def.ghi.", "general"); // true
  * ```
+ *
+ * @see {@link ENCRYPTED_REGEX} Underlying regex map.
  */
 export function matchEncryptedPattern(data: string, format: "node" | "web" | "general"): boolean {
   if (typeof data !== "string") return false;

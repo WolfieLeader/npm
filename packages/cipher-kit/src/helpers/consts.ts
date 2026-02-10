@@ -1,6 +1,4 @@
-export const ENCODING = Object.freeze(["base64", "base64url", "hex", "utf8", "latin1"] as const);
-
-export const CIPHER_ENCODING = Object.freeze(["base64", "base64url", "hex"] as const);
+export { CIPHER_ENCODING, ENCODING } from "@internal/helpers";
 
 export const DIGEST_ALGORITHMS = Object.freeze({
   sha256: { node: "sha256", web: "SHA-256" },

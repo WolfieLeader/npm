@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { tryCompress, tryCompressObj, tryDecompress, tryDecompressObj } from "~/index";
-import { data, largeObj, repeated, smallObj } from "./__helpers__";
+import { tryCompress, tryCompressObj, tryDecompress, tryDecompressObj } from "~/index.js";
+import { data, largeObj, repeated, smallObj } from "./__helpers__.js";
 
 describe("Compress Test", () => {
   test("Compress Data", () => {

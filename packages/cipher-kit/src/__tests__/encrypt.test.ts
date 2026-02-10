@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noTsIgnore: Required for tests */
 import { describe, expect, test } from "vitest";
-import { matchEncryptedPattern, nodeKit, webKit } from "~/export";
-import { data, largeObj, secret, smallObj } from "./__helpers__";
+import { matchEncryptedPattern, nodeKit, webKit } from "~/export.js";
+import { data, largeObj, secret, smallObj } from "./__helpers__.js";
 
 describe("Encryption Tests", () => {
   test("Node: Encrypt", () => {

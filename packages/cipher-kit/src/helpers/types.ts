@@ -1,28 +1,20 @@
 import type nodeCrypto from "node:crypto";
-import type { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCODING, ENCRYPTION_ALGORITHMS } from "./consts";
+import type { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCODING, ENCRYPTION_ALGORITHMS } from "./consts.js";
 
 declare const __brand: unique symbol;
 
 /** A brand type to distinguish between different types */
 type Brand<T> = { readonly [__brand]: T };
 
-/**
- * A platform-specific secret key for encryption/decryption.
- *
- * ### 🍼 Explain Like I'm Five
- * You have a treasure (your secret data) and want to keep it safe.
- * For that you create a key (the secret key) and lock your treasure with it.
- *
- * @template Platform - 'web' or 'node' to specify the platform of the secret key.
- */
+/** A platform-specific secret key for encryption/decryption. */
 export type SecretKey<Platform extends "web" | "node"> = {
-  /** The platform the key is for ('web' or 'node'). */
+  /** Target platform (`'web'` or `'node'`). */
   readonly platform: Platform;
-  /** The digest algorithm used for HKDF (e.g. 'sha256'). */
+  /** Digest algorithm used for HKDF key derivation. */
   readonly digest: keyof typeof DIGEST_ALGORITHMS;
-  /** The encryption algorithm used (e.g. 'aes256gcm'). */
+  /** Symmetric encryption algorithm. */
   readonly algorithm: keyof typeof ENCRYPTION_ALGORITHMS;
-  /** The actual secret key object (CryptoKey for web, KeyObject for node). */
+  /** Underlying key object — `CryptoKey` on web, `KeyObject` on Node. */
   readonly key: Platform extends "web" ? CryptoKey : nodeCrypto.KeyObject;
 } & Brand<`secretKey-${Platform}`>;
 
@@ -39,65 +31,49 @@ export type EncryptionAlgorithm = keyof typeof ENCRYPTION_ALGORITHMS;
 export type DigestAlgorithm = keyof typeof DIGEST_ALGORITHMS;
 
 /**
- * Options for creating a `SecretKey`
+ * Options for creating a `SecretKey` via HKDF derivation.
  *
- * ### 🍼 Explain Like I'm Five
- * You want to create a special key to lock your treasure box.
- * You can choose how strong the lock is (algorithm), how to make the key (digest),
- * and add some extra secret stuff (salt and info) to make your key unique.
- *
- * - `algorithm`: Encryption algorithm to use (default: `'aes256gcm'`)
- * - `digest`: Digest algorithm for HKDF (default: `'sha256'`)
- * - `salt`: Salt for HKDF (default: `'cipher-kit-salt'`, must be ≥ 8 chars)
- * - `info`: Added context for HKDF (default: `'cipher-kit'`)
+ * **Security note:** HKDF is a key expansion function, not a key stretching function.
+ * It provides no brute-force resistance. The `secret` parameter must be high-entropy
+ * (e.g., a 256-bit random key or a cryptographically strong passphrase).
+ * For human-chosen passwords, use {@link HashPasswordOptions | PBKDF2} instead.
  */
 export interface CreateSecretKeyOptions {
   /** Encryption algorithm to use (default: `'aes256gcm'`). */
   algorithm?: EncryptionAlgorithm;
   /** Digest algorithm for HKDF (default: `'sha256'`). */
   digest?: DigestAlgorithm;
-  /** Optional salt for HKDF (default: `'cipher-kit-salt'`, must be ≥ 8 characters). */
+  /**
+   * Salt for HKDF (default: `'cipher-kit-salt'`, must be ≥ 8 characters).
+   *
+   * **Security note:** The default salt is a fixed string. All keys derived from
+   * the same secret with the default salt produce identical output. For per-user
+   * or per-deployment uniqueness, provide a unique random salt.
+   */
   salt?: string;
   /** Optional context info for HKDF (default: `'cipher-kit'`). */
   info?: string;
+  /**
+   * Whether the derived Web CryptoKey is extractable (default: `false`).
+   * Set to `true` only if you need to export the raw key material via `crypto.subtle.exportKey()`.
+   * Has no effect on Node.js keys.
+   */
+  extractable?: boolean;
 }
 
-/**
- * Options for encryption.
- *
- * ### 🍼 Explain Like I'm Five
- * After locking your message, how should we write the locked message down?
- *
- * - `outputEncoding`: Output ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
- */
+/** Options for encryption. */
 export interface EncryptOptions {
   /** Encoding format for the output ciphertext (default: `'base64url'`). */
   outputEncoding?: CipherEncoding;
 }
 
-/**
- * Options for decryption.
- *
- * ### 🍼 Explain Like I'm Five
- * To unlock the message, we must know how it was written down.
- *
- * - `inputEncoding`: Input ciphertext encoding (`'base64' | 'base64url' | 'hex'`) (default: `'base64url'`)
- */
+/** Options for decryption. */
 export interface DecryptOptions {
   /** Encoding format for the input ciphertext (default: `'base64url'`). */
   inputEncoding?: CipherEncoding;
 }
 
-/**
- * Options for hashing arbitrary data.
- *
- * ### 🍼 Explain Like I'm Five
- * You want to create a unique fingerprint (hash) of your data.
- * You can choose how to create the fingerprint (digest) and how to write it down (encoding).
- *
- * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha256'`)
- * - `outputEncoding`: Output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
- */
+/** Options for hashing arbitrary data. */
 export interface HashOptions {
   /** Digest algorithm to use (default: `'sha256'`). */
   digest?: DigestAlgorithm;
@@ -105,19 +81,7 @@ export interface HashOptions {
   outputEncoding?: CipherEncoding;
 }
 
-/**
- * Options for password hashing (PBKDF2).
- *
- * ### 🍼 Explain Like I'm Five
- * We turn your password into a strong secret by mixing it with salt,
- * stirring many times (iterations), and making a long result (keyLength).
- *
- * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha512'`)
- * - `outputEncoding`: Output ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
- * - `saltLength`: Size of the random salt in bytes (default: `16` bytes)
- * - `iterations`: Number of iterations (default: `320000`)
- * - `keyLength`: Length of the derived key in bytes (default: `64` bytes)
- */
+/** Options for password hashing (PBKDF2). */
 export interface HashPasswordOptions {
   /** Digest algorithm to use (default: `'sha512'`). */
   digest?: DigestAlgorithm;
@@ -125,24 +89,13 @@ export interface HashPasswordOptions {
   outputEncoding?: CipherEncoding;
   /** Length of the salt in bytes (default: `16` bytes, min: `8` bytes). */
   saltLength?: number;
-  /** Number of iterations for key derivation (default: `320000`, min: `1000`). */
+  /** Number of iterations for key derivation (default: `320000`, min: `100000`). */
   iterations?: number;
   /** Length of the derived key in bytes (default: `64` bytes, min: `16` bytes). */
   keyLength?: number;
 }
 
-/**
- * Options for verifying a password hash (PBKDF2) (must match the parameters used to hash).
- *
- * ### 🍼 Explain Like I'm Five
- * To check a password, we must use the same recipe—same mixer, same number of stirs,
- * same size—so the new result matches the old one.
- *
- * - `digest`: `'sha256' | 'sha384' | 'sha512'` (default: `'sha512'`)
- * - `inputEncoding`: Input ciphertext encoding for the hash (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`)
- * - `iterations`: Number of iterations (default: `320000`)
- * - `keyLength`: Length of the derived key in bytes (default: `64` bytes)
- */
+/** Options for verifying a password hash (must match the parameters used to hash). */
 export interface VerifyPasswordOptions {
   /** Digest algorithm to use (default: `'sha512'`). */
   digest?: DigestAlgorithm;

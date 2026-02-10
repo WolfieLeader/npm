@@ -1,4 +1,4 @@
-import { $fmtResultErr, type Result } from "~/helpers/error";
+import { $fmtResultErr, type Result } from "~/helpers/error.js";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -8,9 +8,9 @@ import type {
   HashPasswordOptions,
   SecretKey,
   VerifyPasswordOptions,
-} from "~/helpers/types";
-import { $isSecretKey } from "~/helpers/validate";
-import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from "./web-encode";
+} from "~/helpers/types.js";
+import { $isSecretKey } from "~/helpers/validate.js";
+import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from "./web-encode.js";
 import {
   $createSecretKey,
   $decrypt,
@@ -21,22 +21,18 @@ import {
   $hash,
   $hashPassword,
   $verifyPassword,
-} from "./web-encrypt";
+} from "./web-encrypt.js";
 
 /**
- * Type guard to check if the provided value is a SecretKey object for Web (Deno, Bun, Cloudflare included) environment.
- *
- * ### 🍼 Explain Like I'm Five
- * Checking if the key in your hand is the right kind of key for the lock.
+ * Checks whether a value is a `SecretKey` for the Web Crypto platform.
  *
  * @param x - The value to check.
- * @returns True if the value is a SecretKey object for Web, false otherwise.
+ * @returns `true` if `x` is a `SecretKey<"web">`.
  *
  * @example
  * ```ts
  * isWebSecretKey(webKey); // true
- * isWebSecretKey(nodeKey); // false
- * isWebSecretKey({}); // false
+ * isWebSecretKey({});     // false
  * ```
  */
 export function isWebSecretKey(x: unknown): x is SecretKey<"web"> {
@@ -44,40 +40,27 @@ export function isWebSecretKey(x: unknown): x is SecretKey<"web"> {
 }
 
 /**
- * Safely generates a UUID (v4) (non-throwing).
+ * Generates a UUID (v4) (non-throwing).
  *
- * ### 🍼 Explain Like I'm Five
- * It's like giving your pet a name tag with a super random name made of numbers and letters.
- * The chance of two pets getting the same name tag is practically zero, and it's very hard to guess!
- *
- * @returns A `Result` containing the UUID string or an error.
- *
- * @example
- * ```ts
- * const {result, error, success} = tryGenerateUuid();
- *
- * if (success) console.log(result); // "..." (a UUID string)
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Result<string>` with the UUID or error.
+ * @see {@link generateUuid} For full parameter/behavior docs.
  */
 export function tryGenerateUuid(): Result<string> {
   return $generateUuid();
 }
 
 /**
- * Generates a UUID (v4) (throwing).
- *
- * ### 🍼 Explain Like I'm Five
- * It's like giving your pet a name tag with a super random name made of numbers and letters.
- * The chance of two pets getting the same name tag is practically zero, and it's very hard to guess!
+ * Generates a cryptographically random UUID (v4).
  *
  * @returns A UUID string.
  * @throws {Error} If UUID generation fails.
  *
  * @example
  * ```ts
- * const uuid = generateUuid(); // "..." (a UUID string)
+ * const uuid = generateUuid();
  * ```
+ *
+ * @see {@link tryGenerateUuid} Non-throwing variant returning `Result<string>`.
  */
 export function generateUuid(): string {
   const { result, error } = $generateUuid();
@@ -86,28 +69,10 @@ export function generateUuid(): string {
 }
 
 /**
- * Safely derives a `SecretKey` from the provided string for encryption/decryption (non-throwing).
+ * Derives a `SecretKey` from a passphrase (non-throwing).
  *
- * Uses HKDF to derive a key from the input string.
- *
- * ### 🍼 Explain Like I'm Five
- * Imagine you want to create a special key for future use to lock your treasure box (data).
- * So, you stir in some secret ingredients (like salt and info) to make sure your key is one-of-a-kind.
- *
- * @param secret - The input string to derive the `SecretKey` from, must be at least 8 characters.
- * @param options.algorithm - The encryption algorithm to use (default: `'aes256gcm'`).
- * @param options.digest - The hash algorithm for HKDF (default: `'sha256'`).
- * @param options.salt - A salt string (default: `'cipher-kit-salt'`, must be ≥ 8 chars).
- * @param options.info - An info string (default: `'cipher-kit'`).
- * @returns A `Result` promise containing the derived `SecretKey` or an error.
- *
- * @example
- * ```ts
- * const {result, error, success} = await tryCreateSecretKey("my-secret");
- *
- * if (success) console.log(result); // SecretKey object
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Promise<Result<{ result: SecretKey<"web"> }>>` with the derived key or error.
+ * @see {@link createSecretKey} For full parameter/behavior docs.
  */
 export async function tryCreateSecretKey(
   secret: string,
@@ -117,26 +82,22 @@ export async function tryCreateSecretKey(
 }
 
 /**
- * Derives a `SecretKey` from the provided string for encryption/decryption (throwing).
+ * Derives a `SecretKey` from a passphrase for encryption/decryption.
  *
- * Uses HKDF to derive a key from the input string.
+ * @remarks
+ * Uses HKDF via the Web Crypto API to derive a symmetric key from the input string.
  *
- * ### 🍼 Explain Like I'm Five
- * Imagine you want to create a special key for future use to lock your treasure box (data).
- * So, you stir in some secret ingredients (like salt and info) to make sure your key is one-of-a-kind.
- *
- * @param secret - The input string to derive the `SecretKey` from, must be at least 8 characters.
- * @param options.algorithm - The encryption algorithm to use (default: `'aes256gcm'`).
- * @param options.digest - The hash algorithm for HKDF (default: `'sha256'`).
- * @param options.salt - A salt string (default: `'cipher-kit-salt'`, must be ≥ 8 chars).
- * @param options.info - An info string (default: `'cipher-kit'`).
- * @returns A promise of the derived `SecretKey`.
+ * @param secret - Passphrase to derive the key from (min 8 characters).
+ * @param options - Key derivation options.
+ * @returns The derived `SecretKey`.
  * @throws {Error} If key derivation fails.
  *
  * @example
  * ```ts
- * const secretKey = await createSecretKey("my-secret"); // SecretKey object
+ * const secretKey = await createSecretKey("my-secret");
  * ```
+ *
+ * @see {@link tryCreateSecretKey} Non-throwing variant returning `Result`.
  */
 export async function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): Promise<SecretKey<"web">> {
   const { result, error } = await $createSecretKey(secret, options);
@@ -145,27 +106,10 @@ export async function createSecretKey(secret: string, options: CreateSecretKeyOp
 }
 
 /**
- * Safely encrypts a UTF-8 string using the provided `SecretKey` (non-throwing).
+ * Encrypts a UTF-8 string (non-throwing).
  *
- * Output format: "iv.cipherWithTag."
- *
- * ### 🍼 Explain Like I'm Five
- * You scramble a secret message with your special key,
- * creating a jumbled code that only someone with the right key can read.
- *
- * @param data - A UTF-8 string to encrypt.
- * @param secretKey - The `SecretKey` object used for encryption.
- * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
- * @returns A `Result` promise containing the encrypted string in the specified format or an error.
- *
- * @example
- * ```ts
- * const secretKey = await createSecretKey("my-secret");
- * const {result, error, success} = await tryEncrypt("Hello, World!", secretKey);
- *
- * if (success) console.log(result); // "iv.cipherWithTag." (Encrypted string)
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Promise<Result<string>>` with the ciphertext or error.
+ * @see {@link encrypt} For full parameter/behavior docs.
  */
 export async function tryEncrypt(
   data: string,
@@ -176,25 +120,24 @@ export async function tryEncrypt(
 }
 
 /**
- * Encrypts a UTF-8 string using the provided `SecretKey` (throwing).
+ * Encrypts a UTF-8 string using the provided `SecretKey`.
  *
- * Output format: "iv.cipherWithTag."
+ * @remarks
+ * Output format: `"iv.cipherWithTag."` (two dot-separated base64url segments plus trailing dot).
  *
- * ### 🍼 Explain Like I'm Five
- * You scramble a secret message with your special key,
- * creating a jumbled code that only someone with the right key can read.
- *
- * @param data - A UTF-8 string to encrypt.
- * @param secretKey - The `SecretKey` object used for encryption.
- * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
- * @returns A promise with the encrypted string in the specified format.
- * @throws {Error} If the input data or key is invalid, or if encryption fails.
+ * @param data - UTF-8 string to encrypt.
+ * @param secretKey - The `SecretKey` used for encryption.
+ * @param options - Encryption options.
+ * @returns The encrypted string.
+ * @throws {Error} If the input or key is invalid, or encryption fails.
  *
  * @example
  * ```ts
  * const secretKey = await createSecretKey("my-secret");
- * const encrypted = await encrypt("Hello, World!", secretKey); // "iv.cipherWithTag." (Encrypted string)
+ * const encrypted = await encrypt("Hello, World!", secretKey);
  * ```
+ *
+ * @see {@link tryEncrypt} Non-throwing variant returning `Result<string>`.
  */
 export async function encrypt(
   data: string,
@@ -207,28 +150,10 @@ export async function encrypt(
 }
 
 /**
- * Safely decrypts the input string using the provided `SecretKey` (non-throwing).
+ * Decrypts a ciphertext string (non-throwing).
  *
- * Expects input in the format "iv.cipherWithTag." and returns the decrypted UTF-8 string.
- *
- * ### 🍼 Explain Like I'm Five
- * You take a scrambled secret message and use your special key to unscramble it,
- * revealing the original message inside.
- *
- * @param encrypted - The input string to decrypt, in the format "iv.cipherWithTag.".
- * @param secretKey - The `SecretKey` object used for decryption.
- * @param options.inputEncoding - The encoding format for the input ciphertext (default: `'base64url'`).
- * @returns A `Result` promise containing the decrypted UTF-8 string or an error.
- *
- * @example
- * ```ts
- * const secretKey = await createSecretKey("my-secret");
- * const encrypted = await encrypt("Hello, World!", secretKey);
- * const {result, error, success} = await tryDecrypt(encrypted, secretKey);
- *
- * if (success) console.log(result); // "Hello, World!"
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Promise<Result<string>>` with the plaintext or error.
+ * @see {@link decrypt} For full parameter/behavior docs.
  */
 export async function tryDecrypt(
   encrypted: string,
@@ -239,19 +164,16 @@ export async function tryDecrypt(
 }
 
 /**
- * Decrypts the input string using the provided `SecretKey` (throwing).
+ * Decrypts a ciphertext string using the provided `SecretKey`.
  *
- * Expects input in the format "iv.cipherWithTag." and returns the decrypted UTF-8 string.
+ * @remarks
+ * Expects input in the format `"iv.cipherWithTag."`.
  *
- * ### 🍼 Explain Like I'm Five
- * You take a scrambled secret message and use your special key to unscramble it,
- * revealing the original message inside.
- *
- * @param encrypted - The input string to decrypt, in the format "iv.cipherWithTag.".
- * @param secretKey - The `SecretKey` object used for decryption.
- * @param options.inputEncoding - The encoding format for the input ciphertext (default: `'base64url'`).
- * @returns A promise with the decrypted UTF-8 string.
- * @throws {Error} If the input data or key is invalid, or if decryption fails.
+ * @param encrypted - The encrypted string to decrypt.
+ * @param secretKey - The `SecretKey` used for decryption.
+ * @param options - Decryption options.
+ * @returns The decrypted UTF-8 string.
+ * @throws {Error} If the input or key is invalid, or decryption fails.
  *
  * @example
  * ```ts
@@ -259,6 +181,8 @@ export async function tryDecrypt(
  * const encrypted = await encrypt("Hello, World!", secretKey);
  * const decrypted = await decrypt(encrypted, secretKey); // "Hello, World!"
  * ```
+ *
+ * @see {@link tryDecrypt} Non-throwing variant returning `Result<string>`.
  */
 export async function decrypt(
   encrypted: string,
@@ -271,31 +195,10 @@ export async function decrypt(
 }
 
 /**
- * Safely encrypts a plain object using the provided `SecretKey` (non-throwing).
+ * Encrypts a plain object (non-throwing).
  *
- * Only plain objects (POJOs) are accepted. Class instances, Maps, Sets, etc. are rejected.
- *
- * Output format: "iv.cipherWithTag."
- *
- * ### 🍼 Explain Like I'm Five
- * Imagine you have a toy box (an object) that you want to keep secret.
- * So, you take a picture of your toy box (convert it to JSON), and scramble that with
- * your special key, creating a jumbled code that only someone with the right key can read.
- *
- * @template T - The type of the plain object to encrypt.
- * @param obj - A plain object to encrypt.
- * @param secretKey - The `SecretKey` object used for encryption.
- * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
- * @returns A `Result` promise containing the encrypted string in the specified format or an error.
- *
- * @example
- * ```ts
- * const secretKey = await createSecretKey("my-secret");
- * const {result, error, success} = await tryEncryptObj({ a: 1 }, secretKey);
- *
- * if (success) console.log(result); // "iv.cipherWithTag." (Encrypted string)
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Promise<Result<string>>` with the ciphertext or error.
+ * @see {@link encryptObj} For full parameter/behavior docs.
  */
 export async function tryEncryptObj<T extends object = Record<string, unknown>>(
   obj: T,
@@ -306,29 +209,25 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
 }
 
 /**
- * Encrypts a plain object using the provided `SecretKey` (throwing).
+ * Encrypts a plain object using the provided `SecretKey`.
  *
- * Only plain objects (POJOs) are accepted. Class instances, Maps, Sets, etc. are rejected.
+ * @remarks
+ * Only plain objects (POJOs) are accepted; class instances, Maps, Sets, etc. are rejected.
+ * Output format: `"iv.cipherWithTag."`.
  *
- * Output format: "iv.cipherWithTag."
- *
- * ### 🍼 Explain Like I'm Five
- * Imagine you have a toy box (an object) that you want to keep secret.
- * So, you take a picture of your toy box (convert it to JSON), and scramble that with
- * your special key, creating a jumbled code that only someone with the right key can read.
- *
- * @template T - The type of the plain object to encrypt.
- * @param obj - A plain object to encrypt.
- * @param secretKey - The `SecretKey` object used for encryption.
- * @param options.outputEncoding - The encoding format for the output ciphertext (default: `'base64url'`).
- * @returns A promise with the encrypted string in the specified format.
- * @throws {Error} If the input data or key is invalid, or if encryption fails.
+ * @param obj - Plain object to encrypt.
+ * @param secretKey - The `SecretKey` used for encryption.
+ * @param options - Encryption options.
+ * @returns The encrypted string.
+ * @throws {Error} If the input or key is invalid, or encryption fails.
  *
  * @example
  * ```ts
  * const secretKey = await createSecretKey("my-secret");
- * const encrypted = await encryptObj({ a: 1 }, secretKey); // "iv.cipherWithTag." (Encrypted string)
+ * const encrypted = await encryptObj({ a: 1 }, secretKey);
  * ```
+ *
+ * @see {@link tryEncryptObj} Non-throwing variant returning `Result<string>`.
  */
 export async function encryptObj<T extends object = Record<string, unknown>>(
   obj: T,
@@ -341,29 +240,10 @@ export async function encryptObj<T extends object = Record<string, unknown>>(
 }
 
 /**
- * Safely decrypts an encrypted JSON string into a plain object (non-throwing).
+ * Decrypts an encrypted JSON string into a plain object (non-throwing).
  *
- * Expects input in the format `"iv.cipherWithTag."` and returns a plain object.
- *
- * ### 🍼 Explain Like I'm Five
- * You rebuild your toy box (an object) by unscrambling the jumbled code (encrypted text),
- * using your special key to open it.
- *
- * @template T - The expected shape of the decrypted object.
- * @param encrypted - The encrypted string (format: `"iv.cipherWithTag."`).
- * @param secretKey - The `SecretKey` used for decryption.
- * @param options.inputEncoding - Input ciphertext encoding (default: `'base64url'`).
- * @returns A `Result` promise with the decrypted object on success, or an error.
- *
- * @example
- * ```ts
- * const secretKey = await createSecretKey("my-secret");
- * const encrypted = await encryptObj({ a: 1 }, secretKey);
- * const {result, error, success} = await tryDecryptObj<{ a: number }>(encrypted, secretKey);
- *
- * if (success) console.log(result); // { a: 1 }
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Promise<Result<{ result: T }>>` with the object or error.
+ * @see {@link decryptObj} For full parameter/behavior docs.
  */
 export async function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
@@ -374,19 +254,15 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
 }
 
 /**
- * Decrypts an encrypted JSON string into a plain object (throwing).
+ * Decrypts an encrypted JSON string into a plain object.
  *
- * Expects input in the format `"iv.cipherWithTag."` and returns a plain object.
+ * @remarks
+ * Expects input in the format `"iv.cipherWithTag."`.
  *
- * ### 🍼 Explain Like I'm Five
- * You rebuild your toy box (an object) by unscrambling the jumbled code (encrypted text),
- * using your special key to open it.
- *
- * @template T - The expected shape of the decrypted object.
- * @param encrypted - The encrypted string (format: `"iv.cipherWithTag."`).
+ * @param encrypted - The encrypted string.
  * @param secretKey - The `SecretKey` used for decryption.
- * @param options.inputEncoding - Input ciphertext encoding (default: `'base64url'`).
- * @returns A promise with the decrypted object.
+ * @param options - Decryption options.
+ * @returns The decrypted object.
  * @throws {Error} If decryption or JSON parsing fails.
  *
  * @example
@@ -395,6 +271,8 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
  * const encrypted = await encryptObj({ a: 1 }, secretKey);
  * const obj = await decryptObj<{ a: number }>(encrypted, secretKey); // obj.a === 1
  * ```
+ *
+ * @see {@link tryDecryptObj} Non-throwing variant returning `Result`.
  */
 export async function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
@@ -407,52 +285,29 @@ export async function decryptObj<T extends object = Record<string, unknown>>(
 }
 
 /**
- * Safely hashes a UTF-8 string (non-throwing).
+ * Hashes a UTF-8 string (non-throwing).
  *
- * Uses the selected digest (default: `'sha256'`) and returns the hash
- * in the chosen encoding (default: `'base64url'`).
- *
- * ### 🍼 Explain Like I'm Five
- * Like putting something in a blender and getting a smoothie, you can’t get the original ingredients back,
- * but the smoothie is always the same if you use the same ingredients.
- *
- * @param data - The input string to hash.
- * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`, default: `'sha256'`).
- * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`, default: `'base64url'`).
- * @returns A `Result` promise with the hash string or an error.
- *
- * @example
- * ```ts
- * const {result, error, success} = await tryHash("my data");
- *
- * if (success) console.log(result); // "..." (Hashed string)
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Promise<Result<string>>` with the hash or error.
+ * @see {@link hash} For full parameter/behavior docs.
  */
 export async function tryHash(data: string, options: HashOptions = {}): Promise<Result<string>> {
   return await $hash(data, options);
 }
 
 /**
- * Hashes a UTF-8 string (throwing).
- *
- * Uses the selected digest (default: `'sha256'`) and returns the hash
- * in the chosen encoding (default: `'base64url'`).
- *
- * ### 🍼 Explain Like I'm Five
- * Like putting something in a blender and getting a smoothie, you can’t get the original ingredients back,
- * but the smoothie is always the same if you use the same ingredients.
+ * Hashes a UTF-8 string using the specified digest algorithm.
  *
  * @param data - The input string to hash.
- * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`, default: `'sha256'`).
- * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`, default: `'base64url'`).
- * @returns A promise of the hashed string.
+ * @param options - Hash options.
+ * @returns The hashed string.
  * @throws {Error} If input is invalid or hashing fails.
  *
  * @example
  * ```ts
- * const hashed = await hash("my data"); // "..." (Hashed string)
+ * const hashed = await hash("my data");
  * ```
+ *
+ * @see {@link tryHash} Non-throwing variant returning `Result<string>`.
  */
 export async function hash(data: string, options: HashOptions = {}): Promise<string> {
   const { result, error } = await $hash(data, options);
@@ -461,30 +316,10 @@ export async function hash(data: string, options: HashOptions = {}): Promise<str
 }
 
 /**
- * Safely hashes a password using PBKDF2 (non-throwing).
+ * Hashes a password using PBKDF2 (non-throwing).
  *
- * Uses strong defaults (`sha512`, 320k iterations, 64-byte key, 16-byte salt) and
- * returns `{ hash, salt }` encoded (default: `'base64url'`).
- *
- * ### 🍼 Explain Like I'm Five
- * We take your password, mix in some random salt, and stir many times.
- * The result is a super-secret soup that’s hard to copy.
- *
- * @param password - The password to hash.
- * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`; default: `'sha512'`).
- * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
- * @param options.saltLength - Length of the random salt in bytes (default: `16` bytes, min: `8` bytes).
- * @param options.iterations - Number of iterations (default: `320000`, min: `1000`).
- * @param options.keyLength - Length of the derived key in bytes (default: `64` bytes, min: `16` bytes).
- * @returns A `Result` promise with `{ result, salt }` or an error.
- *
- * @example
- * ```ts
- * const {result, error, success} = await tryHashPassword("my-password");
- *
- * if (success) console.log(result, salt); // "..." (hashed password), "..." (salt)
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Promise<Result<{ result: string; salt: string }>>` with the hash/salt or error.
+ * @see {@link hashPassword} For full parameter/behavior docs.
  */
 export async function tryHashPassword(
   password: string,
@@ -494,28 +329,22 @@ export async function tryHashPassword(
 }
 
 /**
- * Hashes a password using PBKDF2 (throwing).
+ * Hashes a password using PBKDF2.
  *
- * Uses strong defaults (`sha512`, 320k iterations, 64-byte key, 16-byte salt) and
- * returns `{ hash, salt }` encoded (default: `'base64url'`).
- *
- * ### 🍼 Explain Like I'm Five
- * We take your password, mix in some random salt, and stir many times.
- * The result is a super-secret soup that’s hard to copy.
+ * @remarks
+ * Defaults: `sha512`, 320 000 iterations, 64-byte key, 16-byte random salt.
  *
  * @param password - The password to hash.
- * @param options.digest - Hash algorithm (`'sha256' | 'sha384' | 'sha512'`; default: `'sha512'`).
- * @param options.outputEncoding - Output encoding (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
- * @param options.saltLength - Length of the random salt in bytes (default: `16` bytes, min: `8` bytes).
- * @param options.iterations - Number of iterations (default: `320000`, min: `1000`).
- * @param options.keyLength - Length of the derived key in bytes (default: `64` bytes, min: `16` bytes).
- * @returns A promise with `{ result, salt }` for storage.
+ * @param options - Password hashing options.
+ * @returns `{ result, salt }` for storage.
  * @throws {Error} If inputs are invalid or hashing fails.
  *
  * @example
  * ```ts
- * const {result, salt} = await hashPassword("my-password"); // "..." (hashed password), "..." (salt)
+ * const { result, salt } = await hashPassword("my-password");
  * ```
+ *
+ * @see {@link tryHashPassword} Non-throwing variant returning `Result`.
  */
 export async function hashPassword(
   password: string,
@@ -527,28 +356,21 @@ export async function hashPassword(
 }
 
 /**
- * Verifies a password against a stored PBKDF2 hash (non-throwing).
+ * Verifies a password against a stored PBKDF2 hash.
  *
- * Re-derives the key using the same parameters and compares in constant time, to prevent timing attacks.
- *
- * ### 🍼 Explain Like I'm Five
- * We follow the same recipe as when we made the secret.
- * If the new soup tastes exactly the same, the password is correct.
+ * @remarks
+ * Re-derives the key with the same parameters and compares in constant time to prevent timing attacks.
  *
  * @param password - The plain password to verify.
  * @param hashedPassword - The stored hash (encoded).
  * @param salt - The stored salt (encoded).
- * @param options.digest - Hash algorithm used during hashing (`'sha256' | 'sha384' | 'sha512'`; default: `'sha512'`).
- * @param options.inputEncoding - Encoding of the stored hash and salt (`'base64' | 'base64url' | 'hex'`; default: `'base64url'`).
- * @param options.iterations - Number of iterations used during hashing (default: `320000`).
- * @param options.keyLength - Length of the derived key in bytes used during hashing (default: `64` bytes).
- * @returns A promise of boolean, `true` if the password matches, otherwise `false`.
+ * @param options - Verification options (must match the parameters used to hash).
+ * @returns `true` if the password matches, otherwise `false`.
  *
  * @example
  * ```ts
- * const {result, salt} = await hashPassword("my-password");
- *
- * await verifyPassword("my-password", result, salt); // true
+ * const { result, salt } = await hashPassword("my-password");
+ * await verifyPassword("my-password", result, salt);    // true
  * await verifyPassword("wrong-password", result, salt); // false
  * ```
  */
@@ -562,24 +384,10 @@ export async function verifyPassword(
 }
 
 /**
- * Safely converts a string to a `Uint8Array` using the specified encoding (non-throwing).
+ * Converts a string to a `Uint8Array` (non-throwing).
  *
- * Supported encodings: `'base64' | 'base64url' | 'hex' | 'utf8' | 'latin1'` (default: `'utf8'`).
- *
- * ### 🍼 Explain Like I'm Five
- * This turns your words into tiny computer building blocks (bytes) so computers can work with them.
- *
- * @param data - The input string to convert.
- * @param inputEncoding - The encoding of the input string (default: `'utf8'`).
- * @returns A `Result` with `{ result: Uint8Array }` or an error.
- *
- * @example
- * ```ts
- * const {result, error, success} = tryConvertStrToBytes("Hello", "utf8");
- *
- * if (success) console.log(result); // Uint8Array([...])
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Result<{ result: Uint8Array<ArrayBuffer> }>` with the bytes or error.
+ * @see {@link convertStrToBytes} For full parameter/behavior docs.
  */
 export function tryConvertStrToBytes(
   data: string,
@@ -589,22 +397,19 @@ export function tryConvertStrToBytes(
 }
 
 /**
- * Converts a string to a `Uint8Array` using the specified encoding (throwing).
- *
- * Supported encodings: `'base64' | 'base64url' | 'hex' | 'utf8' | 'latin1'` (default: `'utf8'`).
- *
- * ### 🍼 Explain Like I'm Five
- * This turns your words into tiny computer building blocks (bytes) so computers can work with them.
+ * Converts a string to a `Uint8Array` using the specified encoding.
  *
  * @param data - The input string to convert.
- * @param inputEncoding - The encoding of the input string (default: `'utf8'`).
+ * @param inputEncoding - Source encoding (default: `'utf8'`).
  * @returns A `Uint8Array` containing the bytes.
  * @throws {Error} If input is invalid or conversion fails.
  *
  * @example
  * ```ts
- * const bytes = convertStrToBytes("Hello", "utf8"); // Uint8Array([...])
+ * const bytes = convertStrToBytes("Hello", "utf8");
  * ```
+ *
+ * @see {@link tryConvertStrToBytes} Non-throwing variant returning `Result`.
  */
 export function convertStrToBytes(data: string, inputEncoding: Encoding = "utf8"): Uint8Array<ArrayBuffer> {
   const { result, error } = $convertStrToBytes(data, inputEncoding);
@@ -613,25 +418,10 @@ export function convertStrToBytes(data: string, inputEncoding: Encoding = "utf8"
 }
 
 /**
- * Safely converts a `Uint8Array` or `ArrayBuffer` to a string using the specified encoding (non-throwing).
+ * Converts a `Uint8Array` or `ArrayBuffer` to a string (non-throwing).
  *
- * Supported encodings: `'base64' | 'base64url' | 'hex' | 'utf8' | 'latin1'` (default: `'utf8'`).
- *
- * ### 🍼 Explain Like I'm Five
- * This turns the tiny computer building blocks (bytes) back into a readable sentence.
- *
- * @param data - The `Uint8Array` or `ArrayBuffer` to convert.
- * @param outputEncoding - The output encoding (default: `'utf8'`).
- * @returns A `Result` with the string or an error.
- *
- * @example
- * ```ts
- * const bytes = convertStrToBytes("Hello", "utf8"); // Uint8Array([...])
- * const {result, error, success} = tryConvertBytesToStr(bytes, "utf8");
- *
- * if (success) console.log(result); // "Hello"
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Result<string>` with the encoded string or error.
+ * @see {@link convertBytesToStr} For full parameter/behavior docs.
  */
 export function tryConvertBytesToStr(
   data: Uint8Array | ArrayBuffer,
@@ -641,23 +431,20 @@ export function tryConvertBytesToStr(
 }
 
 /**
- * Converts a `Uint8Array` or `ArrayBuffer` to a string using the specified encoding (throwing).
+ * Converts a `Uint8Array` or `ArrayBuffer` to a string using the specified encoding.
  *
- * Supported encodings: `'base64' | 'base64url' | 'hex' | 'utf8' | 'latin1'` (default: `'utf8'`).
- *
- * ### 🍼 Explain Like I'm Five
- * This turns the tiny computer building blocks (bytes) back into a readable sentence.
- *
- * @param data - The `Uint8Array` or `ArrayBuffer` to convert.
- * @param outputEncoding - The output encoding (default: `'utf8'`).
+ * @param data - The bytes to convert.
+ * @param outputEncoding - Target encoding (default: `'utf8'`).
  * @returns The encoded string.
  * @throws {Error} If input is invalid or conversion fails.
  *
  * @example
  * ```ts
- * const bytes = convertStrToBytes("Hello", "utf8"); // Uint8Array([...])
+ * const bytes = convertStrToBytes("Hello", "utf8");
  * const str = convertBytesToStr(bytes, "utf8"); // "Hello"
  * ```
+ *
+ * @see {@link tryConvertBytesToStr} Non-throwing variant returning `Result<string>`.
  */
 export function convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding: Encoding = "utf8"): string {
   const { result, error } = $convertBytesToStr(data, outputEncoding);
@@ -666,48 +453,30 @@ export function convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding
 }
 
 /**
- * Safely converts text between encodings (non-throwing).
+ * Converts text between encodings (non-throwing).
  *
- * Example: convert `'utf8'` text to `'base64url'`, or `'hex'` to `'utf8'`.
- *
- * ### 🍼 Explain Like I'm Five
- * It’s like translating your sentence from one alphabet to another.
- *
- * @param data - The input string to convert.
- * @param from - The current encoding of `data`.
- * @param to - The target encoding for `data`.
- * @returns A `Result` with a string or an error.
- *
- * @example
- * ```ts
- * const {result, error, success} = tryConvertEncoding("Hello", "utf8", "base64url");
- *
- * if (success) console.log(result); // "..." (Base64url encoded string)
- * else console.error(error); // { message: "...", description: "..." }
- * ```
+ * @returns `Result<string>` with the re-encoded string or error.
+ * @see {@link convertEncoding} For full parameter/behavior docs.
  */
 export function tryConvertEncoding(data: string, from: Encoding, to: Encoding): Result<string> {
   return $convertEncoding(data, from, to);
 }
 
 /**
- * Converts text between encodings (throwing).
+ * Converts text between encodings.
  *
- * Example: convert `'utf8'` text to `'base64url'`, or `'hex'` to `'utf8'`.
- *
- * ### 🍼 Explain Like I'm Five
- * It’s like translating your sentence from one alphabet to another.
- *
- * @param data - The input string to convert.
- * @param from - The current encoding of `data`.
- * @param to - The target encoding for `data`.
- * @returns The converted string.
+ * @param data - The input string.
+ * @param from - Current encoding of `data`.
+ * @param to - Target encoding.
+ * @returns The re-encoded string.
  * @throws {Error} If encodings are invalid or conversion fails.
  *
  * @example
  * ```ts
- * const base64url = convertEncoding("Hello", "utf8", "base64url"); // "..." (Base64url encoded string)
+ * const encoded = convertEncoding("Hello", "utf8", "base64url");
  * ```
+ *
+ * @see {@link tryConvertEncoding} Non-throwing variant returning `Result<string>`.
  */
 export function convertEncoding(data: string, from: Encoding, to: Encoding): string {
   const { result, error } = $convertEncoding(data, from, to);

@@ -43,6 +43,7 @@ test target="all":
     pnpm --filter compress-kit test
     pnpm --filter get-client-ip test
     pnpm --filter modern-cookies test
+    pnpm --filter generate-certs test
   else
     pnpm --filter {{ target }} test
   fi

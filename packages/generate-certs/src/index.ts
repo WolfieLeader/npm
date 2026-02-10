@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { $generateCerts } from "./generate";
+import forge from "node-forge";
+import { $generateCerts } from "./generate.js";
 
 /** Options for generating self-signed HTTPS certificates. */
 export interface GenerateCertsOptions {
@@ -56,22 +57,25 @@ export function generateCerts({ certsPath, activateLogs = true }: GenerateCertsO
 
 function $checkForCerts({ certsPath, activateLogs: log = true }: GenerateCertsOptions) {
   try {
-    if ($isFileExists(certsPath, "key.pem") && $isFileExists(certsPath, "cert.pem")) {
-      if (log) console.log("🔍 Found existing certificates for HTTPS.");
-      return { key: $readFile(certsPath, "key.pem"), cert: $readFile(certsPath, "cert.pem") };
+    const keyPem = $readFile(certsPath, "key.pem");
+    const certPem = $readFile(certsPath, "cert.pem");
+
+    const cert = forge.pki.certificateFromPem(certPem);
+    if (cert.validity.notAfter < new Date()) {
+      if (log) console.log("⏰ Existing certificate has expired. Regenerating...");
+      return;
     }
+
+    if (log) console.log("🔍 Found existing certificates for HTTPS.");
+    return { key: keyPem, cert: certPem };
   } catch (err) {
+    if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") return;
     throw new Error(
       `❌ Error checking for existing certificates: ${err instanceof Error ? err.message : "Unknown error"}`,
     );
   }
 }
 
-export function $isFileExists(dir: string, fileName: string) {
-  return fs.existsSync(path.join(dir, fileName));
-}
-
-export function $readFile(dir: string, fileName: string) {
-  if (!$isFileExists(dir, fileName)) throw new Error(`"${fileName}" not found.`);
+function $readFile(dir: string, fileName: string) {
   return fs.readFileSync(path.join(dir, fileName), "utf8");
 }

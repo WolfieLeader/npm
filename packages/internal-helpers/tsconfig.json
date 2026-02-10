@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Internal Helpers",
+  "compilerOptions": {
+    "composite": false,
+    "target": "es2022",
+    "moduleDetection": "force",
+    "module": "nodenext",
+    "rootDir": ".",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "noEmit": true,
+    "preserveWatchOutput": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noTsIgnore: Required for tests */
 import { describe, expect, test } from "vitest";
-import { nodeKit, webKit } from "~/export";
-import { secret } from "./__helpers__";
+import { nodeKit, webKit } from "~/export.js";
+import { secret } from "./__helpers__.js";
 
 describe("Encryption Tests", () => {
   test("Node: Create Secret Key", () => {
@@ -27,8 +27,9 @@ describe("Encryption Tests", () => {
   });
 
   test("Web: Same Input Same Secret Key Output", async () => {
-    const key1 = new Uint8Array(await crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret)).key));
-    const key2 = new Uint8Array(await crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret)).key));
+    const opts = { extractable: true };
+    const key1 = new Uint8Array(await crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key));
+    const key2 = new Uint8Array(await crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key));
     expect(key1).toEqual(key2);
   });
 
@@ -39,8 +40,11 @@ describe("Encryption Tests", () => {
   });
 
   test("Web: Different Input Different Secret Key Output", async () => {
-    const key1 = new Uint8Array(await crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret)).key));
-    const key2 = new Uint8Array(await crypto.subtle.exportKey("raw", (await webKit.createSecretKey(`${secret}!`)).key));
+    const opts = { extractable: true };
+    const key1 = new Uint8Array(await crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key));
+    const key2 = new Uint8Array(
+      await crypto.subtle.exportKey("raw", (await webKit.createSecretKey(`${secret}!`, opts)).key),
+    );
     expect(key1).not.toEqual(key2);
   });
 

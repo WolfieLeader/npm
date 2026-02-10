@@ -8,6 +8,7 @@
     "module": "nodenext",
     "rootDir": ".",
     "moduleResolution": "nodenext",
+    "paths": { "~/*": ["./src/*"] },
     "types": ["node"],
     "resolveJsonModule": true,
     "allowJs": false,

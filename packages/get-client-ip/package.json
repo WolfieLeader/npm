@@ -10,7 +10,6 @@
   },
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
   "exports": {
     ".": {
       "import": {
@@ -21,14 +20,8 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./dist/index.d.ts"
-      ]
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
@@ -37,8 +30,8 @@
   "scripts": {
     "build": "tsup",
     "prepare": "npm run build",
-    "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
   },
   "peerDependencies": {
     "express": ">=4.21.0"
@@ -52,7 +45,11 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.2.2",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "author": "WolfieLeader",
   "license": "MIT",

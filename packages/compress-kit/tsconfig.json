@@ -5,9 +5,9 @@
     "composite": false,
     "target": "es2022",
     "moduleDetection": "force",
-    "module": "esnext",
+    "module": "nodenext",
     "rootDir": ".",
-    "moduleResolution": "bundler",
+    "moduleResolution": "nodenext",
     "paths": {
       "~/*": ["./src/*"]
     },
@@ -18,8 +18,6 @@
     "preserveWatchOutput": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noFallthroughCasesInSwitch": true,

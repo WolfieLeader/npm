@@ -10,7 +10,6 @@
   },
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
   "exports": {
     ".": {
       "import": {
@@ -41,20 +40,8 @@
         "types": "./dist/web-api.d.cts",
         "default": "./dist/web-api.cjs"
       }
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./dist/index.d.ts"
-      ],
-      "node": [
-        "./dist/node.d.ts"
-      ],
-      "web-api": [
-        "./dist/web-api.d.ts"
-      ]
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
@@ -63,15 +50,18 @@
   "scripts": {
     "build": "tsup",
     "prepare": "npm run build",
-    "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
   "devDependencies": {
+    "@internal/helpers": "workspace:*",
     "@types/node": "^25.2.2",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "author": "WolfieLeader",
   "license": "MIT",

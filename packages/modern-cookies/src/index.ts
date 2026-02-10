@@ -1,26 +1,23 @@
 import { parse, serialize } from "cookie";
 import type { Request, Response } from "express";
 
-/**
- * Represents options for setting cookies.
- * These options can be used to configure various attributes of the cookie.
- */
+/** Options for setting a cookie. */
 export interface CookieOptions {
-  /** Specifies the `HttpOnly` attribute for the cookie. */
+  /** Prevents client-side JavaScript access to the cookie value. */
   httpOnly?: boolean;
-  /** Specifies the `Secure` attribute for the cookie. */
+  /** Sends cookie only over HTTPS; required for `__Secure-` and `__Host-` prefixes. */
   secure?: boolean;
-  /** Specifies the `SameSite` attribute for the cookie. */
+  /** Cross-site behavior; `'none'` should be paired with `secure: true`. */
   sameSite?: "strict" | "lax" | "none";
-  /** Specifies the `number` (in seconds) the cookie will be valid for. */
+  /** Lifetime in seconds; omit for session cookie. */
   maxAge?: number;
-  /** Specifies the exact date/time when the cookie expires (`Expires`). */
+  /** Exact expiration date/time (`Expires` attribute). */
   expires?: Date;
-  /** Specifies the `Path` attribute for the cookie. */
+  /** URL path scope for the cookie (default: `'/'`). */
   path?: string;
-  /** Specifies the `Domain` attribute for the cookie. */
+  /** Domain scope for the cookie; omit to restrict to the current host. */
   domain?: string;
-  /** Specifies the `Priority` attribute for the cookie. */
+  /** Browser priority hint for the cookie. */
   priority?: "low" | "medium" | "high";
 }
 
@@ -51,6 +48,11 @@ export function getCookie(req: Request, name: string, logError = false): string 
  * - `__Secure-`: Forces `secure: true` and `path: '/'`.
  * - `__Host-`: Forces `secure: true`, `path: '/'`, and removes `domain`.
  *
+ * **Security note:** This is a thin wrapper — `httpOnly`, `secure`, and `sameSite`
+ * all default to `undefined` (absent). For session or auth cookies, always set
+ * `{ httpOnly: true, secure: true, sameSite: "lax" }` explicitly to mitigate
+ * XSS and CSRF risks.
+ *
  * @param res - The Express response object.
  * @param name - The name of the cookie to set.
  * @param value - The value of the cookie.
@@ -71,7 +73,7 @@ export function setCookie(
     if (name.startsWith("__Secure-")) {
       cookieOptions = { ...cookieOptions, secure: true };
     } else if (name.startsWith("__Host-")) {
-      cookieOptions = { ...cookieOptions, secure: true, domain: undefined };
+      cookieOptions = { ...cookieOptions, secure: true, path: "/", domain: undefined };
     }
 
     const serialized = serialize(name, value, cookieOptions);
@@ -79,9 +81,7 @@ export function setCookie(
     return true;
   } catch (error) {
     if (logError) {
-      console.error(
-        `Error setting cookie "${name}", with value "${value}", and options "${JSON.stringify(options)}": ${error}`,
-      );
+      console.error(`Error setting cookie "${name}" with options "${JSON.stringify(options)}": ${error}`);
     }
     return false;
   }

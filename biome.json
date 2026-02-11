@@ -7,7 +7,16 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/node_modules", "!**/dist", "!**/build", "!**/coverage", "!**/.turbo"]
+    "includes": [
+      "packages/**",
+      "*.json",
+      "*.jsonc",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/coverage",
+      "!**/.turbo"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -15,15 +24,21 @@
     "indentWidth": 2,
     "lineWidth": 120,
     "lineEnding": "lf",
-    "includes": ["**", "!**/node_modules", "!**/dist", "!**/build", "!**/coverage", "!**/.turbo"]
+    "includes": [
+      "packages/**",
+      "*.json",
+      "*.jsonc",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/coverage",
+      "!**/.turbo"
+    ]
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": {
-        "noExplicitAny": "off" // Needed for generic types in TypeScript
-      },
       "complexity": {
         "noUselessStringConcat": "error"
       },

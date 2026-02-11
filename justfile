@@ -1,4 +1,4 @@
-packages := "cipher-kit compress-kit generate-certs get-client-ip modern-cookies"
+packages := "cipher-kit compress-kit generate-certs get-client-ip modern-cookies @internal/helpers"
 
 _default:
   just --list
@@ -23,11 +23,12 @@ build target="all":
 
 [group('verify')]
 fmt:
-  pnpm biome format --write .
+  pnpm format
+  pnpm format:md
 
 [group('verify')]
 lint:
-  pnpm biome lint --fix .
+  pnpm lint
 
 [group('verify')]
 typecheck:
@@ -38,12 +39,7 @@ test target="all":
   #!/usr/bin/env bash
   set -euo pipefail
   if [ "{{ target }}" = "all" ]; then
-    pnpm --filter @internal/helpers test
-    pnpm --filter cipher-kit test
-    pnpm --filter compress-kit test
-    pnpm --filter get-client-ip test
-    pnpm --filter modern-cookies test
-    pnpm --filter generate-certs test
+    pnpm test
   else
     pnpm --filter {{ target }} test
   fi
@@ -53,23 +49,14 @@ smoke:
   pnpm smoke
 
 [group('verify')]
-check:
-  pnpm check
-
-[group('verify')]
-fix:
-  pnpm check:fix
-
-[group('verify')]
-test-file package file:
-  pnpm --filter {{ package }} exec vitest run {{ file }}
-
-[group('verify')]
 attw:
   pnpm attw
 
 [group('verify')]
-verify: typecheck fix
+verify: fmt lint typecheck
+
+[group('verify')]
+full-verify: fmt lint typecheck test attw smoke
 
 # ── Deps ─────────────────────────────────────────
 
@@ -90,81 +77,6 @@ update target="all":
     pnpm --filter {{ target }} update --latest
   fi
   pnpm install
-
-# ── Publish ──────────────────────────────────────
-
-[group('publish')]
-bump package bump:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  valid_packages="{{ packages }}"
-  if ! echo "$valid_packages" | grep -qw "{{ package }}"; then
-    echo "Error: '{{ package }}' is not a valid package. Choose from: $valid_packages"
-    exit 1
-  fi
-  valid_bumps="patch minor major"
-  if ! echo "$valid_bumps" | grep -qw "{{ bump }}"; then
-    echo "Error: '{{ bump }}' is not a valid bump type. Choose from: $valid_bumps"
-    exit 1
-  fi
-  cd packages/{{ package }}
-  npm version {{ bump }} --no-git-tag-version
-  version=$(node -p "require('./package.json').version")
-  echo "Bumped {{ package }} to $version"
-
-[group('publish')]
-bump-beta package:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  valid_packages="{{ packages }}"
-  if ! echo "$valid_packages" | grep -qw "{{ package }}"; then
-    echo "Error: '{{ package }}' is not a valid package. Choose from: $valid_packages"
-    exit 1
-  fi
-  cd packages/{{ package }}
-  npm version prerelease --preid beta --no-git-tag-version
-  version=$(node -p "require('./package.json').version")
-  echo "Bumped {{ package }} to $version (beta)"
-
-[group('publish')]
-publish package:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  valid_packages="{{ packages }}"
-  if ! echo "$valid_packages" | grep -qw "{{ package }}"; then
-    echo "Error: '{{ package }}' is not a valid package. Choose from: $valid_packages"
-    exit 1
-  fi
-  pnpm build
-  cd packages/{{ package }}
-  version=$(node -p "require('./package.json').version")
-  pnpm publish --no-git-checks
-  cd ..
-  git add packages/{{ package }}/package.json
-  git commit -m "{{ package }}@$version"
-  git tag "{{ package }}@$version"
-  echo "Published {{ package }}@$version"
-  echo "Run 'git push && git push --tags' when ready."
-
-[group('publish')]
-publish-beta package:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  valid_packages="{{ packages }}"
-  if ! echo "$valid_packages" | grep -qw "{{ package }}"; then
-    echo "Error: '{{ package }}' is not a valid package. Choose from: $valid_packages"
-    exit 1
-  fi
-  pnpm build
-  cd packages/{{ package }}
-  version=$(node -p "require('./package.json').version")
-  pnpm publish --tag beta --no-git-checks
-  cd ..
-  git add packages/{{ package }}/package.json
-  git commit -m "{{ package }}@$version"
-  git tag "{{ package }}@$version"
-  echo "Published {{ package }}@$version (beta)"
-  echo "Run 'git push && git push --tags' when ready."
 
 # ── Other ────────────────────────────────────────
 

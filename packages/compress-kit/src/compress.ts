@@ -1,9 +1,20 @@
+import {
+  $convertBytesToStr,
+  $convertStrToBytes,
+  $err,
+  $fmtError,
+  $isIntIn,
+  $isPlainObj,
+  $isStr,
+  $ok,
+  $parseToObj,
+  $stringifyObj,
+  CIPHER_ENCODING,
+  type Result,
+  textDecoder,
+} from "@internal/helpers";
 import pako from "pako";
-import { $convertBytesToStr, $convertStrToBytes, CIPHER_ENCODING } from "./helpers/encode";
-import { $err, $fmtError, $ok, type Result } from "./helpers/error";
-import { $parseToObj, $stringifyObj } from "./helpers/object";
-import type { CompressOptions, DecompressOptions, EightToFifteen, OneToNine } from "./helpers/types";
-import { $isIntIn, $isPlainObj, $isStr } from "./helpers/validate";
+import type { CompressOptions, DecompressOptions, EightToFifteen, OneToNine } from "./types.js";
 
 const STRATEGIES = Object.freeze({
   default: pako.constants.Z_DEFAULT_STRATEGY,
@@ -112,7 +123,49 @@ export function $decompress(compressed: string, options: DecompressOptions): Res
   }
 
   try {
-    return $ok(pako.inflate(bytes.result, { to: "string", windowBits: windowBits, raw: false }));
+    if (options.maxOutputSize) {
+      const maxSize = options.maxOutputSize;
+      const inflater = new pako.Inflate({ windowBits: windowBits, raw: false });
+      const chunks: Uint8Array[] = [];
+      let totalBytes = 0;
+      let exceeded = false;
+
+      inflater.onData = (chunk: Uint8Array) => {
+        if (exceeded) return;
+        totalBytes += chunk.length;
+        if (totalBytes > maxSize) {
+          exceeded = true;
+          return;
+        }
+        chunks.push(chunk);
+      };
+
+      inflater.push(bytes.result, true);
+
+      if (exceeded) {
+        return $err({
+          msg: "Decompression: Output exceeds size limit",
+          desc: `Decompressed output exceeds maxOutputSize (${options.maxOutputSize} bytes)`,
+        });
+      }
+
+      if (inflater.err) {
+        return $err({ msg: "Decompression: Failed to decompress data", desc: inflater.msg || "Unknown inflate error" });
+      }
+
+      const total = chunks.reduce((sum, c) => sum + c.length, 0);
+      const output = new Uint8Array(total);
+      let offset = 0;
+      for (const chunk of chunks) {
+        output.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      return $ok(textDecoder.decode(output));
+    }
+
+    const result = pako.inflate(bytes.result, { to: "string", windowBits: windowBits, raw: false });
+    return $ok(result);
   } catch (error) {
     return $err({ msg: "Decompression: Failed to decompress data", desc: $fmtError(error) });
   }

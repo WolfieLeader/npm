@@ -1,6 +1,28 @@
 import { parse, serialize } from "cookie";
 import type { Request, Response } from "express";
 
+function $sanitizeForLog(input: unknown, maxLength = 160): string {
+  const value = typeof input === "string" ? input : input instanceof Error ? input.message : String(input);
+  return value.replace(/[\r\n\t]/g, " ").slice(0, maxLength);
+}
+
+function $safeLogCookieError(action: "getting" | "setting", name: string, error: unknown) {
+  try {
+    console.error(`Error ${action} cookie`, { name: $sanitizeForLog(name), reason: $sanitizeForLog(error) });
+  } catch {}
+}
+
+function $normalizeSameSite(value: CookieOptions["sameSite"]): CookieOptions["sameSite"] {
+  if (value === undefined) return undefined;
+
+  const normalized = value.toLowerCase();
+  if (normalized !== "strict" && normalized !== "lax" && normalized !== "none") {
+    throw new Error(`Invalid sameSite value: ${value}`);
+  }
+
+  return normalized;
+}
+
 /** Options for setting a cookie. */
 export interface CookieOptions {
   /** Prevents client-side JavaScript access to the cookie value. */
@@ -33,10 +55,11 @@ export function getCookie(req: Request, name: string, logError = false): string 
   try {
     const header = req.get("cookie");
     if (!header) return undefined;
+
     const cookies = parse(header);
     return cookies[name];
   } catch (error) {
-    if (logError) console.error(`Error getting cookie "${name}":`, error);
+    if (logError) $safeLogCookieError("getting", name, error);
     return undefined;
   }
 }
@@ -45,13 +68,13 @@ export function getCookie(req: Request, name: string, logError = false): string 
  * Sets a cookie on an Express response.
  *
  * Automatically applies stricter defaults for special prefixes:
- * - `__Secure-`: Forces `secure: true` and `path: '/'`.
+ * - `__Secure-`: Forces `secure: true`. Path defaults to `'/'` when not specified.
  * - `__Host-`: Forces `secure: true`, `path: '/'`, and removes `domain`.
  *
- * **Security note:** This is a thin wrapper — `httpOnly`, `secure`, and `sameSite`
- * all default to `undefined` (absent). For session or auth cookies, always set
- * `{ httpOnly: true, secure: true, sameSite: "lax" }` explicitly to mitigate
- * XSS and CSRF risks.
+ * @example Setting a secure session cookie
+ * ```ts
+ * setCookie(res, "session", token, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 86400 });
+ * ```
  *
  * @param res - The Express response object.
  * @param name - The name of the cookie to set.
@@ -68,21 +91,25 @@ export function setCookie(
   logError = false,
 ): boolean {
   try {
-    let cookieOptions = { ...options, path: options.path || "/" };
+    const sameSite = $normalizeSameSite(options.sameSite);
+    let cookieOptions = { ...options, sameSite, path: options.path || "/" };
+    const normalizedName = name.toLowerCase();
 
-    if (name.startsWith("__Secure-")) {
+    if (normalizedName.startsWith("__secure-")) {
       cookieOptions = { ...cookieOptions, secure: true };
-    } else if (name.startsWith("__Host-")) {
+    } else if (normalizedName.startsWith("__host-")) {
       cookieOptions = { ...cookieOptions, secure: true, path: "/", domain: undefined };
+    }
+
+    if (cookieOptions.sameSite === "none") {
+      cookieOptions = { ...cookieOptions, secure: true };
     }
 
     const serialized = serialize(name, value, cookieOptions);
     res.append("Set-Cookie", serialized);
     return true;
   } catch (error) {
-    if (logError) {
-      console.error(`Error setting cookie "${name}" with options "${JSON.stringify(options)}": ${error}`);
-    }
+    if (logError) $safeLogCookieError("setting", name, error);
     return false;
   }
 }
@@ -97,5 +124,5 @@ export function setCookie(
  * @returns `true` if the deletion request was added successfully, otherwise `false`.
  */
 export function deleteCookie(res: Response, name: string, options: CookieOptions = {}, logError = false): boolean {
-  return setCookie(res, name, "", { ...options, maxAge: 0 }, logError);
+  return setCookie(res, name, "", { ...options, maxAge: 0, expires: new Date(0) }, logError);
 }

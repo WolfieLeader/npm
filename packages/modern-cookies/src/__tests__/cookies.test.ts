@@ -76,6 +76,12 @@ describe("setCookie", () => {
       setCookie(res, "__Secure-session", "abc", { path: "/admin" });
       expect(res._cookies[0]).toContain("Path=/admin");
     });
+
+    test("enforces secure for lowercase __secure- prefix", () => {
+      const res = mockRes();
+      setCookie(res, "__secure-session", "abc", {});
+      expect(res._cookies[0]).toContain("Secure");
+    });
   });
 
   describe("__Host- prefix", () => {
@@ -116,6 +122,29 @@ describe("deleteCookie", () => {
   });
 });
 
+describe("sameSite=none enforcement", () => {
+  test("forces secure: true when sameSite is none", () => {
+    const res = mockRes();
+    setCookie(res, "token", "abc", { sameSite: "none" });
+    expect(res._cookies[0]).toContain("Secure");
+    expect(res._cookies[0]).toContain("SameSite=None");
+  });
+
+  test("works when secure is already true", () => {
+    const res = mockRes();
+    setCookie(res, "token", "abc", { sameSite: "none", secure: true });
+    expect(res._cookies[0]).toContain("Secure");
+    expect(res._cookies[0]).toContain("SameSite=None");
+  });
+
+  test("normalizes sameSite casing and still enforces secure", () => {
+    const res = mockRes();
+    setCookie(res, "token", "abc", { sameSite: "None" as "none", secure: false });
+    expect(res._cookies[0]).toContain("Secure");
+    expect(res._cookies[0]).toContain("SameSite=None");
+  });
+});
+
 describe("error logging", () => {
   test("does not log cookie value in error (WARN-10)", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -129,6 +158,36 @@ describe("error logging", () => {
     expect(consoleSpy).toHaveBeenCalled();
     const logMessage = consoleSpy.mock.calls[0]?.[0] as string;
     expect(logMessage).not.toContain("secret-session-value");
+    consoleSpy.mockRestore();
+  });
+
+  test("sanitizes cookie name in logs", () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = {
+      append: () => {
+        throw new Error("Serialize\nfailed");
+      },
+    } as unknown as Response;
+
+    setCookie(res, "token\nname", "value", {}, true);
+    expect(consoleSpy).toHaveBeenCalled();
+    const metadata = consoleSpy.mock.calls[0]?.[1] as { name: string; reason: string };
+    expect(metadata.name).not.toContain("\n");
+    expect(metadata.reason).not.toContain("\n");
+    consoleSpy.mockRestore();
+  });
+
+  test("does not throw if console.error throws", () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {
+      throw new Error("logger failure");
+    });
+    const res = {
+      append: () => {
+        throw new Error("Serialize failed");
+      },
+    } as unknown as Response;
+
+    expect(setCookie(res, "token", "value", {}, true)).toBe(false);
     consoleSpy.mockRestore();
   });
 });

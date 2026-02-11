@@ -1,61 +1,30 @@
-import * as nodeCryptoKit from "./node/kit";
-import * as webCryptoKit from "./web/kit";
+import * as nodeCryptoKit from "./node/kit.js";
+import * as webCryptoKit from "./web/kit.js";
 
 export {
   parseToObj,
   stringifyObj,
   tryParseToObj,
   tryStringifyObj,
-} from "~/helpers/object";
+} from "~/helpers/object.js";
 export {
   ENCRYPTED_REGEX,
   matchEncryptedPattern,
-} from "~/helpers/validate";
-export type * from "./helpers/types";
+} from "~/helpers/validate.js";
+export type * from "./helpers/types.js";
 
 /**
- * Node.js cryptography kit (Crypto Node.js API).
+ * Node.js cryptography kit using the built-in `crypto` module.
  *
- * Can be imported directly from 'cipher-kit/node' for smaller bundle size.
- *
- * - Uses Node's `crypto` module.
- * - Synchronous API (throwing) + safe wrappers that return `Result` (non-throwing).
- * - JSDoc comments with `Explain Like I'm Five` sections.
- *
- * #### Contains:
- * - Secret key creation from passphrase.
- * - Data encryption and decryption.
- * - Object encryption and decryption.
- * - Data hashing (digest).
- * - Password hashing and verification with time-safe comparison.
- * - Object serialization and deserialization (to/from JSON).
- * - Pattern matching to validate encrypted data format.
- *
- * ### 🍼 Explain Like I'm Five
- * It's like a toolkit that helps you keep your and your users' secrets safe when using Node.js.
+ * Synchronous API with throwing and `Result`-returning (`try*`) variants.
+ * Can be imported directly from `cipher-kit/node` for a smaller bundle.
  */
 export const nodeKit = nodeCryptoKit;
 
 /**
- * Web, Deno, Bun and Cloudflare Workers cryptography kit (Crypto Web API).
+ * Web Crypto API kit for browsers, Deno, Bun, and Cloudflare Workers.
  *
- * Can be imported directly from 'cipher-kit/web-api' for smaller bundle size.
- *
- * - Uses the Web Crypto API (`crypto.subtle`).
- * - Async API (Promise) + safe wrappers that return `Result`.
- * - JSDoc comments with `Explain Like I'm Five` sections.
- *
- * #### Contains:
- * - Secret key creation from passphrase.
- * - Data encryption and decryption.
- * - Object encryption and decryption.
- * - Data hashing (digest).
- * - Password hashing and verification with time-safe comparison.
- * - Object serialization and deserialization (to/from JSON).
- * - Pattern matching to validate encrypted data format.
- *
- * ### 🍼 Explain Like I'm Five
- * It's like a toolkit that helps you keep your and your users' secrets safe when using the web
- * or other Node.js alternatives like Deno, Bun, or Cloudflare Workers.
+ * Async API with throwing and `Result`-returning (`try*`) variants.
+ * Can be imported directly from `cipher-kit/web-api` for a smaller bundle.
  */
 export const webKit = webCryptoKit;

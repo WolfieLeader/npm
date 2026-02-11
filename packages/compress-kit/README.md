@@ -22,7 +22,6 @@
 - 🧪 **Strict Validation** - Robust input checks and type validation for predictable results.
 - 🌐 **Cross-Platform** – Works seamlessly in Web, Node.js, Deno, Bun and Cloudflare Workers.
 - 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
-- 🍼 **Explain Like I'm Five** - Newbie-friendly explanations and documentation.
 
 ## Installation 🔥
 

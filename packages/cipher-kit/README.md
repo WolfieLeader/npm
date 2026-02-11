@@ -24,7 +24,6 @@
 - 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
 - 🌳 **Tree-Shakable** - Import from the root or from platform-specific entry points to keep bundles lean.
 - 🚫 **Zero Dependencies** – Fully self-contained, no external libraries required.
-- 🍼 **Explain Like I'm Five** - Newbie-friendly explanations and documentation.
 
 ## Installation 🔥
 

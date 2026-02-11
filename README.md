@@ -25,7 +25,6 @@ Secure, Modern, and Cross-Platform Cryptography Helpers for Web, Node.js, Deno, 
 - 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
 - 🌳 **Tree-Shakable** - Import from the root or from platform-specific entry points to keep bundles lean.
 - 🚫 **Zero Dependencies** – Fully self-contained, no external libraries required.
-- 🍼 **Explain Like I'm Five** - Newbie-friendly explanations and documentation.
 
 📖 [View README →](./packages/cipher-kit/README.md)
 
@@ -41,7 +40,6 @@ Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, Bun
 - 🧪 **Strict Validation** - Robust input checks and type validation for predictable results.
 - 🌐 **Cross-Platform** – Works seamlessly in Web, Node.js, Deno, Bun and Cloudflare Workers.
 - 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
-- 🍼 **Explain Like I'm Five** - Newbie-friendly explanations and documentation.
 
 📖 [View README →](./packages/compress-kit/README.md)
 

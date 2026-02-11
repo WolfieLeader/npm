@@ -89,14 +89,18 @@ export class PublicController {
 
 ## Headers ⛑️
 
-The following headers are checked in order of precedence:
+The following sources are checked in order of precedence:
+
+`req.ip` (respects Express's `trust proxy` setting) is checked first.
+
+Then the following headers:
 
 ```typescript
+forwarded           // RFC 7239 — parsed specially (e.g., for="192.0.2.1")
 x-client-ip
 x-forwarded-for
 forwarded-for
 x-forwarded
-forwarded
 x-real-ip
 cf-connecting-ip
 true-client-ip
@@ -106,11 +110,10 @@ x-appengine-user-ip
 cf-pseudo-ipv4
 ```
 
-It also falls back to:
+Final fallback:
 
 ```typescript
-req.ip;
-req.socket.remoteAddress;
+req.socket.remoteAddress
 ```
 
 ## Credit 💪🏽

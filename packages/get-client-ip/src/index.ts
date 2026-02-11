@@ -58,7 +58,7 @@ function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
  *
  * This function works both as a standalone utility and as Express middleware.
  * It attempts to detect the IP by inspecting common proxy-related headers
- * such as `x-forwarded-for`, `x-real-ip`, and others. If no valid IP is found
+ * such as `forwarded` (RFC 7239), `x-forwarded-for`, `x-real-ip`, and others. If no valid IP is found
  * in the headers, it falls back to `req.socket.remoteAddress`.
  *
  * When used as middleware, it populates:

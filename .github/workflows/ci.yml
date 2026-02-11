@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    name: Lint, Build & Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20, 25]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint & format check
+        run: pnpm check
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: |
+          pnpm --filter @internal/helpers test
+          pnpm --filter cipher-kit test
+          pnpm --filter compress-kit test
+          pnpm --filter get-client-ip test
+          pnpm --filter modern-cookies test
+
+      - name: Validate type exports
+        run: pnpm attw
+
+      - name: Smoke test (pack & import)
+        run: pnpm smoke

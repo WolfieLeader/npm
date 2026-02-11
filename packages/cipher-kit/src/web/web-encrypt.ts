@@ -1,6 +1,6 @@
-import { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "~/helpers/consts";
-import { $err, $fmtError, $fmtResultErr, $ok, type Result, title } from "~/helpers/error";
-import { $parseToObj, $stringifyObj } from "~/helpers/object";
+import { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "~/helpers/consts.js";
+import { $err, $fmtError, $fmtResultErr, $ok, type Result, title } from "~/helpers/error.js";
+import { $parseToObj, $stringifyObj } from "~/helpers/object.js";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -9,9 +9,9 @@ import type {
   HashPasswordOptions,
   SecretKey,
   VerifyPasswordOptions,
-} from "~/helpers/types";
-import { $isPlainObj, $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate";
-import { $convertBytesToStr, $convertStrToBytes, textEncoder } from "./web-encode";
+} from "~/helpers/types.js";
+import { $isPlainObj, $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate.js";
+import { $convertBytesToStr, $convertStrToBytes, textEncoder } from "./web-encode.js";
 
 export function $generateUuid(): Result<string> {
   try {
@@ -78,6 +78,7 @@ export async function $createSecretKey(
     const ikm = await crypto.subtle.importKey("raw", textEncoder.encode(secret.normalize("NFKC")), "HKDF", false, [
       "deriveKey",
     ]);
+    const extractable = options.extractable ?? false;
     const key = await crypto.subtle.deriveKey(
       {
         name: "HKDF",
@@ -87,7 +88,7 @@ export async function $createSecretKey(
       },
       ikm,
       { name: encryptAlgo.web, length: encryptAlgo.keyBytes * 8 },
-      true,
+      extractable,
       ["encrypt", "decrypt"],
     );
     const secretKey = Object.freeze({
@@ -221,6 +222,13 @@ export async function $decrypt(
     });
   }
 
+  if (ivBytes.result.byteLength !== injectedKey.injected.ivLength) {
+    return $err({
+      msg: `${title("web", "Decryption")}: Invalid IV length`,
+      desc: `Expected ${injectedKey.injected.ivLength} bytes, got ${ivBytes.result.byteLength}`,
+    });
+  }
+
   try {
     const decrypted = await crypto.subtle.decrypt(
       { name: injectedKey.injected.web, iv: ivBytes.result },
@@ -338,10 +346,10 @@ export async function $hashPassword(
   }
 
   const iterations = options.iterations ?? 320_000;
-  if (typeof iterations !== "number" || iterations < 1000) {
+  if (typeof iterations !== "number" || iterations < 100_000) {
     return $err({
       msg: `${title("web", "Password Hashing")}: Weak iteration count`,
-      desc: "Iterations must be a number and at least 1000 (recommended 320,000 or more)",
+      desc: "Iterations must be a number and at least 100,000 (recommended 320,000 or more)",
     });
   }
 

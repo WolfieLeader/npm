@@ -1,8 +1,8 @@
 import { Buffer } from "node:buffer";
-import { ENCODING } from "~/helpers/consts";
-import { $err, $fmtError, $ok, type Result } from "~/helpers/error";
-import type { Encoding } from "~/helpers/types";
-import { $isStr } from "~/helpers/validate";
+import { ENCODING } from "~/helpers/consts.js";
+import { $err, $fmtError, $ok, type Result } from "~/helpers/error.js";
+import type { Encoding } from "~/helpers/types.js";
+import { $isStr } from "~/helpers/validate.js";
 
 export function $convertStrToBytes(data: string, inputEncoding: Encoding = "utf8"): Result<{ result: Buffer }> {
   if (!$isStr(data)) {
@@ -38,7 +38,7 @@ export function $convertBytesToStr(data: Buffer, outputEncoding: Encoding = "utf
     });
   }
   try {
-    return $ok(Buffer.from(data).toString(outputEncoding));
+    return $ok(data.toString(outputEncoding));
   } catch (error) {
     return $err({ msg: "Crypto NodeJS API - Bytes to String: Failed to convert data", desc: $fmtError(error) });
   }

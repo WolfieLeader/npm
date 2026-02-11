@@ -1,8 +1,8 @@
 import { Buffer } from "node:buffer";
 import nodeCrypto from "node:crypto";
-import { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "~/helpers/consts";
-import { $err, $fmtError, $fmtResultErr, $ok, type Result, title } from "~/helpers/error";
-import { $parseToObj, $stringifyObj } from "~/helpers/object";
+import { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "~/helpers/consts.js";
+import { $err, $fmtError, $fmtResultErr, $ok, type Result, title } from "~/helpers/error.js";
+import { $parseToObj, $stringifyObj } from "~/helpers/object.js";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -11,9 +11,9 @@ import type {
   HashPasswordOptions,
   SecretKey,
   VerifyPasswordOptions,
-} from "~/helpers/types";
-import { $isPlainObj, $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate";
-import { $convertBytesToStr, $convertStrToBytes } from "./node-encode";
+} from "~/helpers/types.js";
+import { $isPlainObj, $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate.js";
+import { $convertBytesToStr, $convertStrToBytes } from "./node-encode.js";
 
 export function $generateUuid(): Result<string> {
   try {
@@ -205,6 +205,20 @@ export function $decrypt(encrypted: string, secretKey: SecretKey<"node">, option
     });
   }
 
+  if (ivBytes.result.byteLength !== injectedKey.injected.ivLength) {
+    return $err({
+      msg: `${title("node", "Decryption")}: Invalid IV length`,
+      desc: `Expected ${injectedKey.injected.ivLength} bytes, got ${ivBytes.result.byteLength}`,
+    });
+  }
+
+  if (tagBytes.result.byteLength !== 16) {
+    return $err({
+      msg: `${title("node", "Decryption")}: Invalid auth tag length`,
+      desc: `Expected 16 bytes, got ${tagBytes.result.byteLength}`,
+    });
+  }
+
   try {
     const decipher = nodeCrypto.createDecipheriv(injectedKey.injected.node, injectedKey.key, ivBytes.result);
     decipher.setAuthTag(tagBytes.result);
@@ -322,10 +336,10 @@ export function $hashPassword(
   }
 
   const iterations = options.iterations ?? 320_000;
-  if (typeof iterations !== "number" || iterations < 1000) {
+  if (typeof iterations !== "number" || iterations < 100_000) {
     return $err({
       msg: `${title("node", "Password Hashing")}: Weak iterations count`,
-      desc: "Iterations must be a number and at least 1000 (recommended 320,000 or more)",
+      desc: "Iterations must be a number and at least 100,000 (recommended 320,000 or more)",
     });
   }
 

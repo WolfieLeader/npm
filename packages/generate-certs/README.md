@@ -49,6 +49,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const certs = generateCerts({ certsPath: path.resolve(__dirname, "../certs") });
 ```
 
+To suppress console logs, pass `activateLogs: false`:
+
+```typescript
+const certs = generateCerts({ certsPath: path.resolve(__dirname, "../certs"), activateLogs: false });
+```
+
 ### Express 📫
 
 ```typescript

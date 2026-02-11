@@ -129,6 +129,9 @@ export interface DecompressOptions {
 
   // Size of the compression window: 2^windowBits (8-15; default: 15).
   windowBits?: number;
+
+  // Maximum allowed decompressed output size in bytes. Aborts early if exceeded (decompression bomb protection).
+  maxOutputSize?: number;
 }
 ```
 

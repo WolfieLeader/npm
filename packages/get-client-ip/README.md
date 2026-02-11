@@ -111,7 +111,6 @@ It also falls back to:
 ```typescript
 req.ip;
 req.socket.remoteAddress;
-req.connection.remoteAddress;
 ```
 
 ## Credit 💪🏽

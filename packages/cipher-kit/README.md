@@ -160,6 +160,9 @@ interface CreateSecretKeyOptions {
 
   // Optional context info for HKDF (default: "cipher-kit").
   info?: string;
+
+  // Whether the derived Web CryptoKey is extractable, has no effect on Node.js keys (default: false).
+  extractable?: boolean;
 }
 ```
 
@@ -339,7 +342,7 @@ interface HashPasswordOptions {
   // Length of the salt in bytes (default: 16 bytes, min: 8 bytes).
   saltLength?: number;
 
-  // Number of iterations for key derivation (default: 320000, min: 1000).
+  // Number of iterations for key derivation (default: 320000, min: 100000).
   iterations?: number;
 
   // Length of the derived key in bytes (default: 64 bytes, min: 16 bytes).

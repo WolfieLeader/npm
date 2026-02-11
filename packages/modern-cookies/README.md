@@ -1,11 +1,11 @@
 <div align="center">
 <img src="https://github.com/WolfieLeader/npm/blob/main/assets/modern-cookies-banner.svg" align="center" alt="banner" />
 
-<h1 align="center" style="font-weight:900;">modern-cookies</h1>
+<h1 align="center">modern-cookies</h1>
 
 <p align="center">
-  A Lightweight and Modern Cookie<br/>
-  Utility for Express and Nest.js
+  Type-safe cookie management for Express and NestJS<br/>
+  with automatic security enforcement.
 </p>
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
@@ -15,115 +15,178 @@
 
 </div>
 
-## Why `modern-cookies`? 🤔
+## Highlights ✨
 
-- 💡 **Simple API** — Intuitive functions `setCookie`, `getCookie`, and `deleteCookie` for effortless cookie management.
-- 🔨 **Built on Reliability** — Uses the proven [cookie](https://www.npmjs.com/package/cookie) library for RFC-compliant parsing and serialization.
-- ❌ **Graceful Error Handling** — Returns `false` on failures and provides a `logError` flag for optional console logging.
-- 🛡️ **Security-Aware Defaults** — Automatically enforces rules for special prefixes: `__Secure-` and `__Host-`.
+- **Simple API** — `setCookie`, `getCookie`, and `deleteCookie`
+- **Automatic security enforcement** for `__Secure-` and `__Host-` cookie prefixes
+- **`sameSite: "none"` enforcement** — automatically forces `secure: true`
+- **Graceful error handling** — returns `boolean`, never throws
+- **Built on** the RFC-compliant [`cookie`](https://www.npmjs.com/package/cookie) library
 
-## Installation 🔥
+## Installation 📦
+
+Requires Node.js >= 20. Express is an optional peer dependency.
 
 ```bash
-npm install modern-cookies@latest
+npm install modern-cookies
 # or
-yarn add modern-cookies@latest
-# or
-pnpm install modern-cookies@latest
-# or
-bun add modern-cookies@latest
+pnpm add modern-cookies
 ```
 
-## Usage 🪛
-
-### Express 📫
+## Quick Start 🚀
 
 ```typescript
 import express from "express";
 import { getCookie, setCookie, deleteCookie } from "modern-cookies";
-import { env } from "./env";
 
-function bootstrap() {
-  const app = express();
+const app = express();
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+app.post("/login", (req, res) => {
+  setCookie(res, "session", "abc123", { httpOnly: true, secure: true, sameSite: "lax", maxAge: 86400 });
+  res.json({ message: "Logged in" });
+});
 
-  app.get("/get-cookie", (req, res) => {
-    const cookieValue = getCookie(req, "myCookie");
-    res.json({ cookieValue });
-  });
+app.get("/profile", (req, res) => {
+  const session = getCookie(req, "session");
+  res.json({ session });
+});
 
-  app.get("/set-cookie", (req, res) => {
-    const isSet = setCookie(res, "myCookie", "SomeValue123", {
-      httpOnly: true,
-      maxAge: 60, // 1 minute
-    });
+app.post("/logout", (req, res) => {
+  deleteCookie(res, "session");
+  res.json({ message: "Logged out" });
+});
 
-    res.json({ message: isSet ? "Cookie set successfully" : "Failed to set cookie" });
-  });
-
-  app.get("/delete-cookie", (req, res) => {
-    const isDeleted = deleteCookie(res, "myCookie");
-    res.json({ message: isDeleted ? "Cookie deleted successfully" : "Failed to delete cookie" });
-  });
-
-  app.listen(env.PORT || 3000, () => {
-    console.log(`🚀 Express server running on: http://localhost:${env.PORT || 3000}`);
-  });
-}
-
-bootstrap();
+app.listen(3000);
 ```
 
-### NestJS 🪺
+## API Reference 📖
+
+### `getCookie(req, name, logError?): string | undefined`
+
+Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if not found.
 
 ```typescript
-import { Controller, Get, Req, Res } from "@nestjs/common";
+const session = getCookie(req, "session");
+
+// Enable error logging for debugging
+const theme = getCookie(req, "theme", true);
+```
+
+### `setCookie(res, name, value, options, logError?): boolean`
+
+Sets a cookie on the response. The `options` parameter is **required**. Returns `true` on success, `false` on failure.
+
+```typescript
+setCookie(res, "theme", "dark", { maxAge: 60 * 60 * 24 * 365, sameSite: "strict" });
+
+// Check if the cookie was set successfully
+const ok = setCookie(res, "lang", "en", { maxAge: 60 * 60 * 24 * 365 });
+```
+
+> **Tip:** For session or auth cookies, always set `{ httpOnly: true, secure: true, sameSite: "lax" }` to mitigate XSS and CSRF risks.
+
+### `deleteCookie(res, name, options?, logError?): boolean`
+
+Deletes a cookie by setting `maxAge: 0`. If the cookie was set with a specific `path` or `domain`, pass the same values to ensure the correct cookie is removed.
+
+```typescript
+deleteCookie(res, "session");
+
+// If the cookie was set with a specific path/domain, match them
+deleteCookie(res, "tracking", { path: "/app", domain: "example.com" });
+```
+
+### `CookieOptions`
+
+```typescript
+interface CookieOptions {
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: "strict" | "lax" | "none";
+  maxAge?: number; // Lifetime in seconds; omit for session cookie
+  expires?: Date; // Exact expiration date (Expires attribute)
+  path?: string; // URL path scope (default: "/")
+  domain?: string; // Domain scope; omit to restrict to current host
+  priority?: "low" | "medium" | "high";
+}
+```
+
+> **Type export:** `import type { CookieOptions } from "modern-cookies"`
+
+## Security Features 🛡️
+
+### Cookie Prefix Enforcement
+
+When you use special cookie name prefixes, `setCookie` automatically enforces the required attributes:
+
+| Prefix      | Enforced Attributes                           |
+| ----------- | --------------------------------------------- |
+| `__Secure-` | `secure: true`                                |
+| `__Host-`   | `secure: true`, `path: "/"`, `domain` removed |
+
+```typescript
+// secure is automatically forced to true
+setCookie(res, "__Secure-Token", value, { httpOnly: true });
+
+// secure, path, and domain are all enforced
+setCookie(res, "__Host-Token", value, { httpOnly: true });
+```
+
+### `sameSite: "none"` Enforcement
+
+When `sameSite` is set to `"none"`, `secure: true` is automatically added. This prevents browsers from silently rejecting the cookie.
+
+```typescript
+// secure: true is added automatically
+setCookie(res, "cross-origin", value, { sameSite: "none" });
+```
+
+## NestJS 🧩
+
+```typescript
+import { Controller, Get, Post, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { getCookie, setCookie, deleteCookie } from "modern-cookies";
 
-@Controller("")
-export class PublicController {
-  @Get("get-cookie")
-  getCookie(@Req() req: Request) {
-    const cookieValue = getCookie(req, "myCookie");
-    return { cookieValue };
+@Controller("auth")
+export class AuthController {
+  @Post("login")
+  login(@Res() res: Response) {
+    const token = "generated-session-token";
+    setCookie(res, "session", token, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 60 * 60 * 24 });
+    res.json({ success: true });
   }
 
-  @Get("set-cookie")
-  setCookie(@Res() res: Response) {
-    const isSet = setCookie(res, "myCookie", "SomeValue123", {
-      httpOnly: true,
-      maxAge: 60, // 1 minute
-    });
-    // Since we used the `Res` we need to send the response manually
-    res.json({ message: isSet ? "Cookie set successfully" : "Failed to set cookie" });
+  @Get("me")
+  me(@Req() req: Request, @Res() res: Response) {
+    const session = getCookie(req, "session");
+    if (!session) return res.status(401).json({ error: "Not authenticated" });
+    res.json({ session });
   }
 
-  @Get("delete-cookie")
-  deleteCookie(@Res() res: Response) {
-    const isDeleted = deleteCookie(res, "myCookie");
-    res.json({ message: isDeleted ? "Cookie deleted successfully" : "Failed to delete cookie" });
+  @Post("logout")
+  logout(@Res() res: Response) {
+    deleteCookie(res, "session");
+    res.json({ success: true });
   }
 }
 ```
 
-## Credit 💪🏽
+## Credits 🙏
 
-Huge credit to [Cookie NPM package](https://www.npmjs.com/package/cookie) for the cookie parsing and serialization used in this package.
+Built on the [cookie](https://www.npmjs.com/package/cookie) package for RFC-compliant parsing and serialization.
 
 ## Contributions 🤝
 
-Want to contribute or suggest a feature or improvement?
-
-- Open an issue or feature request
-- Submit a PR to improve the packages or add new ones
-- Star ⭐ the repo if you like what you see
+- Open an [issue](https://github.com/WolfieLeader/npm/issues) or feature request
+- Submit a PR to improve the package
+- Star the repo if you find it useful
 
 <div align="center">
 <br/>
-<div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
-<p style="font-size: 12px; font-style: italic;">This project is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="nofollow">MIT License</a>.</p>
-<div style="font-size: 12px; font-style: italic; font-weight: 600;">Thank you!</div>
+
+Crafted carefully by [WolfieLeader](https://github.com/WolfieLeader)
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
 </div>

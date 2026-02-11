@@ -96,6 +96,6 @@ export function setCookie(
  * @param logError - If `true`, logs errors to the console.
  * @returns `true` if the deletion request was added successfully, otherwise `false`.
  */
-export function deleteCookie(res: Response, name: string, options: CookieOptions, logError = false): boolean {
+export function deleteCookie(res: Response, name: string, options: CookieOptions = {}, logError = false): boolean {
   return setCookie(res, name, "", { ...options, maxAge: 0 }, logError);
 }

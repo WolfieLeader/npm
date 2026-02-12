@@ -27,7 +27,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 20. Recommended as a dev dependency.
+Requires Node.js >= 18. Recommended as a dev dependency.
 
 ```bash
 npm install -D generate-certs
@@ -102,26 +102,6 @@ When certificates already exist at the specified path, the following checks are 
 If any check fails, certificates are automatically regenerated.
 
 ## Framework Examples 🧩
-
-### Express
-
-```typescript
-import https from "node:https";
-import path from "node:path";
-import express from "express";
-import { generateCerts } from "generate-certs";
-
-const certs = generateCerts({ certsPath: path.resolve(import.meta.dirname, "../certs") });
-
-const app = express();
-app.get("/", (req, res) => {
-  res.json({ secure: req.secure });
-});
-
-https.createServer(certs, app).listen(3443, () => {
-  console.log("HTTPS server running on https://localhost:3443");
-});
-```
 
 ### NestJS
 

@@ -25,7 +25,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 20. Express is an optional peer dependency.
+Requires Node.js >= 18. Express is an optional peer dependency.
 
 ```bash
 npm install get-client-ip
@@ -62,25 +62,6 @@ app.listen(3000);
 ### `getClientIp(req, res?, next?): string | undefined`
 
 Extracts the client's IP address from an incoming request. Works both as a standalone function and as Express middleware. Returns `string | undefined`.
-
-```typescript
-import { getClientIp } from "get-client-ip";
-
-// Standalone — returns the IP directly
-app.get("/ip", (req, res) => {
-  const ip = getClientIp(req); // "203.0.113.50" or undefined
-  res.json({ ip });
-});
-
-// Middleware — same function, but also calls next() and populates req.clientIp
-app.use(getClientIp);
-
-app.get("/me", (req, res) => {
-  // req.clientIp  — first valid IP (string | undefined)
-  // req.clientIps — all valid IPs ([string, ...string[]] | undefined)
-  res.json({ ip: req.clientIp, allIps: req.clientIps });
-});
-```
 
 **Side effects:** Sets `req.clientIp` and `req.clientIps` on the request object when a valid IP is found. Throws if `req` is `undefined`.
 

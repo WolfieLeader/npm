@@ -62,6 +62,7 @@ describe("generateCerts", () => {
   });
 
   it("generated key has restricted file permissions", () => {
+    if (process.platform === "win32") return;
     const certsPath = makeTmpDir();
     generateCerts({ certsPath, ...OPTS });
 
@@ -98,7 +99,7 @@ describe("generateCerts", () => {
     expiredCert.setIssuer([{ name: "commonName", value: "localhost" }]);
     expiredCert.sign(keys.privateKey, forge.md.sha256.create());
 
-    fs.writeFileSync(path.join(certsPath, "key.pem"), forge.pki.privateKeyToPem(keys.privateKey));
+    fs.writeFileSync(path.join(certsPath, "key.pem"), forge.pki.privateKeyToPem(keys.privateKey), { mode: 0o600 });
     fs.writeFileSync(path.join(certsPath, "cert.pem"), forge.pki.certificateToPem(expiredCert));
 
     const result = generateCerts({ certsPath, ...OPTS });
@@ -117,10 +118,14 @@ describe("generateCerts", () => {
     expect(fs.existsSync(path.join(nested, "cert.pem"))).toBe(true);
   });
 
+  it("throws when certsPath is relative", () => {
+    expect(() => generateCerts({ certsPath: "./relative-certs", ...OPTS })).toThrow("must be an absolute path");
+  });
+
   it("throws on corrupt cert file", () => {
     const certsPath = makeTmpDir();
 
-    fs.writeFileSync(path.join(certsPath, "key.pem"), "not-a-pem");
+    fs.writeFileSync(path.join(certsPath, "key.pem"), "not-a-pem", { mode: 0o600 });
     fs.writeFileSync(path.join(certsPath, "cert.pem"), "not-a-pem");
 
     expect(() => generateCerts({ certsPath, ...OPTS })).toThrow("Error checking for existing certificates");
@@ -136,5 +141,172 @@ describe("generateCerts", () => {
     const valid = crypto.verify("sha256", data, certObj.publicKey, signature);
 
     expect(valid).toBe(true);
+  });
+
+  it("regenerates when key.pem has insecure permissions", () => {
+    if (process.platform === "win32") return;
+
+    const certsPath = makeTmpDir();
+    const first = generateCerts({ certsPath, ...OPTS });
+
+    fs.chmodSync(path.join(certsPath, "key.pem"), 0o644);
+
+    const second = generateCerts({ certsPath, ...OPTS });
+
+    expect(second.key).not.toBe(first.key);
+    expect(second.cert).not.toBe(first.cert);
+
+    const stat = fs.statSync(path.join(certsPath, "key.pem"));
+    expect(stat.mode & 0o777).toBe(0o600);
+  });
+
+  it("regenerates when key and cert are mismatched", () => {
+    const certsPath = makeTmpDir();
+    const first = generateCerts({ certsPath, ...OPTS });
+
+    const otherKeys = forge.pki.rsa.generateKeyPair(2048);
+    fs.writeFileSync(path.join(certsPath, "key.pem"), forge.pki.privateKeyToPem(otherKeys.privateKey));
+    fs.chmodSync(path.join(certsPath, "key.pem"), 0o600);
+
+    const second = generateCerts({ certsPath, ...OPTS });
+
+    expect(second.key).not.toBe(first.key);
+    expect(second.cert).not.toBe(first.cert);
+  });
+
+  it("regenerates when cert is not yet valid", () => {
+    const certsPath = makeTmpDir();
+
+    const keys = forge.pki.rsa.generateKeyPair(2048);
+    const futureCert = forge.pki.createCertificate();
+    futureCert.publicKey = keys.publicKey;
+    futureCert.serialNumber = "02";
+    futureCert.validity.notBefore = new Date(Date.now() + 10 * 60 * 1000);
+    futureCert.validity.notAfter = new Date(Date.now() + ONE_YEAR_MS);
+    futureCert.setSubject([{ name: "commonName", value: "localhost" }]);
+    futureCert.setIssuer([{ name: "commonName", value: "localhost" }]);
+    futureCert.setExtensions([
+      {
+        name: "subjectAltName",
+        altNames: [
+          { type: 2, value: "localhost" },
+          { type: 7, ip: "127.0.0.1" },
+          { type: 7, ip: "::1" },
+        ],
+      },
+    ]);
+    futureCert.sign(keys.privateKey, forge.md.sha256.create());
+
+    fs.writeFileSync(path.join(certsPath, "key.pem"), forge.pki.privateKeyToPem(keys.privateKey), { mode: 0o600 });
+    fs.writeFileSync(path.join(certsPath, "cert.pem"), forge.pki.certificateToPem(futureCert));
+
+    const result = generateCerts({ certsPath, ...OPTS });
+    const cert = forge.pki.certificateFromPem(result.cert);
+    expect(cert.validity.notBefore.getTime()).toBeLessThanOrEqual(Date.now() + 5 * 60 * 1000);
+  });
+
+  it("regenerates when CN is not localhost", () => {
+    const certsPath = makeTmpDir();
+
+    const keys = forge.pki.rsa.generateKeyPair(2048);
+    const cert = forge.pki.createCertificate();
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = "03";
+    cert.validity.notBefore = new Date(Date.now() - 60_000);
+    cert.validity.notAfter = new Date(Date.now() + ONE_YEAR_MS);
+    cert.setSubject([{ name: "commonName", value: "example.com" }]);
+    cert.setIssuer([{ name: "commonName", value: "example.com" }]);
+    cert.setExtensions([
+      {
+        name: "subjectAltName",
+        altNames: [
+          { type: 2, value: "localhost" },
+          { type: 7, ip: "127.0.0.1" },
+          { type: 7, ip: "::1" },
+        ],
+      },
+    ]);
+    cert.sign(keys.privateKey, forge.md.sha256.create());
+
+    fs.writeFileSync(path.join(certsPath, "key.pem"), forge.pki.privateKeyToPem(keys.privateKey), { mode: 0o600 });
+    fs.writeFileSync(path.join(certsPath, "cert.pem"), forge.pki.certificateToPem(cert));
+
+    const result = generateCerts({ certsPath, ...OPTS });
+    const newCert = forge.pki.certificateFromPem(result.cert);
+    expect(newCert.subject.getField("CN").value).toBe("localhost");
+  });
+
+  it("regenerates when SANs are missing", () => {
+    const certsPath = makeTmpDir();
+
+    const keys = forge.pki.rsa.generateKeyPair(2048);
+    const cert = forge.pki.createCertificate();
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = "04";
+    cert.validity.notBefore = new Date(Date.now() - 60_000);
+    cert.validity.notAfter = new Date(Date.now() + ONE_YEAR_MS);
+    cert.setSubject([{ name: "commonName", value: "localhost" }]);
+    cert.setIssuer([{ name: "commonName", value: "localhost" }]);
+    cert.setExtensions([
+      {
+        name: "subjectAltName",
+        altNames: [{ type: 2, value: "localhost" }],
+      },
+    ]);
+    cert.sign(keys.privateKey, forge.md.sha256.create());
+
+    fs.writeFileSync(path.join(certsPath, "key.pem"), forge.pki.privateKeyToPem(keys.privateKey), { mode: 0o600 });
+    fs.writeFileSync(path.join(certsPath, "cert.pem"), forge.pki.certificateToPem(cert));
+
+    const result = generateCerts({ certsPath, ...OPTS });
+    const newCert = forge.pki.certificateFromPem(result.cert);
+
+    const san = newCert.getExtension("subjectAltName") as { altNames: { type: number; value?: string; ip?: string }[] };
+    const ips = san.altNames.filter((a) => a.type === 7).map((a) => a.ip);
+    expect(ips).toContain("127.0.0.1");
+    expect(ips).toContain("::1");
+  });
+
+  it("regenerates when key size is too weak", () => {
+    const certsPath = makeTmpDir();
+
+    const keys = forge.pki.rsa.generateKeyPair(1024);
+    const cert = forge.pki.createCertificate();
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = "05";
+    cert.validity.notBefore = new Date(Date.now() - 60_000);
+    cert.validity.notAfter = new Date(Date.now() + ONE_YEAR_MS);
+    cert.setSubject([{ name: "commonName", value: "localhost" }]);
+    cert.setIssuer([{ name: "commonName", value: "localhost" }]);
+    cert.setExtensions([
+      {
+        name: "subjectAltName",
+        altNames: [
+          { type: 2, value: "localhost" },
+          { type: 7, ip: "127.0.0.1" },
+          { type: 7, ip: "::1" },
+        ],
+      },
+    ]);
+    cert.sign(keys.privateKey, forge.md.sha256.create());
+
+    fs.writeFileSync(path.join(certsPath, "key.pem"), forge.pki.privateKeyToPem(keys.privateKey), { mode: 0o600 });
+    fs.writeFileSync(path.join(certsPath, "cert.pem"), forge.pki.certificateToPem(cert));
+
+    const result = generateCerts({ certsPath, ...OPTS });
+    const newCert = forge.pki.certificateFromPem(result.cert);
+    const pubKey = newCert.publicKey as { n?: { bitLength?: () => number } };
+    expect(pubKey.n?.bitLength?.()).toBeGreaterThanOrEqual(2048);
+  });
+
+  it("generates a positive non-zero serial number", () => {
+    const certsPath = makeTmpDir();
+    const { cert: certPem } = generateCerts({ certsPath, ...OPTS });
+    const cert = forge.pki.certificateFromPem(certPem);
+
+    expect(cert.serialNumber).toMatch(/^[0-9a-f]+$/i);
+    expect(cert.serialNumber).not.toBe("0");
+    const firstByte = Number.parseInt(cert.serialNumber.slice(0, 2), 16);
+    expect((firstByte & 0x80) === 0).toBe(true);
   });
 });

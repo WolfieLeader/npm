@@ -38,9 +38,19 @@ export interface GenerateCertsOptions {
  *
  * // NestJS example:
  * const app = await NestFactory.create(AppModule, { httpsOptions: certs });
+ *
+ * // HonoJS example:
+ * serve({ fetch: app.fetch, port: 3443, createServer: createSecureServer, serverOptions: certs })
+ *
+ * // Fastify example:
+ * const app = Fastify({ https: certs });
  * ```
  */
 export function generateCerts({ certsPath, activateLogs = true }: GenerateCertsOptions) {
+  if (!path.isAbsolute(certsPath)) {
+    throw new Error("❌ Error generating certificates: certsPath must be an absolute path");
+  }
+
   const certs = $checkForCerts({ certsPath, activateLogs });
   if (certs) return certs;
   try {
@@ -60,9 +70,58 @@ function $checkForCerts({ certsPath, activateLogs: log = true }: GenerateCertsOp
     const keyPem = $readFile(certsPath, "key.pem");
     const certPem = $readFile(certsPath, "cert.pem");
 
+    if (process.platform !== "win32") {
+      const keyStats = fs.statSync(path.join(certsPath, "key.pem"));
+      if ((keyStats.mode & 0o777) !== 0o600) {
+        if (log) console.log("⚠️ Private key has insecure permissions. Regenerating...");
+        return;
+      }
+    }
+
     const cert = forge.pki.certificateFromPem(certPem);
-    if (cert.validity.notAfter < new Date()) {
+    const now = Date.now();
+    const clockSkewMs = 5 * 60 * 1000;
+
+    if (cert.validity.notAfter.getTime() <= now + clockSkewMs) {
       if (log) console.log("⏰ Existing certificate has expired. Regenerating...");
+      return;
+    }
+
+    if (cert.validity.notBefore.getTime() > now + clockSkewMs) {
+      if (log) console.log("⏳ Existing certificate is not valid yet. Regenerating...");
+      return;
+    }
+
+    const commonName = cert.subject.getField("CN")?.value;
+    if (commonName !== "localhost") {
+      if (log) console.log("🏷️ Certificate common name is invalid. Regenerating...");
+      return;
+    }
+
+    const san = cert.getExtension("subjectAltName") as
+      | { altNames?: Array<{ type: number; value?: string; ip?: string }> }
+      | undefined;
+    const hasLocalhostDns = san?.altNames?.some((entry) => entry.type === 2 && entry.value === "localhost") ?? false;
+    const hasLoopbackV4 = san?.altNames?.some((entry) => entry.type === 7 && entry.ip === "127.0.0.1") ?? false;
+    const hasLoopbackV6 = san?.altNames?.some((entry) => entry.type === 7 && entry.ip === "::1") ?? false;
+
+    if (!(hasLocalhostDns && hasLoopbackV4 && hasLoopbackV6)) {
+      if (log) console.log("🌐 Certificate SAN entries are invalid. Regenerating...");
+      return;
+    }
+
+    const certRsaPublic = cert.publicKey as { n?: { bitLength?: () => number } };
+    const bitLength = certRsaPublic.n?.bitLength?.();
+    if (typeof bitLength !== "number" || bitLength < 2048) {
+      if (log) console.log("🔐 Certificate key size is too weak. Regenerating...");
+      return;
+    }
+
+    const privateKey = forge.pki.privateKeyFromPem(keyPem);
+    const certPublicKey = forge.pki.publicKeyToPem(cert.publicKey);
+    const keyPublicKey = forge.pki.publicKeyToPem(forge.pki.setRsaPublicKey(privateKey.n, privateKey.e));
+    if (certPublicKey !== keyPublicKey) {
+      if (log) console.log("🔑 Key/certificate mismatch detected. Regenerating...");
       return;
     }
 

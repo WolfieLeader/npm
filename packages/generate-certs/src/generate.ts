@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import forge from "node-forge";
@@ -7,14 +8,18 @@ export function $generateCerts(certificatesPath: string) {
 
   const keys = forge.pki.rsa.generateKeyPair(2048);
   const privateKey = forge.pki.privateKeyToPem(keys.privateKey);
-  $writeAtomic(path.join(certificatesPath, "key.pem"), privateKey, 0o600);
 
   const cert = forge.pki.createCertificate();
   cert.publicKey = keys.publicKey;
-  cert.serialNumber = forge.util.bytesToHex(forge.random.getBytesSync(16));
-  cert.validity.notBefore = new Date();
-  cert.validity.notAfter = new Date();
-  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+  const serialBytes = crypto.randomBytes(16);
+  serialBytes[0] = (serialBytes[0] ?? 0) & 0x7f;
+  if (serialBytes.every((b) => b === 0)) {
+    serialBytes[serialBytes.length - 1] = 1;
+  }
+  cert.serialNumber = serialBytes.toString("hex");
+  cert.validity.notBefore = new Date(Date.now() - 5 * 60 * 1000);
+  cert.validity.notAfter = new Date(cert.validity.notBefore);
+  cert.validity.notAfter.setFullYear(cert.validity.notAfter.getFullYear() + 1);
 
   const attrs = [{ name: "commonName", value: "localhost" }];
 
@@ -34,18 +39,38 @@ export function $generateCerts(certificatesPath: string) {
   cert.sign(keys.privateKey, forge.md.sha256.create());
 
   const certPem = forge.pki.certificateToPem(cert);
-  $writeAtomic(path.join(certificatesPath, "cert.pem"), certPem);
+  const keyPath = path.join(certificatesPath, "key.pem");
+  const certPath = path.join(certificatesPath, "cert.pem");
+
+  try {
+    $writeAtomic(keyPath, privateKey, 0o600);
+    $writeAtomic(certPath, certPem);
+  } catch (err) {
+    try {
+      fs.unlinkSync(keyPath);
+    } catch {}
+    try {
+      fs.unlinkSync(certPath);
+    } catch {}
+    throw err;
+  }
 }
 
 function $writeAtomic(filePath: string, content: string, mode?: number) {
-  const tmpPath = `${filePath}.${process.pid}.tmp`;
+  const tmpDir = fs.mkdtempSync(path.join(path.dirname(filePath), ".tmp-cert-"));
+  fs.chmodSync(tmpDir, 0o700);
+  const tmpPath = path.join(tmpDir, path.basename(filePath));
   try {
-    fs.writeFileSync(tmpPath, content, mode != null ? { mode } : undefined);
+    fs.writeFileSync(tmpPath, content, mode != null ? { mode, flag: "wx" } : { flag: "wx" });
     fs.renameSync(tmpPath, filePath);
   } catch (err) {
     try {
       fs.unlinkSync(tmpPath);
     } catch {}
     throw err;
+  } finally {
+    try {
+      fs.rmdirSync(tmpDir);
+    } catch {}
   }
 }

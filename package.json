@@ -1,16 +1,6 @@
 {
   "name": "npm-packages",
   "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "format": "pnpm biome format",
-    "lint": "pnpm biome lint --fix",
-    "format:md": "prettier --write 'packages/*/README.md' README.md",
-    "test": "turbo run test",
-    "typecheck": "turbo run typecheck",
-    "attw": "pnpm --filter './packages/*' --filter '!@internal/helpers' exec attw --pack . --ignore-rules no-resolution",
-    "smoke": "bash scripts/smoke.sh"
-  },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
     "@biomejs/biome": "2.3.14",

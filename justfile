@@ -1,20 +1,21 @@
-packages := "cipher-kit compress-kit generate-certs get-client-ip modern-cookies @internal/helpers"
+workspace_packages := "cipher-kit compress-kit generate-certs get-client-ip modern-cookies @internal/helpers"
+public_packages := "cipher-kit compress-kit generate-certs get-client-ip modern-cookies"
 
 _default:
   just --list
 
-# ── Dev ──────────────────────────────────────────
+# ── Workspace ────────────────────────────────────
 
-[group('dev')]
+[group('workspace')]
 install:
   pnpm install
 
-[group('dev')]
+[group('workspace')]
 build target="all":
   #!/usr/bin/env bash
   set -euo pipefail
   if [ "{{ target }}" = "all" ]; then
-    pnpm build
+    pnpm turbo run build
   else
     pnpm --filter {{ target }} build
   fi
@@ -22,50 +23,110 @@ build target="all":
 # ── Verify ───────────────────────────────────────
 
 [group('verify')]
-fmt:
-  pnpm format
-  pnpm format:md
+fmt target="all":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if [ "{{ target }}" = "all" ]; then
+    pnpm biome format --write .
+    pnpm exec prettier --write "packages/*/README.md" README.md
+  else
+    pnpm --filter {{ target }} exec biome format --write .
+  fi
 
 [group('verify')]
-lint:
-  pnpm lint
+lint target="all":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if [ "{{ target }}" = "all" ]; then
+    pnpm biome lint --fix
+  else
+    pnpm --filter {{ target }} exec biome lint --fix .
+  fi
 
 [group('verify')]
-typecheck:
-  pnpm typecheck
+typecheck target="all":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if [ "{{ target }}" = "all" ]; then
+    pnpm turbo run typecheck
+  else
+    pnpm --filter {{ target }} typecheck
+  fi
 
 [group('verify')]
 test target="all":
   #!/usr/bin/env bash
   set -euo pipefail
   if [ "{{ target }}" = "all" ]; then
-    pnpm test
+    pnpm turbo run test
   else
     pnpm --filter {{ target }} test
   fi
 
 [group('verify')]
-smoke:
-  pnpm smoke
+smoke target="all":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if [ "{{ target }}" = "all" ]; then
+    bash scripts/run.sh
+  else
+    bash scripts/run.sh {{ target }}
+  fi
 
 [group('verify')]
-attw:
-  pnpm attw
+attw target="all":
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  if [ "{{ target }}" = "all" ]; then
+    for pkg in {{ public_packages }}; do
+      pnpm --filter "$pkg" exec attw --pack . --ignore-rules no-resolution
+    done
+    exit 0
+  fi
+
+  if [ "{{ target }}" = "@internal/helpers" ]; then
+    echo "attw is not supported for private package: @internal/helpers"
+    exit 1
+  fi
+
+  valid=false
+  for pkg in {{ public_packages }}; do
+    if [ "$pkg" = "{{ target }}" ]; then
+      valid=true
+      break
+    fi
+  done
+
+  if [ "$valid" != "true" ]; then
+    echo "Unknown public package: {{ target }}"
+    echo "Available packages: {{ public_packages }}"
+    exit 1
+  fi
+
+  pnpm --filter {{ target }} exec attw --pack . --ignore-rules no-resolution
 
 [group('verify')]
-verify: fmt lint typecheck
+verify target="all":
+  just fmt {{ target }}
+  just lint {{ target }}
+  just typecheck {{ target }}
 
 [group('verify')]
-full-verify: fmt lint typecheck test attw smoke
+full-verify target="all":
+  just verify {{ target }}
+  just test {{ target }}
+  if [ "{{ target }}" != "@internal/helpers" ]; then just attw {{ target }}; fi
+  if [ "{{ target }}" != "@internal/helpers" ]; then just smoke {{ target }}; fi
 
-# ── Deps ─────────────────────────────────────────
+# ── Maintenance ──────────────────────────────────
 
-[group('deps')]
+[group('maintenance')]
 update target="all":
   #!/usr/bin/env bash
   set -euo pipefail
   if [ "{{ target }}" = "all" ]; then
-    for pkg in {{ packages }}; do
+    for pkg in {{ workspace_packages }}; do
       echo "Updating packages/$pkg..."
       pnpm --filter "$pkg" update --latest
     done
@@ -78,8 +139,7 @@ update target="all":
   fi
   pnpm install
 
-# ── Other ────────────────────────────────────────
-
+[group('maintenance')]
 clean:
   rm -rf node_modules .turbo
   for dir in packages/*; do rm -rf "$dir/dist" "$dir/node_modules" "$dir/.turbo"; done

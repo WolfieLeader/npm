@@ -92,17 +92,19 @@ export function setCookie(
 ): boolean {
   try {
     const sameSite = $normalizeSameSite(options.sameSite);
-    let cookieOptions = { ...options, sameSite, path: options.path || "/" };
+    const cookieOptions = { ...options, sameSite, path: options.path || "/" };
     const normalizedName = name.toLowerCase();
 
-    if (normalizedName.startsWith("__secure-")) {
-      cookieOptions = { ...cookieOptions, secure: true };
-    } else if (normalizedName.startsWith("__host-")) {
-      cookieOptions = { ...cookieOptions, secure: true, path: "/", domain: undefined };
+    if (normalizedName.startsWith("__host-")) {
+      cookieOptions.secure = true;
+      cookieOptions.path = "/";
+      cookieOptions.domain = undefined;
+    } else if (normalizedName.startsWith("__secure-")) {
+      cookieOptions.secure = true;
     }
 
     if (cookieOptions.sameSite === "none") {
-      cookieOptions = { ...cookieOptions, secure: true };
+      cookieOptions.secure = true;
     }
 
     const serialized = serialize(name, value, cookieOptions);
@@ -114,8 +116,10 @@ export function setCookie(
   }
 }
 
+const UNIX_EPOCH = new Date(0);
+
 /**
- * Deletes a cookie by setting its `Max-Age` to 0.
+ * Deletes a cookie by setting its `Max-Age` to `0` and `Expires` to the Unix epoch.
  *
  * @param res - The Express response object.
  * @param name - The name of the cookie to delete.
@@ -124,5 +128,5 @@ export function setCookie(
  * @returns `true` if the deletion request was added successfully, otherwise `false`.
  */
 export function deleteCookie(res: Response, name: string, options: CookieOptions = {}, logError = false): boolean {
-  return setCookie(res, name, "", { ...options, maxAge: 0, expires: new Date(0) }, logError);
+  return setCookie(res, name, "", { ...options, maxAge: 0, expires: UNIX_EPOCH }, logError);
 }

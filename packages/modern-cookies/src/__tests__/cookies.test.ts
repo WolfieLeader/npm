@@ -39,6 +39,20 @@ describe("getCookie", () => {
     const req = mockReq("token=a%20b%3Dc");
     expect(getCookie(req, "token")).toBe("a b=c");
   });
+
+  test("logs error with logError: true when parsing fails", () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const req = {
+      get: () => {
+        throw new Error("Header read failure");
+      },
+    } as unknown as Request;
+
+    const result = getCookie(req, "session", true);
+    expect(result).toBeUndefined();
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
 });
 
 describe("setCookie", () => {
@@ -62,6 +76,44 @@ describe("setCookie", () => {
     const res = mockRes();
     setCookie(res, "test", "val", { path: "/admin" });
     expect(res._cookies[0]).toContain("Path=/admin");
+  });
+
+  test("returns false on invalid sameSite value", () => {
+    const res = mockRes();
+    const result = setCookie(res, "test", "val", { sameSite: "invalid" as "strict" });
+    expect(result).toBe(false);
+    expect(res._cookies).toHaveLength(0);
+  });
+
+  test("sets sameSite to strict", () => {
+    const res = mockRes();
+    setCookie(res, "test", "val", { sameSite: "strict" });
+    expect(res._cookies[0]).toContain("SameSite=Strict");
+  });
+
+  test("sets sameSite to lax", () => {
+    const res = mockRes();
+    setCookie(res, "test", "val", { sameSite: "lax" });
+    expect(res._cookies[0]).toContain("SameSite=Lax");
+  });
+
+  test("sets expires option", () => {
+    const res = mockRes();
+    const date = new Date("2030-01-01T00:00:00Z");
+    setCookie(res, "test", "val", { expires: date });
+    expect(res._cookies[0]).toContain("Expires=");
+  });
+
+  test("sets domain option", () => {
+    const res = mockRes();
+    setCookie(res, "test", "val", { domain: "example.com" });
+    expect(res._cookies[0]).toContain("Domain=example.com");
+  });
+
+  test("sets priority option", () => {
+    const res = mockRes();
+    setCookie(res, "test", "val", { priority: "high" });
+    expect(res._cookies[0]).toContain("Priority=High");
   });
 
   describe("__Secure- prefix", () => {
@@ -119,6 +171,27 @@ describe("deleteCookie", () => {
     const res = mockRes();
     deleteCookie(res, "session", {});
     expect(res._cookies[0]).toContain("session=");
+  });
+
+  test("sets expires to the Unix epoch", () => {
+    const res = mockRes();
+    deleteCookie(res, "session");
+    expect(res._cookies[0]).toContain("Expires=Thu, 01 Jan 1970 00:00:00 GMT");
+  });
+
+  test("enforces __Host- prefix security on delete", () => {
+    const res = mockRes();
+    deleteCookie(res, "__Host-session", { domain: "example.com", path: "/admin" });
+    expect(res._cookies[0]).toContain("Secure");
+    expect(res._cookies[0]).toContain("Path=/");
+    expect(res._cookies[0]).not.toContain("Path=/admin");
+    expect(res._cookies[0]).not.toContain("Domain");
+  });
+
+  test("enforces __Secure- prefix security on delete", () => {
+    const res = mockRes();
+    deleteCookie(res, "__Secure-session");
+    expect(res._cookies[0]).toContain("Secure");
   });
 });
 

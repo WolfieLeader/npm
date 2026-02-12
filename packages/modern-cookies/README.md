@@ -141,6 +141,10 @@ When `sameSite` is set to `"none"`, `secure: true` is automatically added. This 
 setCookie(res, "cross-origin", value, { sameSite: "none" });
 ```
 
+### Safe Error Logging
+
+When `logError` is enabled, error messages include only the cookie **name** and the error reason — never the cookie **value**. All logged strings are sanitized (newlines and control characters are stripped, length is capped) to prevent log injection.
+
 ## NestJS 🧩
 
 ```typescript

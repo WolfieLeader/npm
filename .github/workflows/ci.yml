@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20, 25]
+        node-version: [18, 20, 22, 24, 25]
 
     steps:
       - name: Checkout repository
@@ -28,28 +28,23 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
 
+      - name: Setup just
+        uses: extractions/setup-just@v2
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint & format check
-        run: pnpm check
-
       - name: Build all packages
-        run: pnpm build
+        run: just build
 
-      - name: Type check
-        run: pnpm typecheck
+      - name: Verify (fmt + lint + typecheck)
+        run: just verify
 
       - name: Run tests
-        run: |
-          pnpm --filter @internal/helpers test
-          pnpm --filter cipher-kit test
-          pnpm --filter compress-kit test
-          pnpm --filter get-client-ip test
-          pnpm --filter modern-cookies test
+        run: just test
 
       - name: Validate type exports
-        run: pnpm attw
+        run: just attw
 
       - name: Smoke test (pack & import)
-        run: pnpm smoke
+        run: just smoke

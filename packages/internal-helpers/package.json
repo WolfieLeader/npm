@@ -23,9 +23,13 @@
   ],
   "sideEffects": false,
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.2.2",

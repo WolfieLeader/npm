@@ -7,18 +7,103 @@ function $isIP(ip: unknown): ip is string {
   return typeof ip === "string" && isIP(ip) !== 0;
 }
 
+function $isTrustedProxyAddress(ip: string): boolean {
+  const ipVersion = isIP(ip);
+
+  if (ipVersion === 4) {
+    const [a, b] = ip.split(".").map((part) => Number.parseInt(part, 10));
+    const secondOctet = b ?? -1;
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 169 && secondOctet === 254) return true;
+    if (a === 192 && secondOctet === 168) return true;
+    if (a === 172 && secondOctet >= 16 && secondOctet <= 31) return true;
+    return false;
+  }
+
+  if (ipVersion === 6) {
+    const lower = ip.toLowerCase();
+    return (
+      lower === "::1" ||
+      (Number.parseInt(lower.slice(0, 4), 16) & 0xffc0) === 0xfe80 ||
+      lower.startsWith("fc") ||
+      lower.startsWith("fd") ||
+      lower.startsWith("::ffff:10.") ||
+      lower.startsWith("::ffff:127.") ||
+      lower.startsWith("::ffff:169.254.") ||
+      lower.startsWith("::ffff:192.168.") ||
+      /^::ffff:172\.(1[6-9]|2\d|3[0-1])\./.test(lower)
+    );
+  }
+
+  return false;
+}
+
+function $normalizeIpCandidate(candidate: string): string | null {
+  const trimmed = candidate.trim();
+  if (!trimmed) return null;
+
+  const unquoted = trimmed.replace(/^"(.*)"$/, "$1");
+
+  const bracketed = unquoted.match(/^\[([^\]]+)\](?::\d+)?$/);
+  if (bracketed?.[1] && isIP(bracketed[1]) !== 0) return bracketed[1];
+
+  if (isIP(unquoted) !== 0) return unquoted;
+
+  const ipv4WithPort = unquoted.match(/^([^:]+):(\d+)$/);
+  if (ipv4WithPort?.[1] && isIP(ipv4WithPort[1]) === 4) return ipv4WithPort[1];
+
+  return null;
+}
+
+// e.g. Forwarded: for=192.0.2.43;proto=http, for="[2001:db8:cafe::17]"
+function $extractForwarded(value: string | string[]): NonEmptyArray<string> | null {
+  const lines = Array.isArray(value) ? value : [value];
+  const ips: string[] = [];
+
+  for (const line of lines) {
+    for (const segment of line.split(",")) {
+      for (const directive of segment.split(";")) {
+        const [rawKey, rawVal] = directive.split("=", 2);
+        if (!rawKey || !rawVal) continue;
+        if (rawKey.trim().toLowerCase() !== "for") continue;
+        const ip = $normalizeIpCandidate(rawVal);
+        if (ip) ips.push(ip);
+      }
+    }
+  }
+
+  return ips.length > 0 ? (ips as NonEmptyArray<string>) : null;
+}
+
+function $extractHeaderIps(headerValue: string | string[]): NonEmptyArray<string> | null {
+  const values = Array.isArray(headerValue) ? headerValue : [headerValue];
+  const ips: string[] = [];
+
+  for (const value of values) {
+    for (const token of value.split(",")) {
+      const ip = $normalizeIpCandidate(token);
+      if (ip) ips.push(ip);
+    }
+  }
+
+  return ips.length > 0 ? (ips as NonEmptyArray<string>) : null;
+}
+
+// CDN-injected headers first (high trust — overwritten by the CDN on every request),
+// then generic forwarding headers (lower trust — forwarded as-is from the client).
 const LOOKUP_HEADERS = [
+  "cf-connecting-ip",
+  "true-client-ip",
+  "fastly-client-ip",
+  "x-appengine-user-ip",
+  "cf-pseudo-ipv4",
   "x-client-ip",
   "x-forwarded-for",
   "forwarded-for",
   "x-forwarded",
   "x-real-ip",
-  "cf-connecting-ip",
-  "true-client-ip",
   "x-cluster-client-ip",
-  "fastly-client-ip",
-  "x-appengine-user-ip",
-  "cf-pseudo-ipv4",
 ];
 
 function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
@@ -26,28 +111,24 @@ function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
 
   if (!req.headers) return null;
 
-  if (typeof req.headers.forwarded === "string") {
-    const match = req.headers.forwarded.match(/for="?\[?([^\]";,\s]+)/i);
-    if (match?.[1] && $isIP(match[1])) return [match[1]];
+  const remoteAddress = req.socket?.remoteAddress;
+  if ($isIP(remoteAddress) && !$isTrustedProxyAddress(remoteAddress)) {
+    return null;
   }
 
-  for (let i = 0; i < LOOKUP_HEADERS.length; i++) {
-    const ip = req.headers[LOOKUP_HEADERS[i] as string];
-    if (!ip) continue;
-    if (Array.isArray(ip)) {
-      const filteredIps = ip.filter((item) => $isIP(item.trim()));
-      if (filteredIps.length > 0) return filteredIps.map((item) => item.trim()) as NonEmptyArray<string>;
-    }
-
-    if (typeof ip === "string") {
-      if ($isIP(ip.trim())) return [ip.trim()];
-      if (!ip.includes(",")) continue;
-      const filteredIps = ip.split(",").filter((ip) => $isIP(ip.trim()));
-      if (filteredIps.length > 0) {
-        return filteredIps.map((item) => item.trim()) as NonEmptyArray<string>;
-      }
-    }
+  if (typeof req.headers.forwarded === "string" || Array.isArray(req.headers.forwarded)) {
+    const forwardedIps = $extractForwarded(req.headers.forwarded);
+    if (forwardedIps) return forwardedIps;
   }
+
+  for (const header of LOOKUP_HEADERS) {
+    const ip = req.headers[header];
+    if (!ip || !(typeof ip === "string" || Array.isArray(ip))) continue;
+
+    const extractedIps = $extractHeaderIps(ip);
+    if (extractedIps) return extractedIps;
+  }
+
   return null;
 }
 
@@ -60,6 +141,8 @@ function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
  * It attempts to detect the IP by inspecting common proxy-related headers
  * such as `forwarded` (RFC 7239), `x-forwarded-for`, `x-real-ip`, and others. If no valid IP is found
  * in the headers, it falls back to `req.socket.remoteAddress`.
+ * Header fallback is skipped when `req.socket.remoteAddress` is a public address,
+ * reducing spoofing risk for direct internet-facing connections.
  *
  * When used as middleware, it populates:
  * - `req.clientIp`: The first valid IP address found.
@@ -67,9 +150,9 @@ function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
  *
  * **Security note — trust boundary:** This function checks `req.ip` first (which
  * respects Express's `trust proxy` setting). When `req.ip` is falsy, it
- * unconditionally reads all forwarding headers — any upstream client can forge
- * them. In production behind a reverse proxy, configure Express's `trust proxy`
- * so that `req.ip` is populated correctly and header fallback is avoided.
+ * reads forwarding headers only if the socket peer looks like a local/private
+ * proxy. In production behind a reverse proxy, configure Express's `trust proxy`
+ * so `req.ip` is populated correctly and treated as the primary source of truth.
  *
  * @param req - The Express request object.
  * @param res - (Optional) The Express response object. Included to support middleware signature.
@@ -97,18 +180,19 @@ export function getClientIp(req: Request, res?: Response, next?: NextFunction): 
   if (!req) throw new Error("Request is undefined");
 
   const ips = $extractIpFromHeaders(req);
-  if (ips && ips.length > 0) {
+  if (ips) {
     req.clientIp = ips[0];
     req.clientIps = ips;
     next?.();
     return ips[0];
   }
 
-  if ($isIP(req.socket.remoteAddress)) {
-    req.clientIp = req.socket.remoteAddress;
-    req.clientIps = [req.socket.remoteAddress];
+  const remoteAddress = req.socket?.remoteAddress;
+  if ($isIP(remoteAddress)) {
+    req.clientIp = remoteAddress;
+    req.clientIps = [remoteAddress];
     next?.();
-    return req.socket.remoteAddress;
+    return remoteAddress;
   }
 
   next?.();

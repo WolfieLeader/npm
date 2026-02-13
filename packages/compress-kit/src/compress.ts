@@ -11,10 +11,9 @@ import {
   $stringifyObj,
   CIPHER_ENCODING,
   type Result,
-  textDecoder,
 } from "@internal/helpers";
 import pako from "pako";
-import type { CompressOptions, DecompressOptions, EightToFifteen, OneToNine } from "./types.js";
+import type { CompressEncoding, CompressOptions, DecompressOptions, EightToFifteen, OneToNine } from "./types.js";
 
 const STRATEGIES = Object.freeze({
   default: pako.constants.Z_DEFAULT_STRATEGY,
@@ -24,43 +23,76 @@ const STRATEGIES = Object.freeze({
   fixed: pako.constants.Z_FIXED,
 } as const);
 
+function $estimateDecodedByteLength(data: string, encoding: CompressEncoding): number | null {
+  if (encoding === "hex") {
+    if (data.length % 2 !== 0) return null;
+    return data.length / 2;
+  }
+
+  if (encoding === "base64") {
+    if (data.length % 4 !== 0) return null;
+    const padding = data.endsWith("==") ? 2 : data.endsWith("=") ? 1 : 0;
+    return (data.length / 4) * 3 - padding;
+  }
+
+  const stripped = data.replace(/=+$/, "");
+  if (stripped.length % 4 === 1) return null;
+  const pad = (4 - (stripped.length % 4)) % 4;
+  return ((stripped.length + pad) / 4) * 3 - pad;
+}
+
 export function $compress(data: string, options: CompressOptions): Result<string> {
   if (!$isStr(data)) {
-    return $err({ msg: "Compression: Empty string", desc: "Cannot compress null or undefined string" });
+    return $err({
+      message: "compress: Data must be a non-empty string",
+      description: "Provide a non-empty, non-whitespace string to compress",
+    });
   }
 
   if (!$isPlainObj<CompressOptions>(options)) {
-    return $err({ msg: "Compression: Invalid options", desc: "Options is not a plain object" });
+    return $err({
+      message: "compress: Options must be a plain object",
+      description: "Pass a plain object ({...}) as the options argument",
+    });
   }
 
   const outputEncoding = options.outputEncoding ?? "base64url";
   if (!CIPHER_ENCODING.includes(outputEncoding)) {
     return $err({
-      msg: "Compression: Invalid output encoding",
-      desc: `Output encoding must be one of: ${CIPHER_ENCODING.join(", ")}`,
+      message: `compress: Unsupported output encoding: ${outputEncoding}`,
+      description: "Use base64, base64url, or hex",
     });
   }
 
   const level = options.level ?? 6;
   if (!$isIntIn<OneToNine>(level, 1, 9)) {
-    return $err({ msg: "Compression: Invalid level", desc: "Level must be an integer between 1 and 9" });
+    return $err({
+      message: `compress: Invalid level: ${level}`,
+      description: "Level must be an integer between 1 and 9",
+    });
   }
 
   const windowBits = options.windowBits ?? 15;
   if (!$isIntIn<EightToFifteen>(windowBits, 8, 15)) {
-    return $err({ msg: "Compression: Invalid windowBits", desc: "windowBits must be an integer between 8 and 15" });
+    return $err({
+      message: `compress: Invalid windowBits: ${windowBits}`,
+      description: "windowBits must be an integer between 8 and 15",
+    });
   }
 
   const memLevel = options.memLevel ?? 8;
   if (!$isIntIn<OneToNine>(memLevel, 1, 9)) {
-    return $err({ msg: "Compression: Invalid memLevel", desc: "memLevel must be an integer between 1 and 9" });
+    return $err({
+      message: `compress: Invalid memLevel: ${memLevel}`,
+      description: "memLevel must be an integer between 1 and 9",
+    });
   }
 
   const strategyName = options.strategy ?? "default";
-  if (!$isStr(strategyName) || !(strategyName in STRATEGIES)) {
+  if (!$isStr(strategyName) || !Object.hasOwn(STRATEGIES, strategyName)) {
     return $err({
-      msg: "Compression: Invalid strategy",
-      desc: `Strategy must be one of: ${Object.keys(STRATEGIES).join(", ")}`,
+      message: `compress: Invalid strategy: ${strategyName}`,
+      description: `Strategy must be one of: ${Object.keys(STRATEGIES).join(", ")}`,
     });
   }
   const strategy = STRATEGIES[strategyName as keyof typeof STRATEGIES];
@@ -68,106 +100,140 @@ export function $compress(data: string, options: CompressOptions): Result<string
   const bytes = $convertStrToBytes(data, "utf8");
   if (bytes.error) return $err(bytes.error);
 
-  const encoded = $convertBytesToStr(bytes.result, outputEncoding);
-  if (encoded.error) return $err(encoded.error);
-
   try {
-    const compressedBytes = pako.deflate(bytes.result, {
-      level: level,
-      windowBits: windowBits,
-      memLevel: memLevel,
-      strategy: strategy,
-      raw: false,
-    });
+    const compressedBytes = pako.deflate(bytes.result, { level, windowBits, memLevel, strategy, raw: false });
 
-    const compressed = $convertBytesToStr(compressedBytes, outputEncoding);
-    if (compressed.error) return $err(compressed.error);
-
-    if (encoded.result.length <= compressed.result.length) {
+    if (bytes.result.byteLength <= compressedBytes.byteLength) {
+      const encoded = $convertBytesToStr(bytes.result, outputEncoding);
+      if (encoded.error) return $err(encoded.error);
       return $ok(`${encoded.result}.0.`);
     }
 
+    const compressed = $convertBytesToStr(compressedBytes, outputEncoding);
+    if (compressed.error) return $err(compressed.error);
     return $ok(`${compressed.result}.1.`);
   } catch (error) {
-    return $err({ msg: "Compression: Failed to compress data", desc: $fmtError(error) });
+    return $err({ message: "compress: Failed to compress data", description: $fmtError(error) });
   }
 }
 
 export function $decompress(compressed: string, options: DecompressOptions): Result<string> {
   if (!$isStr(compressed, 4) || (!compressed.endsWith(".0.") && !compressed.endsWith(".1."))) {
-    return $err({ msg: "Decompression: Invalid format", desc: "String does not match expected compressed format" });
+    return $err({
+      message: "decompress: Invalid compressed data format",
+      description: "Data must end with '.0.' or '.1.' suffix",
+    });
   }
 
   if (!$isPlainObj<DecompressOptions>(options)) {
-    return $err({ msg: "Decompression: Invalid options", desc: "Options is not a plain object" });
+    return $err({
+      message: "decompress: Options must be a plain object",
+      description: "Pass a plain object ({...}) as the options argument",
+    });
   }
 
   const inputEncoding = options.inputEncoding ?? "base64url";
   if (!CIPHER_ENCODING.includes(inputEncoding)) {
     return $err({
-      msg: "Decompression: Invalid input encoding",
-      desc: `Input encoding must be one of: ${CIPHER_ENCODING.join(", ")}`,
+      message: `decompress: Unsupported input encoding: ${inputEncoding}`,
+      description: "Use base64, base64url, or hex",
     });
   }
 
   const windowBits = options.windowBits ?? 15;
   if (!$isIntIn<EightToFifteen>(windowBits, 8, 15)) {
-    return $err({ msg: "Decompression: Invalid windowBits", desc: "windowBits must be an integer between 8 and 15" });
+    return $err({
+      message: `decompress: Invalid windowBits: ${windowBits}`,
+      description: "windowBits must be an integer between 8 and 15",
+    });
   }
 
-  const bytes = $convertStrToBytes(compressed.slice(0, -3), inputEncoding);
+  if (options.maxOutputSize != null && options.maxOutputSize !== 0) {
+    if (!$isIntIn(options.maxOutputSize, 1, Number.MAX_SAFE_INTEGER)) {
+      return $err({
+        message: "decompress: Invalid maxOutputSize",
+        description: "maxOutputSize must be a positive integer",
+      });
+    }
+  }
+  const maxSize = options.maxOutputSize ?? 0;
+  const payload = compressed.slice(0, -3);
+
+  if (compressed.endsWith(".0.") && maxSize > 0) {
+    const estimated = $estimateDecodedByteLength(payload, inputEncoding);
+    if (estimated != null && estimated > maxSize) {
+      return $err({
+        message: "decompress: Output exceeds size limit",
+        description: `Decompressed output exceeds maxOutputSize (${maxSize} bytes)`,
+      });
+    }
+  }
+
+  const bytes = $convertStrToBytes(payload, inputEncoding);
   if (bytes.error) return $err(bytes.error);
 
   if (compressed.endsWith(".0.")) {
+    if (maxSize > 0 && bytes.result.byteLength > maxSize) {
+      return $err({
+        message: "decompress: Output exceeds size limit",
+        description: `Decompressed output exceeds maxOutputSize (${maxSize} bytes)`,
+      });
+    }
     return $convertBytesToStr(bytes.result, "utf8");
   }
 
-  try {
-    if (options.maxOutputSize) {
-      const maxSize = options.maxOutputSize;
-      const inflater = new pako.Inflate({ windowBits: windowBits, raw: false });
-      const chunks: Uint8Array[] = [];
-      let totalBytes = 0;
-      let exceeded = false;
+  if (maxSize > 0) {
+    const inflater = new pako.Inflate({ windowBits, raw: false });
+    const decoder = new TextDecoder("utf-8", { fatal: true });
+    const parts: string[] = [];
+    let totalBytes = 0;
+    let exceeded = false;
 
-      inflater.onData = (chunk: Uint8Array) => {
-        if (exceeded) return;
-        totalBytes += chunk.length;
-        if (totalBytes > maxSize) {
-          exceeded = true;
-          return;
-        }
-        chunks.push(chunk);
-      };
+    inflater.onData = (chunk: Uint8Array) => {
+      if (exceeded) return;
+      if (chunk.length > maxSize - totalBytes) {
+        exceeded = true;
+        throw new Error("EXCEEDED");
+      }
+      totalBytes += chunk.length;
+      parts.push(decoder.decode(chunk, { stream: true }));
+    };
 
+    try {
       inflater.push(bytes.result, true);
-
+    } catch (error) {
+      try {
+        decoder.decode();
+      } catch {}
       if (exceeded) {
         return $err({
-          msg: "Decompression: Output exceeds size limit",
-          desc: `Decompressed output exceeds maxOutputSize (${options.maxOutputSize} bytes)`,
+          message: "decompress: Output exceeds size limit",
+          description: `Decompressed output exceeds maxOutputSize (${maxSize} bytes)`,
         });
       }
-
-      if (inflater.err) {
-        return $err({ msg: "Decompression: Failed to decompress data", desc: inflater.msg || "Unknown inflate error" });
-      }
-
-      const total = chunks.reduce((sum, c) => sum + c.length, 0);
-      const output = new Uint8Array(total);
-      let offset = 0;
-      for (const chunk of chunks) {
-        output.set(chunk, offset);
-        offset += chunk.length;
-      }
-
-      return $ok(textDecoder.decode(output));
+      return $err({ message: "decompress: Failed to decompress data", description: $fmtError(error) });
     }
 
-    const result = pako.inflate(bytes.result, { to: "string", windowBits: windowBits, raw: false });
-    return $ok(result);
+    if (inflater.err) {
+      return $err({
+        message: "decompress: Failed to decompress data",
+        description: inflater.msg || "Unknown inflate error",
+      });
+    }
+
+    try {
+      parts.push(decoder.decode());
+    } catch (error) {
+      return $err({ message: "decompress: Failed to decode output", description: $fmtError(error) });
+    }
+    return $ok(parts.join(""));
+  }
+
+  try {
+    const inflated = pako.inflate(bytes.result, { windowBits, raw: false });
+    return $convertBytesToStr(inflated, "utf8");
   } catch (error) {
-    return $err({ msg: "Decompression: Failed to decompress data", desc: $fmtError(error) });
+    return $err({ message: "decompress: Failed to decompress data", description: $fmtError(error) });
   }
 }
 

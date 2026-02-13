@@ -1,11 +1,11 @@
 <div align="center">
 <img src="https://github.com/WolfieLeader/npm/blob/main/assets/compress-kit-banner.svg" align="center" alt="banner" />
 
-<h1 align="center" style="font-weight:900;">compress-kit</h1>
+<h1 align="center">compress-kit</h1>
 
 <p align="center">
-  Reliable, Cross-Platform Compression & Decompression for Web, Node.js, <br/>
-  Deno, Bun and Cloudflare Workers
+  Cross-platform string compression using DEFLATE.<br/>
+  30-90% size reduction on typical text and JSON.
 </p>
 
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/WolfieLeader/npm?color=DC343B" alt="License"></a>
@@ -15,140 +15,203 @@
 
 </div>
 
-## Why `compress-kit`? 🤔
+## Highlights ✨
 
-- 📉 **Strong Compression** – Achieves size reductions of ~30% to 90% on typical text and JSON data using the Deflate algorithm via [`pako`](https://www.npmjs.com/package/pako).
-- 🔁 **Lossless Algorithms** – Ensures perfect reconstruction of the original data.
-- 🧪 **Strict Validation** - Robust input checks and type validation for predictable results.
-- 🌐 **Cross-Platform** – Works seamlessly in Web, Node.js, Deno, Bun and Cloudflare Workers.
-- 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
+- **Lossless DEFLATE compression** via [`pako`](https://www.npmjs.com/package/pako)
+- **Automatic passthrough** when compression isn't beneficial (data gets larger)
+- **Decompression bomb protection** via `maxOutputSize` with streaming abort
+- **Type-safe API** with throwing and `Result<T>` variants
+- **Cross-platform** — Node.js, Deno, Bun, Cloudflare Workers, and all modern browsers
 
-## Installation 🔥
+## Installation 📦
+
+Requires Node.js >= 18.
 
 ```bash
-npm install compress-kit@latest
+npm install compress-kit
 # or
-yarn add compress-kit@latest
-# or
-pnpm install compress-kit@latest
-# or
-bun add compress-kit@latest
+pnpm add compress-kit
 ```
 
 ## Quick Start 🚀
 
 ```typescript
-import { compress, compressObj, decompress, decompressObj } from "compress-kit";
+import { compress, decompress, compressObj, decompressObj } from "compress-kit";
 
-const compressed = compress(longString);
+// String compression
+const input = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(10);
+const compressed = compress(input);
 const original = decompress(compressed);
-console.log(original);
+console.log(`${input.length} chars → ${compressed.length} chars`); // significant reduction
 
-const compressedObj = compressObj(longObject);
-const originalObj = decompressObj<typeof longObject>(compressedObj);
-console.log(originalObj);
-```
+// ⚠️ When decompressing untrusted input, always set maxOutputSize to prevent decompression bombs
+const safe = decompress(compressed, { maxOutputSize: 1_048_576 }); // 1 MB limit
 
-## API Reference 📚
-
-### The `try` Prefix (Non-Throwing `Result` API) 🤔
-
-The `try` prefix functions return a `Result<T>` object that indicates success or failure without throwing exceptions.
-
-This is useful in scenarios where you want to handle errors gracefully without using `try/catch` blocks.
-
-```typescript
-// Throwing version - simpler but requires try/catch
-const msg = compress("long message");
-console.log(`Compressed message: ${msg}`);
-// Non-throwing version - returns a Result<T> object
-const msg = tryCompress("long message");
-
-// Either check for success status
-if (msg.success) console.log(`Compressed message: ${msg.result}`);
-else console.error(`${msg.error.message} - ${msg.error.description}`);
-
-// Or Check that there is no error
-if (!msg.error) console.log(`Compressed message: ${msg.result}`);
-else console.error(`${msg.error.message} - ${msg.error.description}`);
-```
-
-### Compression & Decompression 🤫
-
-Compression is the process of reducing a data's size by removing redundancies, making it faster to transmit and requiring less storage space. Decompression is the reverse process, restoring the original data from its compressed form.
-
-```typescript
-import { compress, compressObj, decompress, decompressObj } from "compress-kit";
-
-const longString = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
-
-const compressed = compress(longString);
-const original = decompress(compressed);
-console.log(original);
-
-const longObj = {
-  name: "John Doe",
-  age: 30,
-  city: "New York",
-  occupation: "Developer",
-  hobbies: ["coding", "gaming", "reading"],
-  isActive: true,
-  scores: { math: 95, english: 88, science: 92 },
-  friends: ["Alice", "Bob", "Charlie"],
+// Object compression
+const data = {
+  users: [
+    { name: "Alice", role: "admin" },
+    { name: "Bob", role: "user" },
+  ],
 };
-
-const compressedObj = compressObj(longObj);
-const originalObj = decompressObj<typeof longObj>(compressedObj);
-console.log(originalObj);
+const compressedObj = compressObj(data);
+const originalObj = decompressObj<typeof data>(compressedObj);
+console.log(originalObj.users[0].name); // "Alice"
 ```
 
-The `compress` and `decompress` functions handle strings, while `compressObj` and `decompressObj` work with JavaScript objects, serializing them to JSON for compression. They both accept an optional `option` parameter to customize the compression process.
+## API Reference 📖
+
+### `compress` / `tryCompress`
+
+Compresses a UTF-8 string. Empty and whitespace-only strings are rejected.
 
 ```typescript
-export interface CompressOptions {
-  // Encoding format for the output compressed data (default: `'base64url'`).
-  outputEncoding?: "base64" | "base64url" | "hex";
+import { compress, tryCompress } from "compress-kit";
 
-  // Compression level (1-9; default: 6).
-  level?: number;
+const compressed = compress("Hello, World!".repeat(100));
+console.log(compressed); // base64url-encoded tagged string ending in ".1."
 
-  // Size of the compression window: 2^windowBits (8-15; default: 15).
-  windowBits?: number;
+// Max compression with hex encoding
+const hex = compress("data".repeat(50), { outputEncoding: "hex", level: 9 });
 
-  // Memory usage for compression match finder (1-9; default: 8).
-  memLevel?: number;
-
-  // Compression strategy, 95% of cases should use 'default' (default: 'default').
-  strategy?: "default" | "filtered" | "huffmanOnly" | "rle" | "fixed";
-}
-
-export interface DecompressOptions {
-  // Encoding format for the input compressed data (default: `'base64url'`).
-  inputEncoding?: "base64" | "base64url" | "hex";
-
-  // Size of the compression window: 2^windowBits (8-15; default: 15).
-  windowBits?: number;
-
-  // Maximum allowed decompressed output size in bytes. Aborts early if exceeded (decompression bomb protection).
-  maxOutputSize?: number;
+// Safe variant — returns Result<T> instead of throwing
+const result = tryCompress("Hello, World!");
+if (result.success) {
+  console.log(result.result); // compressed string
 }
 ```
 
-## Credit 💪🏽
+**Options:**
 
-Huge credit to [`pako`](https://www.npmjs.com/package/pako) for the underlying compression and decompression algorithms used in this package.
+| Option           | Type                                                                   | Default       | Description             |
+| ---------------- | ---------------------------------------------------------------------- | ------------- | ----------------------- |
+| `outputEncoding` | `"base64url"` \| `"base64"` \| `"hex"`                                 | `"base64url"` | Output encoding         |
+| `level`          | `1` \| `2` \| ... \| `9`                                               | `6`           | Compression level       |
+| `windowBits`     | `8` \| `9` \| ... \| `15`                                              | `15`          | Window size (2^n)       |
+| `memLevel`       | `1` \| `2` \| ... \| `9`                                               | `8`           | Memory for match finder |
+| `strategy`       | `"default"` \| `"filtered"` \| `"huffmanOnly"` \| `"rle"` \| `"fixed"` | `"default"`   | Compression strategy    |
+
+**Strategies:**
+
+| Strategy        | Use case                                             |
+| --------------- | ---------------------------------------------------- |
+| `"default"`     | Balanced compression — the go-to for most data       |
+| `"filtered"`    | Data with small variations (e.g., numeric sequences) |
+| `"huffmanOnly"` | Data with little redundancy (skips string matching)  |
+| `"rle"`         | Repetitive byte patterns                             |
+| `"fixed"`       | Fixed Huffman coding (faster, less optimal)          |
+
+### `decompress` / `tryDecompress`
+
+Decompresses a tagged string produced by `compress`.
+
+```typescript
+import { compress, decompress } from "compress-kit";
+
+const compressed = compress("Hello, World!".repeat(100));
+const original = decompress(compressed); // "Hello, World!Hello, World!..."
+
+// With max output size protection (1 MB limit)
+const safe = decompress(compressed, { maxOutputSize: 1_048_576 });
+```
+
+**Options:** `inputEncoding` (default `"base64url"`), `windowBits` (`8`-`15`, default `15`), `maxOutputSize` (`0` or `undefined` = no limit).
+
+### `compressObj` / `decompressObj` / `tryCompressObj` / `tryDecompressObj`
+
+Compress and decompress plain objects (POJOs). Class instances, Maps, Sets, etc. are rejected.
+
+```typescript
+import { compressObj, decompressObj } from "compress-kit";
+
+const compressed = compressObj({ users: ["Alice", "Bob"] });
+const original = decompressObj<{ users: string[] }>(compressed);
+console.log(original.users); // ["Alice", "Bob"]
+```
+
+Each function has a `try*` variant (`tryCompressObj`, `tryDecompressObj`).
+
+## Output Format 📤
+
+Compressed output is a **tagged string** with a suffix indicating how the data was stored:
+
+| Suffix | Meaning                                                                      |
+| ------ | ---------------------------------------------------------------------------- |
+| `.0.`  | **Stored** — compression wasn't beneficial, original bytes are encoded as-is |
+| `.1.`  | **Deflated** — DEFLATE compression was applied                               |
+
+Decompression automatically detects the suffix and handles both cases. You never need to check the suffix manually.
+
+## Decompression Safety 🛡️
+
+Set `maxOutputSize` to protect against decompression bombs. When set, decompression uses streaming mode and aborts early if the cumulative output exceeds the byte limit.
+
+```typescript
+import { decompress } from "compress-kit";
+
+// Limit decompressed output to 1 MB
+const safe = decompress(compressed, { maxOutputSize: 1_048_576 });
+```
+
+- `maxOutputSize: 0` or `undefined` — no limit (default)
+- `maxOutputSize: N` (positive integer) — abort if output exceeds N bytes
+
+## The Result Pattern 🎯
+
+Every throwing function has a `try*` variant that returns `Result<T>` instead of throwing.
+
+```typescript
+type Result<T> =
+  | ({ success: true; error?: undefined } & T) // success — value fields spread in
+  | { success: false; error: ErrorStruct }; // failure — error details
+
+interface ErrorStruct {
+  readonly message: string;
+  readonly description: string;
+}
+```
+
+```typescript
+import { tryCompress } from "compress-kit";
+
+const result = tryCompress("Hello, World!");
+
+if (result.success) {
+  console.log(result.result); // compressed string
+} else {
+  console.error(result.error.message, result.error.description);
+}
+```
+
+## Type Exports 🏷️
+
+```typescript
+import type {
+  CompressOptions,
+  DecompressOptions,
+  OneToNine,
+  EightToFifteen,
+  CompressEncoding,
+  Result,
+  ErrorStruct,
+} from "compress-kit";
+```
+
+## Credits 🙏
+
+Built on [`pako`](https://www.npmjs.com/package/pako) for the underlying DEFLATE compression and decompression.
 
 ## Contributions 🤝
 
-Want to contribute or suggest a feature or improvement?
-
-- Open an issue or feature request
-- Submit a PR to improve the packages or add new ones
-- Star ⭐ the repo if you like what you see
+- Open an [issue](https://github.com/WolfieLeader/npm/issues) or feature request
+- Submit a PR to improve the package
+- Star the repo if you find it useful
 
 <div align="center">
 <br/>
-<div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
-<p style="font-size: 12px; font-style: italic;">This project is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="nofollow">MIT License</a>.</p>
-<div style="font-size: 12px; font-style: italic; font-weight: 600;">Thank you!</div>
+
+Crafted carefully by [WolfieLeader](https://github.com/WolfieLeader)
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
 </div>

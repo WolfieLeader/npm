@@ -1,112 +1,141 @@
 <div align="center">
-<img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner.svg" align="center" alt="banner" /><br/><br/>
+<img src="https://github.com/WolfieLeader/npm/blob/main/assets/repo-banner.svg" align="center" alt="banner" />
 
-<p align="center">
-  A monorepo for developer-focused <br/>
-  NPM packages built for performance,<br/>
-  security, and simplicity.
-</p><br/>
+<br/><br/>
+
+<p>Developer-focused npm packages for security, compression, and server utilities.<br/>
+TypeScript-first. Minimal dependencies. Production-ready.</p>
 
 <p align="center"><a href="https://github.com/WolfieLeader/npm/blob/main/packages/cipher-kit/README.md"><img alt="cipher-kit" src="https://img.shields.io/badge/cipher--kit-791AFF?style=for-the-badge&logoColor=white"></a> <a href="https://github.com/WolfieLeader/npm/blob/main/packages/compress-kit/README.md"><img alt="compress-kit" src="https://img.shields.io/badge/compress--kit-14B814?style=for-the-badge&logoColor=white"></a> <a href="https://github.com/WolfieLeader/npm/blob/main/packages/get-client-ip/README.md"><img alt="get-client-ip" src="https://img.shields.io/badge/get--client--ip-FF453A?style=for-the-badge&logoColor=white"></a> <a href="https://github.com/WolfieLeader/npm/blob/main/packages/generate-certs/README.md"><img alt="generate-certs" src="https://img.shields.io/badge/generate--certs-FF9F1A?style=for-the-badge&logoColor=white"></a> <a href="https://github.com/WolfieLeader/npm/blob/main/packages/modern-cookies/README.md"><img alt="modern-cookies" src="https://img.shields.io/badge/modern--cookies-CF6317?style=for-the-badge&logoColor=white"></a></p>
+
 </div>
 
 ## Packages 📦
 
-### `cipher-kit` 🔐
+### cipher-kit 🔐
 
 <a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/v/cipher-kit?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/cipher-kit" rel="nofollow"><img src="https://img.shields.io/npm/dt/cipher-kit.svg?color=03C03C" alt="npm downloads"></a>
 
-Secure, Modern, and Cross-Platform Cryptography Helpers for Web, Node.js, Deno, Bun, and Cloudflare Workers.
+Cross-platform cryptography for Node.js, browsers, Deno, Bun, and Cloudflare Workers.
 
-- 🛡️ **Secure and Flexible** - Uses best practices and modern cryptographic techniques, while providing a flexible and simple API.
-- 📦 **All-in-One Toolkit** – Combines encryption, hashing, encoding, serialization, and more into a single package.
-- 🌐 **Cross-Platform** – Works seamlessly across Web, Node.js, Deno, Bun, and Cloudflare Workers.
-- 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
-- 🌳 **Tree-Shakable** - Import from the root or from platform-specific entry points to keep bundles lean.
-- 🚫 **Zero Dependencies** – Fully self-contained, no external libraries required.
+- **Zero dependencies** — fully self-contained
+- **AES-256-GCM encryption** with HKDF key derivation
+- **PBKDF2 password hashing** with 320K iterations and constant-time verification
+- **Type-safe** with throwing and `Result<T>` variants for every function
+- **Tree-shakable** — import from `cipher-kit/node` or `cipher-kit/web-api`
 
-📖 [View README →](./packages/cipher-kit/README.md)
+```bash
+npm install cipher-kit
+```
 
-### `compress-kit` 🔬
+[View docs](./packages/cipher-kit/README.md)
+
+---
+
+### compress-kit 🔬
 
 <a href="https://www.npmjs.com/package/compress-kit" rel="nofollow"><img src="https://img.shields.io/npm/v/compress-kit?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/compress-kit" rel="nofollow"><img src="https://img.shields.io/npm/dt/compress-kit.svg?color=03C03C" alt="npm downloads"></a>
 
-Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, Bun and Cloudflare Workers
+Cross-platform string compression using DEFLATE. 30-90% size reduction on typical text and JSON.
 
-- 📉 **Strong Compression** – Achieves size reductions of ~30% to 90% on typical text and JSON data using the Deflate algorithm via [`pako`](https://www.npmjs.com/package/pako).
-- 🔁 **Lossless Algorithms** – Ensures perfect reconstruction of the original data.
-- 🧪 **Strict Validation** - Robust input checks and type validation for predictable results.
-- 🌐 **Cross-Platform** – Works seamlessly in Web, Node.js, Deno, Bun and Cloudflare Workers.
-- 💡 **Typed and Ergonomic** - Type-safe API with both throwing and non-throwing (`Result`) flavors.
+- **Lossless DEFLATE** via [`pako`](https://www.npmjs.com/package/pako)
+- **Automatic passthrough** — skips compression when it isn't beneficial
+- **Decompression bomb protection** via `maxOutputSize` with streaming abort
+- **Type-safe** with throwing and `Result<T>` variants
 
-📖 [View README →](./packages/compress-kit/README.md)
+```bash
+npm install compress-kit
+```
 
-### `get-client-ip` 📍
+[View docs](./packages/compress-kit/README.md)
 
-<a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/v/get-client-ip?color=0078D4" alt="npm version"></a> <a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dt/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
+---
 
-A Lightweight Utility for Extracting the Real Client IP Address from Incoming HTTP Requests
+### get-client-ip 📍
 
-- 🌐 **Header-Aware Detection** – Parses standard and cloud-specific proxy headers.
-- 🧠 **Smart Parsing** – Handles multiple IPs, comma-separated values, and arrays.
-- 🧩 **Middleware-Compatible** – Use as drop-in Express/NestJS middleware.
-- 💪🏽 **Works in Standalone Mode** – Can be used as a simple function.
+<a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/v/get-client-ip?color=0078D4" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/get-client-ip" rel="nofollow"><img src="https://img.shields.io/npm/dt/get-client-ip.svg?color=03C03C" alt="npm downloads"></a>
 
-📖 [View README →](./packages/get-client-ip/README.md)
+Extract the real client IP from HTTP requests behind any proxy or CDN.
 
-### `generate-certs` 🗝️
+- **12+ proxy headers** checked in priority order (Cloudflare, Fastly, Akamai, AWS)
+- **Standalone function** or Express/NestJS middleware
+- **Auto-populates** `req.clientIp` and `req.clientIps` with TypeScript support
+- **Zero config** — validates IPs using Node.js `net.isIP()`
+
+```bash
+npm install get-client-ip
+```
+
+[View docs](./packages/get-client-ip/README.md)
+
+---
+
+### generate-certs 🗝️
 
 <a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/v/generate-certs?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/generate-certs" rel="nofollow"><img src="https://img.shields.io/npm/dt/generate-certs.svg?color=03C03C" alt="npm downloads"></a>
 
-Effortless HTTPS certificate generation for local development environments.
+Self-signed HTTPS certificates for local development. No OpenSSL required.
 
-- 🔐 **Automatic Certificate Generation** – Creates valid self-signed certificates for `localhost`.
-- 🔁 **Reusability** – Automatically detects and reuses existing certs if they exist.
-- 🧪 **Development-Ready** – Ideal for testing HTTPS locally without browser complaints.
-- 💡 **Minimal Setup** – No OpenSSL or third-party installations required.
-- 🧩 **Framework Friendly** – Easily integrates with Express, NestJS, and other Node.js frameworks.
+- **Auto-generates and validates** — checks expiry, permissions, and key/cert pairing
+- **Smart reuse** — reuses existing certs when they're still valid
+- **Framework-ready** — Express, NestJS, Hono, Fastify
+- **Secure file permissions** enforced (Unix: `600` on private key)
 
-📖 [View README →](./packages/generate-certs/README.md)
+```bash
+npm install -D generate-certs
+```
 
-### `modern-cookies` 🍪
+[View docs](./packages/generate-certs/README.md)
+
+---
+
+### modern-cookies 🍪
 
 <a href="https://www.npmjs.com/package/modern-cookies" rel="nofollow"><img src="https://img.shields.io/npm/v/modern-cookies?color=0078D4" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/modern-cookies" rel="nofollow"><img src="https://img.shields.io/npm/dt/modern-cookies.svg?color=03C03C" alt="npm downloads"></a>
 
-A Lightweight and Modern Cookie Utility for Express and Nest.js
+Type-safe cookie management for Express and NestJS with automatic security enforcement.
 
-- 💡 **Simple API** — Intuitive functions `setCookie`, `getCookie`, and `deleteCookie` for effortless cookie management.
-- 🔨 **Built on Reliability** — Uses the proven [cookie](https://www.npmjs.com/package/cookie) library for RFC-compliant parsing and serialization.
-- ❌ **Graceful Error Handling** — Returns `false` on failures and provides a `logError` flag for optional console logging.
-- 🛡️ **Security-Aware Defaults** — Automatically enforces rules for special prefixes: `__Secure-` and `__Host-`.
+- **`setCookie`, `getCookie`, `deleteCookie`** — complete cookie API
+- **Auto-enforces** `__Secure-` and `__Host-` prefix rules
+- **`sameSite: "none"` forces `secure: true`** — prevents silent browser rejection
+- **Graceful error handling** — returns `boolean`, never throws
 
-📖 [View README →](./packages/modern-cookies/README.md)
+```bash
+npm install modern-cookies
+```
 
-## Tooling 🧰
+[View docs](./packages/modern-cookies/README.md)
 
-This monorepo uses modern tooling to ensure a smooth development experience:
+---
 
-- **TypeScript** - Strongly typed JavaScript for better maintainability.
-- **PNPM** - Fast, disk-efficient package manager.
-- **Turborepo** - High-performance build system for monorepos.
-- **Tsup** - Zero-config bundler for TypeScript projects.
-- **Biome** - Linter, formatter, and type checker for JavaScript/TypeScript.
-- **Vitest** - Fast and lightweight test runner.
+## Tooling ⚒️
 
-## Contributions 🤝
+| Tool                                              | Purpose                                                            |
+| ------------------------------------------------- | ------------------------------------------------------------------ |
+| [TypeScript 5.9](https://www.typescriptlang.org/) | Strict types with `verbatimModuleSyntax` and `nodenext` resolution |
+| [pnpm](https://pnpm.io/)                          | Workspace management and dependency resolution                     |
+| [Turborepo](https://turbo.build/)                 | Cached, dependency-aware builds across packages                    |
+| [Just](https://just.systems/)                     | Handy way to save and run project-specific commands                |
+| [tsup](https://tsup.egoist.dev/)                  | Dual ESM/CJS output for every package                              |
+| [Biome](https://biomejs.dev/)                     | Linting and formatting (replaces ESLint + Prettier)                |
+| [Vitest](https://vitest.dev/)                     | Testing with TypeScript type checking                              |
 
-Want to contribute or suggest a feature or improvement?
+## Contributing 🤝
 
-- Open an issue or feature request
+- Open an [issue](https://github.com/WolfieLeader/npm/issues) or feature request
 - Submit a PR to improve the packages or add new ones
-- Star ⭐ the repo if you like what you see
+- Star the repo if you find it useful
 
 <div align="center">
 <br/>
-<div style="font-size: 14px; font-weight:bold;"> ⚒️ Crafted carefully by <a href="https://github.com/WolfieLeader" target="_blank" rel="nofollow">WolfieLeader</a></div>
-<p style="font-size: 12px; font-style: italic;">This project is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="nofollow">MIT License</a>.</p>
-<div style="font-size: 12px; font-style: italic; font-weight: 600;">Thank you!</div>
+
+Crafted carefully by [WolfieLeader](https://github.com/WolfieLeader)
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
 </div>

@@ -81,9 +81,13 @@ export async function $createSecretKey(
   const { algorithm, digest, salt, info, encryptAlgo, digestAlgo } = validated;
 
   try {
-    const ikm = await globalThis.crypto.subtle.importKey("raw", textEncoder.encode(secret.normalize("NFKC")), "HKDF", false, [
-      "deriveKey",
-    ]);
+    const ikm = await globalThis.crypto.subtle.importKey(
+      "raw",
+      textEncoder.encode(secret.normalize("NFKC")),
+      "HKDF",
+      false,
+      ["deriveKey"],
+    );
     const extractable = options.extractable ?? false;
     const key = await globalThis.crypto.subtle.deriveKey(
       {
@@ -148,7 +152,11 @@ export async function $encrypt(
 
   try {
     const iv = globalThis.crypto.getRandomValues(new Uint8Array(GCM_IV_LENGTH));
-    const cipherWithTag = await globalThis.crypto.subtle.encrypt({ name: injectedKey.injected.web, iv }, injectedKey.key, result);
+    const cipherWithTag = await globalThis.crypto.subtle.encrypt(
+      { name: injectedKey.injected.web, iv },
+      injectedKey.key,
+      result,
+    );
 
     const cipherOnly = cipherWithTag.slice(0, cipherWithTag.byteLength - GCM_TAG_BYTES);
     const tag = cipherWithTag.slice(cipherWithTag.byteLength - GCM_TAG_BYTES);

@@ -28,8 +28,12 @@ describe("Encryption Tests", () => {
 
   test("Web: Same Input Same Secret Key Output", async () => {
     const opts = { extractable: true };
-    const key1 = new Uint8Array(await globalThis.crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key));
-    const key2 = new Uint8Array(await globalThis.crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key));
+    const key1 = new Uint8Array(
+      await globalThis.crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key),
+    );
+    const key2 = new Uint8Array(
+      await globalThis.crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key),
+    );
     expect(key1).toEqual(key2);
   });
 
@@ -41,7 +45,9 @@ describe("Encryption Tests", () => {
 
   test("Web: Different Input Different Secret Key Output", async () => {
     const opts = { extractable: true };
-    const key1 = new Uint8Array(await globalThis.crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key));
+    const key1 = new Uint8Array(
+      await globalThis.crypto.subtle.exportKey("raw", (await webKit.createSecretKey(secret, opts)).key),
+    );
     const key2 = new Uint8Array(
       await globalThis.crypto.subtle.exportKey("raw", (await webKit.createSecretKey(`${secret}!`, opts)).key),
     );

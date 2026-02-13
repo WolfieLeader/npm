@@ -65,7 +65,7 @@ export function $isWebSecretKey(x: unknown): WebSecretKey | null {
 
 export function $generateUuid(): Result<string> {
   try {
-    return $ok(crypto.randomUUID());
+    return $ok(globalThis.crypto.randomUUID());
   } catch (error) {
     return $err({ message: "web generateUuid: Failed to generate UUID", description: $fmtError(error) });
   }
@@ -81,11 +81,11 @@ export async function $createSecretKey(
   const { algorithm, digest, salt, info, encryptAlgo, digestAlgo } = validated;
 
   try {
-    const ikm = await crypto.subtle.importKey("raw", textEncoder.encode(secret.normalize("NFKC")), "HKDF", false, [
+    const ikm = await globalThis.crypto.subtle.importKey("raw", textEncoder.encode(secret.normalize("NFKC")), "HKDF", false, [
       "deriveKey",
     ]);
     const extractable = options.extractable ?? false;
-    const key = await crypto.subtle.deriveKey(
+    const key = await globalThis.crypto.subtle.deriveKey(
       {
         name: "HKDF",
         hash: digestAlgo.web,
@@ -147,8 +147,8 @@ export async function $encrypt(
   if (error) return $err(error);
 
   try {
-    const iv = crypto.getRandomValues(new Uint8Array(GCM_IV_LENGTH));
-    const cipherWithTag = await crypto.subtle.encrypt({ name: injectedKey.injected.web, iv }, injectedKey.key, result);
+    const iv = globalThis.crypto.getRandomValues(new Uint8Array(GCM_IV_LENGTH));
+    const cipherWithTag = await globalThis.crypto.subtle.encrypt({ name: injectedKey.injected.web, iv }, injectedKey.key, result);
 
     const cipherOnly = cipherWithTag.slice(0, cipherWithTag.byteLength - GCM_TAG_BYTES);
     const tag = cipherWithTag.slice(cipherWithTag.byteLength - GCM_TAG_BYTES);
@@ -241,7 +241,7 @@ export async function $decrypt(
   let decrypted: Uint8Array | undefined;
   try {
     decrypted = new Uint8Array(
-      await crypto.subtle.decrypt(
+      await globalThis.crypto.subtle.decrypt(
         { name: injectedKey.injected.web, iv: ivBytes.result },
         injectedKey.key,
         cipherWithTag,
@@ -312,7 +312,7 @@ export async function $hash(data: string, options: HashOptions = {}): Promise<Re
   if (error) return $err(error);
 
   try {
-    const hashed = await crypto.subtle.digest(digestAlgo.web, result);
+    const hashed = await globalThis.crypto.subtle.digest(digestAlgo.web, result);
     return $convertBytesToStr(hashed, outputEncoding);
   } catch (error) {
     return $err({ message: "web hash: Failed to hash data", description: $fmtError(error) });
@@ -328,17 +328,17 @@ export async function $hashPassword(
 
   const { digestAlgo, outputEncoding, saltLength, iterations, keyLength } = validated;
 
-  const salt = crypto.getRandomValues(new Uint8Array(saltLength));
+  const salt = globalThis.crypto.getRandomValues(new Uint8Array(saltLength));
   let bits: ArrayBuffer | undefined;
   try {
-    const baseKey = await crypto.subtle.importKey(
+    const baseKey = await globalThis.crypto.subtle.importKey(
       "raw",
       textEncoder.encode(password.normalize("NFKC")),
       "PBKDF2",
       false,
       ["deriveBits"],
     );
-    bits = await crypto.subtle.deriveBits(
+    bits = await globalThis.crypto.subtle.deriveBits(
       { name: "PBKDF2", salt, iterations, hash: digestAlgo.web },
       baseKey,
       keyLength * 8,
@@ -379,7 +379,7 @@ export async function $verifyPassword(
   if (hashedPasswordBytes.result.byteLength !== keyLength) return $ok(false);
 
   try {
-    const baseKey = await crypto.subtle.importKey(
+    const baseKey = await globalThis.crypto.subtle.importKey(
       "raw",
       textEncoder.encode(password.normalize("NFKC")),
       "PBKDF2",
@@ -388,7 +388,7 @@ export async function $verifyPassword(
     );
 
     const bits = new Uint8Array(
-      await crypto.subtle.deriveBits(
+      await globalThis.crypto.subtle.deriveBits(
         { name: "PBKDF2", salt: saltBytes.result, iterations, hash: digestAlgo.web },
         baseKey,
         keyLength * 8,

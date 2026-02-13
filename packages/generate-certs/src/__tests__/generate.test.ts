@@ -122,13 +122,67 @@ describe("generateCerts", () => {
     expect(() => generateCerts({ certsPath: "./relative-certs", ...OPTS })).toThrow("must be an absolute path");
   });
 
-  it("throws on corrupt cert file", () => {
+  it("regenerates when cert files are corrupted", () => {
     const certsPath = makeTmpDir();
 
     fs.writeFileSync(path.join(certsPath, "key.pem"), "not-a-pem", { mode: 0o600 });
     fs.writeFileSync(path.join(certsPath, "cert.pem"), "not-a-pem");
 
-    expect(() => generateCerts({ certsPath, ...OPTS })).toThrow("Error checking for existing certificates");
+    const result = generateCerts({ certsPath, ...OPTS });
+    expect(result.key).toContain("-----BEGIN RSA PRIVATE KEY-----");
+    expect(result.cert).toContain("-----BEGIN CERTIFICATE-----");
+  });
+
+  it("regenerates when only cert is corrupted but key is valid", () => {
+    const certsPath = makeTmpDir();
+
+    // Generate valid certs first, then corrupt only the cert
+    const first = generateCerts({ certsPath, ...OPTS });
+    fs.writeFileSync(path.join(certsPath, "cert.pem"), "corrupted-cert-data");
+
+    const second = generateCerts({ certsPath, ...OPTS });
+    expect(second.key).toContain("-----BEGIN RSA PRIVATE KEY-----");
+    expect(second.cert).toContain("-----BEGIN CERTIFICATE-----");
+    expect(second.cert).not.toBe(first.cert);
+  });
+
+  it("evicts stale lock from dead process and succeeds", () => {
+    const certsPath = makeTmpDir();
+    const lockPath = path.join(certsPath, ".generate-certs.lock");
+
+    // Create a stale lock with a non-existent PID
+    fs.writeFileSync(lockPath, "999999999", { flag: "wx" });
+
+    const result = generateCerts({ certsPath, ...OPTS });
+    expect(result.key).toContain("-----BEGIN RSA PRIVATE KEY-----");
+    expect(result.cert).toContain("-----BEGIN CERTIFICATE-----");
+    expect(fs.existsSync(lockPath)).toBe(false);
+  });
+
+  it("cleans up lock file after successful generation", () => {
+    const certsPath = makeTmpDir();
+    const lockPath = path.join(certsPath, ".generate-certs.lock");
+
+    generateCerts({ certsPath, ...OPTS });
+
+    expect(fs.existsSync(lockPath)).toBe(false);
+  });
+
+  it("cleans up lock file even on generation error", () => {
+    const certsPath = makeTmpDir();
+
+    // Make a read-only subdirectory to trigger a generation error
+    const readOnlyDir = path.join(certsPath, "sub", "readonly");
+    fs.mkdirSync(readOnlyDir, { recursive: true });
+    fs.chmodSync(readOnlyDir, 0o444);
+
+    try {
+      generateCerts({ certsPath: readOnlyDir, ...OPTS });
+    } catch {}
+
+    expect(fs.existsSync(path.join(readOnlyDir, ".generate-certs.lock"))).toBe(false);
+
+    fs.chmodSync(readOnlyDir, 0o755);
   });
 
   it("key and cert are cryptographically paired", () => {

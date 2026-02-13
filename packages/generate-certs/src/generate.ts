@@ -42,25 +42,15 @@ export function $generateCerts(certificatesPath: string) {
   const keyPath = path.join(certificatesPath, "key.pem");
   const certPath = path.join(certificatesPath, "cert.pem");
 
-  try {
-    $writeAtomic(keyPath, privateKey, 0o600);
-    $writeAtomic(certPath, certPem);
-  } catch (err) {
-    try {
-      fs.unlinkSync(keyPath);
-    } catch {}
-    try {
-      fs.unlinkSync(certPath);
-    } catch {}
-    throw err;
-  }
+  $writeAtomic(keyPath, privateKey, 0o600);
+  $writeAtomic(certPath, certPem);
 }
 
 function $writeAtomic(filePath: string, content: string, mode?: number) {
   const tmpDir = fs.mkdtempSync(path.join(path.dirname(filePath), ".tmp-cert-"));
-  fs.chmodSync(tmpDir, 0o700);
   const tmpPath = path.join(tmpDir, path.basename(filePath));
   try {
+    fs.chmodSync(tmpDir, 0o700);
     fs.writeFileSync(tmpPath, content, mode != null ? { mode, flag: "wx" } : { flag: "wx" });
     fs.renameSync(tmpPath, filePath);
   } catch (err) {

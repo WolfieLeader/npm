@@ -3,6 +3,11 @@ import path from "node:path";
 import forge from "node-forge";
 import { $generateCerts } from "./generate.js";
 
+const LOCK_FILE = ".generate-certs.lock";
+const LOCK_STALE_MS = 60_000;
+const LOCK_MAX_RETRIES = 50;
+const LOCK_RETRY_DELAY_MS = 200;
+
 /** Options for generating self-signed HTTPS certificates. */
 export interface GenerateCertsOptions {
   /**
@@ -17,12 +22,65 @@ export interface GenerateCertsOptions {
   activateLogs?: boolean;
 }
 
+function $syncSleep(ms: number) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function $evictStaleLock(lockPath: string): boolean {
+  try {
+    const stat = fs.statSync(lockPath);
+    if (Date.now() - stat.mtimeMs > LOCK_STALE_MS) {
+      fs.unlinkSync(lockPath);
+      return true;
+    }
+    const lockPid = Number.parseInt(fs.readFileSync(lockPath, "utf8"), 10);
+    if (!Number.isNaN(lockPid)) {
+      try {
+        process.kill(lockPid, 0);
+      } catch {
+        fs.unlinkSync(lockPath);
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
+
+function $withLock<T>(certsPath: string, fn: () => T): T {
+  const lockPath = path.join(certsPath, LOCK_FILE);
+
+  for (let attempt = 0; attempt < LOCK_MAX_RETRIES; attempt++) {
+    try {
+      fs.writeFileSync(lockPath, `${process.pid}`, { flag: "wx" });
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "EEXIST") {
+        if ($evictStaleLock(lockPath)) continue;
+        if (attempt < LOCK_MAX_RETRIES - 1) {
+          $syncSleep(LOCK_RETRY_DELAY_MS);
+          continue;
+        }
+        throw new Error("Error generating certificates: could not acquire lock");
+      }
+      throw err;
+    }
+
+    try {
+      return fn();
+    } finally {
+      try {
+        fs.unlinkSync(lockPath);
+      } catch {}
+    }
+  }
+
+  throw new Error("Error generating certificates: could not acquire lock after retries");
+}
+
 /**
  * Generates or retrieves self-signed HTTPS certificates from the specified directory.
  *
  * If valid `key.pem` and `cert.pem` files already exist in the target path,
  * they will be reused. Otherwise, new certificates will be generated.
- * Examples are provided for various frameworks and shown in the documentation.
  *
  * @param options - Options to control the certificate generation behavior.
  * @returns An object containing the PEM-formatted `key` and `cert` strings.
@@ -31,7 +89,7 @@ export interface GenerateCertsOptions {
  *
  * @example
  * ```ts
- * const certs = generateCerts({ certsPath: path.resolve(__dirname, 'certs') });
+ * const certs = generateCerts({ certsPath: path.resolve(import.meta.dirname, "certs") });
  *
  * // Express example:
  * https.createServer(certs, app);
@@ -48,21 +106,26 @@ export interface GenerateCertsOptions {
  */
 export function generateCerts({ certsPath, activateLogs = true }: GenerateCertsOptions) {
   if (!path.isAbsolute(certsPath)) {
-    throw new Error("❌ Error generating certificates: certsPath must be an absolute path");
+    throw new Error("Error generating certificates: certsPath must be an absolute path");
   }
 
-  const certs = $checkForCerts({ certsPath, activateLogs });
-  if (certs) return certs;
-  try {
-    $generateCerts(certsPath);
-    if (activateLogs) {
-      console.log("🔐 Certificates for HTTPS have been generated successfully!");
-      console.log(`🛑 Please visit the URL, click on 'Advanced' -> 'Proceed to localhost(unsafe)' to continue.`);
+  fs.mkdirSync(certsPath, { recursive: true });
+
+  return $withLock(certsPath, () => {
+    const certs = $checkForCerts({ certsPath, activateLogs });
+    if (certs) return certs;
+
+    try {
+      $generateCerts(certsPath);
+      if (activateLogs) {
+        console.log("🔐 Certificates for HTTPS have been generated successfully!");
+        console.log(`🛑 Please visit the URL, click on 'Advanced' -> 'Proceed to localhost(unsafe)' to continue.`);
+      }
+      return { key: $readFile(certsPath, "key.pem"), cert: $readFile(certsPath, "cert.pem") };
+    } catch (err) {
+      throw new Error(`Error generating certificates: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
-    return { key: $readFile(certsPath, "key.pem"), cert: $readFile(certsPath, "cert.pem") };
-  } catch (err) {
-    throw new Error(`❌ Error generating certificates: ${err instanceof Error ? err.message : "Unknown error"}`);
-  }
+  });
 }
 
 function $checkForCerts({ certsPath, activateLogs: log = true }: GenerateCertsOptions) {
@@ -72,7 +135,7 @@ function $checkForCerts({ certsPath, activateLogs: log = true }: GenerateCertsOp
 
     if (process.platform !== "win32") {
       const keyStats = fs.statSync(path.join(certsPath, "key.pem"));
-      if ((keyStats.mode & 0o777) !== 0o600) {
+      if ((keyStats.mode & 0o077) !== 0) {
         if (log) console.log("⚠️ Private key has insecure permissions. Regenerating...");
         return;
       }
@@ -125,13 +188,28 @@ function $checkForCerts({ certsPath, activateLogs: log = true }: GenerateCertsOp
       return;
     }
 
+    try {
+      if (!cert.verify(cert)) {
+        if (log) console.log("🔏 Certificate self-signature is invalid. Regenerating...");
+        return;
+      }
+    } catch {
+      if (log) console.log("🔏 Certificate self-signature verification failed. Regenerating...");
+      return;
+    }
+
     if (log) console.log("🔍 Found existing certificates for HTTPS.");
     return { key: keyPem, cert: certPem };
   } catch (err) {
-    if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") return;
-    throw new Error(
-      `❌ Error checking for existing certificates: ${err instanceof Error ? err.message : "Unknown error"}`,
-    );
+    const errno = (err as NodeJS.ErrnoException).code;
+    if (errno === "ENOENT") return;
+    if (errno && typeof errno === "string") {
+      throw new Error(
+        `Error checking for existing certificates: ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
+    }
+    if (log) console.log("⚠️ Corrupt or unreadable certificate files. Regenerating...");
+    return;
   }
 }
 

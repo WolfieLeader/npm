@@ -3,7 +3,8 @@ import type { Request, Response } from "express";
 
 function $sanitizeForLog(input: unknown, maxLength = 160): string {
   const value = typeof input === "string" ? input : input instanceof Error ? input.message : String(input);
-  return value.replace(/[\r\n\t]/g, " ").slice(0, maxLength);
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: intentionally strips all ASCII control characters
+  return value.replace(/[\x00-\x1f\x7f]/g, " ").slice(0, maxLength);
 }
 
 function $safeLogCookieError(action: "getting" | "setting", name: string, error: unknown) {
@@ -12,15 +13,12 @@ function $safeLogCookieError(action: "getting" | "setting", name: string, error:
   } catch {}
 }
 
-function $normalizeSameSite(value: CookieOptions["sameSite"]): CookieOptions["sameSite"] {
+function $normalizeSameSite(value: CookieOptions["sameSite"]): "strict" | "lax" | "none" | undefined {
   if (value === undefined) return undefined;
 
   const normalized = value.toLowerCase();
-  if (normalized !== "strict" && normalized !== "lax" && normalized !== "none") {
-    throw new Error(`Invalid sameSite value: ${value}`);
-  }
-
-  return normalized;
+  if (normalized === "strict" || normalized === "lax" || normalized === "none") return normalized;
+  throw new Error(`Invalid sameSite value: ${value}`);
 }
 
 /** Options for setting a cookie. */
@@ -30,7 +28,7 @@ export interface CookieOptions {
   /** Sends cookie only over HTTPS; required for `__Secure-` and `__Host-` prefixes. */
   secure?: boolean;
   /** Cross-site behavior; `'none'` should be paired with `secure: true`. */
-  sameSite?: "strict" | "lax" | "none";
+  sameSite?: "strict" | "lax" | "none" | "Strict" | "Lax" | "None";
   /** Lifetime in seconds; omit for session cookie. */
   maxAge?: number;
   /** Exact expiration date/time (`Expires` attribute). */
@@ -67,8 +65,10 @@ export function getCookie(req: Request, name: string, logError = false): string 
 /**
  * Sets a cookie on an Express response.
  *
+ * Path defaults to `"/"` when not specified.
+ *
  * Automatically applies stricter defaults for special prefixes:
- * - `__Secure-`: Forces `secure: true`. Path defaults to `'/'` when not specified.
+ * - `__Secure-`: Forces `secure: true`.
  * - `__Host-`: Forces `secure: true`, `path: '/'`, and removes `domain`.
  *
  * @example Setting a secure session cookie
@@ -92,7 +92,7 @@ export function setCookie(
 ): boolean {
   try {
     const sameSite = $normalizeSameSite(options.sameSite);
-    const cookieOptions = { ...options, sameSite, path: options.path || "/" };
+    const cookieOptions = { ...options, sameSite, path: options.path ?? "/" };
     const normalizedName = name.toLowerCase();
 
     if (normalizedName.startsWith("__host-")) {

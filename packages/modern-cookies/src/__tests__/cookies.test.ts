@@ -195,6 +195,29 @@ describe("deleteCookie", () => {
   });
 });
 
+describe("edge cases", () => {
+  test("returns false for empty cookie name", () => {
+    const res = mockRes();
+    const result = setCookie(res, "", "value", {});
+    expect(result).toBe(false);
+    expect(res._cookies).toHaveLength(0);
+  });
+
+  test("enforces __HOST- (fully uppercase) prefix security", () => {
+    const res = mockRes();
+    setCookie(res, "__HOST-session", "abc", { path: "/admin" });
+    expect(res._cookies[0]).toContain("Secure");
+    expect(res._cookies[0]).toContain("Path=/");
+    expect(res._cookies[0]).not.toContain("Path=/admin");
+  });
+
+  test("enforces __SECURE- (fully uppercase) prefix security", () => {
+    const res = mockRes();
+    setCookie(res, "__SECURE-token", "abc", {});
+    expect(res._cookies[0]).toContain("Secure");
+  });
+});
+
 describe("sameSite=none enforcement", () => {
   test("forces secure: true when sameSite is none", () => {
     const res = mockRes();
@@ -212,7 +235,7 @@ describe("sameSite=none enforcement", () => {
 
   test("normalizes sameSite casing and still enforces secure", () => {
     const res = mockRes();
-    setCookie(res, "token", "abc", { sameSite: "None" as "none", secure: false });
+    setCookie(res, "token", "abc", { sameSite: "None", secure: false });
     expect(res._cookies[0]).toContain("Secure");
     expect(res._cookies[0]).toContain("SameSite=None");
   });

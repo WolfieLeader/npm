@@ -65,6 +65,12 @@ app.listen(3000);
 
 Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if not found.
 
+| Parameter  | Type      | Default | Description                                   |
+| ---------- | --------- | ------- | --------------------------------------------- |
+| `req`      | `Request` | —       | The Express request object                    |
+| `name`     | `string`  | —       | The name of the cookie to retrieve            |
+| `logError` | `boolean` | `false` | If `true`, logs parsing errors to the console |
+
 ```typescript
 const session = getCookie(req, "session");
 
@@ -75,6 +81,14 @@ const theme = getCookie(req, "theme", true);
 ### `setCookie(res, name, value, options, logError?): boolean`
 
 Sets a cookie on the response. The `options` parameter is **required**. Returns `true` on success, `false` on failure.
+
+| Parameter  | Type            | Default | Description                                         |
+| ---------- | --------------- | ------- | --------------------------------------------------- |
+| `res`      | `Response`      | —       | The Express response object                         |
+| `name`     | `string`        | —       | The name of the cookie to set                       |
+| `value`    | `string`        | —       | The value of the cookie                             |
+| `options`  | `CookieOptions` | —       | Configuration for the cookie's attributes           |
+| `logError` | `boolean`       | `false` | If `true`, logs serialization errors to the console |
 
 ```typescript
 setCookie(res, "theme", "dark", { maxAge: 60 * 60 * 24 * 365, sameSite: "strict" });
@@ -89,6 +103,13 @@ const ok = setCookie(res, "lang", "en", { maxAge: 60 * 60 * 24 * 365 });
 
 Deletes a cookie by setting `maxAge: 0`. If the cookie was set with a specific `path` or `domain`, pass the same values to ensure the correct cookie is removed.
 
+| Parameter  | Type            | Default | Description                                 |
+| ---------- | --------------- | ------- | ------------------------------------------- |
+| `res`      | `Response`      | —       | The Express response object                 |
+| `name`     | `string`        | —       | The name of the cookie to delete            |
+| `options`  | `CookieOptions` | `{}`    | Additional options (e.g., `path`, `domain`) |
+| `logError` | `boolean`       | `false` | If `true`, logs errors to the console       |
+
 ```typescript
 deleteCookie(res, "session");
 
@@ -102,7 +123,7 @@ deleteCookie(res, "tracking", { path: "/app", domain: "example.com" });
 interface CookieOptions {
   httpOnly?: boolean;
   secure?: boolean;
-  sameSite?: "strict" | "lax" | "none";
+  sameSite?: "strict" | "lax" | "none" | "Strict" | "Lax" | "None";
   maxAge?: number; // Lifetime in seconds; omit for session cookie
   expires?: Date; // Exact expiration date (Expires attribute)
   path?: string; // URL path scope (default: "/")

@@ -39,6 +39,11 @@ function $isTrustedProxyAddress(ip: string): boolean {
   return false;
 }
 
+function $stripZoneId(ip: string): string {
+  const idx = ip.indexOf("%");
+  return idx === -1 ? ip : ip.slice(0, idx);
+}
+
 function $normalizeIpCandidate(candidate: string): string | null {
   const trimmed = candidate.trim();
   if (!trimmed) return null;
@@ -46,9 +51,13 @@ function $normalizeIpCandidate(candidate: string): string | null {
   const unquoted = trimmed.replace(/^"(.*)"$/, "$1");
 
   const bracketed = unquoted.match(/^\[([^\]]+)\](?::\d+)?$/);
-  if (bracketed?.[1] && isIP(bracketed[1]) !== 0) return bracketed[1];
+  if (bracketed?.[1]) {
+    const ip = $stripZoneId(bracketed[1]);
+    if (isIP(ip) !== 0) return ip;
+  }
 
-  if (isIP(unquoted) !== 0) return unquoted;
+  const stripped = $stripZoneId(unquoted);
+  if (isIP(stripped) !== 0) return stripped;
 
   const ipv4WithPort = unquoted.match(/^([^:]+):(\d+)$/);
   if (ipv4WithPort?.[1] && isIP(ipv4WithPort[1]) === 4) return ipv4WithPort[1];
@@ -112,7 +121,7 @@ function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
   if (!req.headers) return null;
 
   const remoteAddress = req.socket?.remoteAddress;
-  if ($isIP(remoteAddress) && !$isTrustedProxyAddress(remoteAddress)) {
+  if (!$isIP(remoteAddress) || !$isTrustedProxyAddress(remoteAddress)) {
     return null;
   }
 
@@ -150,9 +159,12 @@ function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
  *
  * **Security note — trust boundary:** This function checks `req.ip` first (which
  * respects Express's `trust proxy` setting). When `req.ip` is falsy, it
- * reads forwarding headers only if the socket peer looks like a local/private
- * proxy. In production behind a reverse proxy, configure Express's `trust proxy`
- * so `req.ip` is populated correctly and treated as the primary source of truth.
+ * reads forwarding headers **only** if the socket peer (`req.socket.remoteAddress`)
+ * is a recognized private/proxy address. When the socket identity is absent or
+ * public, headers are **not** trusted and the function falls back to
+ * `req.socket.remoteAddress` directly. In production behind a reverse proxy,
+ * configure Express's `trust proxy` so `req.ip` is populated correctly and
+ * treated as the primary source of truth.
  *
  * @param req - The Express request object.
  * @param res - (Optional) The Express response object. Included to support middleware signature.
@@ -203,9 +215,9 @@ export function getClientIp(req: Request, res?: Response, next?: NextFunction): 
 declare global {
   namespace Express {
     export interface Request {
-      /** The first IP address extracted from the request headers */
+      /** The first IP address extracted from the request. */
       clientIp?: string;
-      /** The array of all IP addresses extracted from the request headers */
+      /** All IP addresses extracted from the request. */
       clientIps?: NonEmptyArray<string>;
     }
   }

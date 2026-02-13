@@ -17,7 +17,7 @@
 
 ## Highlights ✨
 
-- **Checks 12+ proxy headers** in priority order
+- **Checks 14 sources** (headers + socket) in priority order
 - **Handles** comma-separated, array, and RFC 7239 `Forwarded` formats
 - **Works standalone** or as Express/NestJS middleware
 - **Auto-populates** `req.clientIp` and `req.clientIps` with full TypeScript support

@@ -37,8 +37,14 @@ jobs:
       - name: Build all packages
         run: just build
 
-      - name: Verify (fmt + lint + typecheck)
-        run: just verify
+      - name: Format + Lint
+        if: matrix.node-version == '25'
+        run: |
+          just fmt && just lint
+          git diff --exit-code || (echo "Tree is dirty after fmt+lint. Run 'just fmt && just lint' locally." && exit 1)
+
+      - name: Typecheck
+        run: just typecheck
 
       - name: Run tests
         run: just test

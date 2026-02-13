@@ -130,11 +130,13 @@ const hashResult = tryHash("smoke-test-data");
 assert.equal(hashResult.success, true);
 assert.ok(typeof hashResult.result === "string" && hashResult.result.length > 0);
 
-// Web API functional: async encrypt/decrypt roundtrip
+// Web API functional: async encrypt/decrypt roundtrip (requires globalThis.crypto, Node 20+)
 (async () => {
-  const webKey = await webApi.createSecretKey("smoke-test-secret");
-  const webEncrypted = await webApi.encrypt("Hello from Web CJS!", webKey);
-  assert.equal(await webApi.decrypt(webEncrypted, webKey), "Hello from Web CJS!");
+  if (globalThis.crypto?.subtle) {
+    const webKey = await webApi.createSecretKey("smoke-test-secret");
+    const webEncrypted = await webApi.encrypt("Hello from Web CJS!", webKey);
+    assert.equal(await webApi.decrypt(webEncrypted, webKey), "Hello from Web CJS!");
+  }
 
   console.log("cipher-kit: all CJS tests OK");
 })();

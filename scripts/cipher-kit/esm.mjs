@@ -130,9 +130,11 @@ const hashResult = tryHash("smoke-test-data");
 assert.equal(hashResult.success, true);
 assert.ok(typeof hashResult.result === "string" && hashResult.result.length > 0);
 
-// Web API functional: async encrypt/decrypt roundtrip
-const webKey = await webApi.createSecretKey("smoke-test-secret");
-const webEncrypted = await webApi.encrypt("Hello from Web ESM!", webKey);
-assert.equal(await webApi.decrypt(webEncrypted, webKey), "Hello from Web ESM!");
+// Web API functional: async encrypt/decrypt roundtrip (requires globalThis.crypto, Node 20+)
+if (globalThis.crypto?.subtle) {
+  const webKey = await webApi.createSecretKey("smoke-test-secret");
+  const webEncrypted = await webApi.encrypt("Hello from Web ESM!", webKey);
+  assert.equal(await webApi.decrypt(webEncrypted, webKey), "Hello from Web ESM!");
+}
 
 console.log("cipher-kit: all ESM tests OK");

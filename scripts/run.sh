@@ -80,7 +80,7 @@ echo "==> Packing tarballs into $TMP_DIR"
 
 TARBALLS=()
 for pkg in "${SELECTED_PKGS[@]}"; do
-  tarball=$(npm pack "$ROOT_DIR/packages/$pkg" --pack-destination "$TMP_DIR" --ignore-scripts --silent)
+  tarball=$(npm pack "$ROOT_DIR/packages/$pkg" --pack-destination "$TMP_DIR" --ignore-scripts --silent | tail -1)
   TARBALLS+=("$TMP_DIR/$tarball")
 done
 

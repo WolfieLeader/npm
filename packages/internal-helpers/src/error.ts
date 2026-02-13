@@ -5,17 +5,27 @@ export interface ErrorStruct {
   readonly description: string;
 }
 
-type ReservedWords<Obj extends object> = "success" extends keyof Obj ? never : "error" extends keyof Obj ? never : Obj;
+type ReservedResultKeys = "success" | "error";
+
+type ShouldWrapObject<T extends object> = Extract<keyof T, ReservedResultKeys> extends never ? false : true;
 
 type OkType<T> = {
   readonly success: true;
   readonly error?: undefined;
-} & (T extends object ? ReservedWords<{ readonly [K in keyof T]: T[K] }> : { readonly result: T });
+} & (T extends object
+  ? ShouldWrapObject<T> extends true
+    ? { readonly result: T }
+    : { readonly [K in keyof T]: T[K] }
+  : { readonly result: T });
 
 type ErrType<T> = {
   readonly success: false;
   readonly error: ErrorStruct;
-} & (T extends object ? ReservedWords<{ readonly [K in keyof T]?: undefined }> : { readonly result?: undefined });
+} & (T extends object
+  ? ShouldWrapObject<T> extends true
+    ? { readonly result?: undefined }
+    : { readonly [K in keyof T]?: undefined }
+  : { readonly result?: undefined });
 
 export type Result<T> = OkType<T> | ErrType<T>;
 
@@ -30,18 +40,10 @@ export function $ok<T>(result: T): Result<T> {
   return { success: true, result } as Result<T>;
 }
 
-interface ShortErrorStruct {
-  readonly msg: string;
-  readonly desc: string;
-}
-
-export function $err(err: ShortErrorStruct | ErrorStruct): Result<never> {
+export function $err(err: ErrorStruct): Result<never> {
   return {
     success: false,
-    error: {
-      message: "msg" in err ? err.msg : err.message,
-      description: "desc" in err ? err.desc : err.description,
-    },
+    error: { message: err.message, description: err.description },
   } as Result<never>;
 }
 

@@ -1,8 +1,8 @@
 import { $err, $fmtError, $ok, type Result } from "./error.js";
-import { $isStr } from "./validate.js";
 
 export const textEncoder = new TextEncoder();
 export const textDecoder = new TextDecoder();
+const strictUtf8Decoder = new TextDecoder("utf-8", { fatal: true });
 
 export const ENCODING = Object.freeze(["base64", "base64url", "hex", "utf8", "latin1"] as const);
 export const CIPHER_ENCODING = Object.freeze(["base64", "base64url", "hex"] as const);
@@ -14,16 +14,16 @@ export function $convertStrToBytes(
   data: string,
   inputEncoding: Encoding = "utf8",
 ): Result<{ result: Uint8Array<ArrayBuffer> }> {
-  if (!$isStr(data)) {
+  if (typeof data !== "string") {
     return $err({
-      msg: "String to Bytes: Empty data",
-      desc: "Data must be a non-empty string",
+      message: "strToBytes: Data must be a string",
+      description: `Expected a string value, received ${typeof data}`,
     });
   }
   if (!ENCODING.includes(inputEncoding)) {
     return $err({
-      msg: `String to Bytes: Unsupported encoding: ${inputEncoding}`,
-      desc: "Use base64, base64url, hex, utf8, or latin1",
+      message: `strToBytes: Unsupported encoding: ${inputEncoding}`,
+      description: "Use base64, base64url, hex, utf8, or latin1",
     });
   }
 
@@ -31,21 +31,21 @@ export function $convertStrToBytes(
     const bytes = strToBytes[inputEncoding](data);
     return $ok({ result: bytes });
   } catch (error) {
-    return $err({ msg: "String to Bytes: Failed to convert data", desc: $fmtError(error) });
+    return $err({ message: "strToBytes: Failed to convert data", description: $fmtError(error) });
   }
 }
 
 export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding: Encoding = "utf8"): Result<string> {
   if (!(data instanceof ArrayBuffer || data instanceof Uint8Array)) {
     return $err({
-      msg: "Bytes to String: Invalid data type",
-      desc: "Data must be an ArrayBuffer or Uint8Array",
+      message: "bytesToStr: Data must be an ArrayBuffer or Uint8Array",
+      description: `Expected binary data (ArrayBuffer or Uint8Array), received ${typeof data}`,
     });
   }
   if (!ENCODING.includes(outputEncoding)) {
     return $err({
-      msg: `Bytes to String: Unsupported encoding: ${outputEncoding}`,
-      desc: "Use base64, base64url, hex, utf8, or latin1",
+      message: `bytesToStr: Unsupported encoding: ${outputEncoding}`,
+      description: "Use base64, base64url, hex, utf8, or latin1",
     });
   }
   try {
@@ -53,7 +53,7 @@ export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncodin
     const str = bytesToStr[outputEncoding](bytes);
     return $ok(str);
   } catch (error) {
-    return $err({ msg: "Bytes to String: Failed to convert data", desc: $fmtError(error) });
+    return $err({ message: "bytesToStr: Failed to convert data", description: $fmtError(error) });
   }
 }
 
@@ -70,7 +70,7 @@ export const bytesToStr = {
   base64url: $toBase64Url,
   hex: $toHex,
   latin1: $toLatin1,
-  utf8: (data: Uint8Array) => textDecoder.decode(data),
+  utf8: (data: Uint8Array) => strictUtf8Decoder.decode(data),
 } as const satisfies Record<Encoding, (data: Uint8Array) => string>;
 
 export function $toLatin1(bytes: Uint8Array): string {
@@ -111,22 +111,34 @@ export function $fromBase64Url(data: string): Uint8Array<ArrayBuffer> {
   return $fromBase64(base64);
 }
 
+const HEX_TABLE = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, "0"));
+
+const HEX_NIBBLE = new Uint8Array(256).fill(255);
+for (let i = 48; i <= 57; i++) HEX_NIBBLE[i] = i - 48; // 0-9
+for (let i = 65; i <= 70; i++) HEX_NIBBLE[i] = i - 55; // A-F
+for (let i = 97; i <= 102; i++) HEX_NIBBLE[i] = i - 87; // a-f
+
 export function $toHex(bytes: Uint8Array): string {
-  let out = "";
+  const hex = new Array<string>(bytes.length);
   for (let i = 0; i < bytes.length; i++) {
-    out += (bytes[i] as number).toString(16).padStart(2, "0");
+    hex[i] = HEX_TABLE[bytes[i] as number] as string;
   }
-  return out;
+  return hex.join("");
 }
 
 export function $fromHex(data: string): Uint8Array<ArrayBuffer> {
-  const clean = data.startsWith("0x") ? data.slice(2) : data;
+  const clean = data.startsWith("0x") || data.startsWith("0X") ? data.slice(2) : data;
   if (clean.length % 2 !== 0) throw new Error("Invalid hex string");
+
   const out = new Uint8Array(clean.length / 2);
-  for (let i = 0; i < out.length; i++) {
-    const byte = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16);
-    if (Number.isNaN(byte)) throw new Error("Invalid hex string");
-    out[i] = byte;
+  for (let i = 0, j = 0; i < clean.length; i += 2, j++) {
+    const hiCode = clean.charCodeAt(i);
+    const loCode = clean.charCodeAt(i + 1);
+    if (hiCode > 255 || loCode > 255) throw new Error("Invalid hex string");
+    const hi = HEX_NIBBLE[hiCode] as number;
+    const lo = HEX_NIBBLE[loCode] as number;
+    if (hi === 255 || lo === 255) throw new Error("Invalid hex string");
+    out[j] = (hi << 4) | lo;
   }
   return out;
 }

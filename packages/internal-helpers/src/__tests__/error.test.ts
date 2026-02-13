@@ -27,6 +27,12 @@ describe("$ok", () => {
     if (result.success) expect(result.result).toBe(true);
   });
 
+  test("wraps undefined", () => {
+    const result = $ok(undefined);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.result).toBeUndefined();
+  });
+
   test("wraps null", () => {
     const result = $ok(null);
     expect(result.success).toBe(true);
@@ -51,7 +57,7 @@ describe("$ok", () => {
   });
 
   test("wraps object with 'success' key instead of spreading", () => {
-    const result = $ok({ success: false, data: 1 }) as unknown as {
+    const result = $ok({ success: false, data: 1 }) as {
       success: true;
       result: { success: false; data: 1 };
     };
@@ -60,35 +66,42 @@ describe("$ok", () => {
   });
 
   test("wraps object with 'error' key instead of spreading", () => {
-    const result = $ok({ error: "bad", value: 2 }) as unknown as {
+    const result = $ok({ error: "bad", value: 2 }) as {
       success: true;
       result: { error: string; value: number };
     };
     expect(result.success).toBe(true);
     expect(result.result).toEqual({ error: "bad", value: 2 });
   });
+
+  test("throws when object spread throws (no silent error conversion)", () => {
+    const badObj = Object.create(null, {
+      boom: {
+        enumerable: true,
+        get() {
+          throw new Error("kaboom");
+        },
+      },
+    });
+
+    expect(() => $ok(badObj as { boom: string })).toThrow("kaboom");
+  });
 });
 
 describe("$err", () => {
-  test("accepts short form (msg/desc)", () => {
-    const result = $err({ msg: "Failed", desc: "Something went wrong" }) as unknown as Result<string>;
-    expect(result.success).toBe(false);
-    expect(result.error).toEqual({ message: "Failed", description: "Something went wrong" });
-  });
-
-  test("accepts full form (message/description)", () => {
+  test("accepts message/description", () => {
     const result = $err({ message: "Failed", description: "Something went wrong" }) as unknown as Result<string>;
     expect(result.success).toBe(false);
     expect(result.error).toEqual({ message: "Failed", description: "Something went wrong" });
   });
 
   test("success is false", () => {
-    const result = $err({ msg: "err", desc: "desc" }) as unknown as Result<string>;
+    const result = $err({ message: "err", description: "desc" }) as unknown as Result<string>;
     expect(result.success).toBe(false);
   });
 
   test("result is undefined", () => {
-    const result = $err({ msg: "err", desc: "desc" }) as unknown as Result<string>;
+    const result = $err({ message: "err", description: "desc" }) as unknown as Result<string>;
     expect(result.result).toBeUndefined();
   });
 });

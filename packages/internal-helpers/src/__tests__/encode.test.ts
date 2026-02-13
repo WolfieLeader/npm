@@ -10,9 +10,15 @@ import {
   $toBase64Url,
   $toHex,
   $toLatin1,
+  type Encoding,
   textEncoder,
 } from "~/encode.js";
-import { ascii, largeBinary, latin1Bytes, unicode } from "./__helpers__.js";
+
+const ascii = "Hello, World!";
+const unicode = "Héllo, Wörld! 🌍🚀 日本語テスト";
+
+const latin1Bytes = Uint8Array.from({ length: 256 }, (_, i) => i);
+const largeBinary = Uint8Array.from({ length: 40_000 }, (_, i) => i % 256);
 
 describe("Latin1", () => {
   test("roundtrips ASCII", () => {
@@ -111,12 +117,22 @@ describe("Hex", () => {
     expect(bytes).toEqual(new Uint8Array([0, 255, 16]));
   });
 
+  test("strips 0X prefix", () => {
+    const bytes = $fromHex("0X00ff10");
+    expect(bytes).toEqual(new Uint8Array([0, 255, 16]));
+  });
+
   test("throws on odd-length string", () => {
     expect(() => $fromHex("abc")).toThrow("Invalid hex string");
   });
 
   test("throws on invalid hex chars", () => {
     expect(() => $fromHex("zzzz")).toThrow("Invalid hex string");
+  });
+
+  test("throws on partial-invalid hex pairs", () => {
+    expect(() => $fromHex("0g1a")).toThrow("Invalid hex string");
+    expect(() => $fromHex("fa")).not.toThrow();
   });
 
   test("handles empty input", () => {
@@ -139,14 +155,26 @@ describe("$convertStrToBytes", () => {
     if (result.success) expect(result.result).toEqual(textEncoder.encode(ascii));
   });
 
-  test("fails for empty string", () => {
+  test("succeeds for empty string", () => {
     const result = $convertStrToBytes("");
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.result).toEqual(new Uint8Array());
+  });
+
+  test("fails for non-string input", () => {
+    const result = $convertStrToBytes(42 as unknown as string);
     expect(result.success).toBe(false);
-    expect(result.error?.message).toContain("Empty data");
+    expect(result.error?.message).toContain("Data must be a string");
+  });
+
+  test("succeeds for whitespace-only string", () => {
+    const result = $convertStrToBytes("   ", "utf8");
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.result).toEqual(textEncoder.encode("   "));
   });
 
   test("fails for invalid encoding", () => {
-    const result = $convertStrToBytes("data", "nope" as any);
+    const result = $convertStrToBytes("data", "nope" as "utf8");
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Unsupported encoding");
   });
@@ -175,15 +203,22 @@ describe("$convertBytesToStr", () => {
   });
 
   test("fails for non-buffer input", () => {
-    const result = $convertBytesToStr("not bytes" as any);
+    const result = $convertBytesToStr("not bytes" as unknown as ArrayBuffer);
     expect(result.success).toBe(false);
-    expect(result.error?.message).toContain("Invalid data type");
+    expect(result.error?.message).toContain("Data must be an ArrayBuffer or Uint8Array");
   });
 
   test("fails for invalid encoding", () => {
-    const result = $convertBytesToStr(new Uint8Array([1]), "nope" as any);
+    const result = $convertBytesToStr(new Uint8Array([1]), "nope" as unknown as Encoding);
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Unsupported encoding");
+  });
+
+  test("fails for invalid UTF-8 bytes", () => {
+    const invalidUtf8 = new Uint8Array([0xff, 0xfe, 0x80]);
+    const result = $convertBytesToStr(invalidUtf8, "utf8");
+    expect(result.success).toBe(false);
+    expect(result.error?.message).toContain("Failed to convert data");
   });
 });
 

@@ -1,37 +1,14 @@
-import type nodeCrypto from "node:crypto";
 import type { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCODING, ENCRYPTION_ALGORITHMS } from "./consts.js";
 
-declare const __brand: unique symbol;
+export type { ErrorStruct } from "@internal/helpers";
 
-/** A brand type to distinguish between different types */
-type Brand<T> = { readonly [__brand]: T };
-
-/** A platform-specific secret key for encryption/decryption. */
-export type SecretKey<Platform extends "web" | "node"> = {
-  /** Target platform (`'web'` or `'node'`). */
-  readonly platform: Platform;
-  /** Digest algorithm used for HKDF key derivation. */
-  readonly digest: keyof typeof DIGEST_ALGORITHMS;
-  /** Symmetric encryption algorithm. */
-  readonly algorithm: keyof typeof ENCRYPTION_ALGORITHMS;
-  /** Underlying key object — `CryptoKey` on web, `KeyObject` on Node. */
-  readonly key: Platform extends "web" ? CryptoKey : nodeCrypto.KeyObject;
-} & Brand<`secretKey-${Platform}`>;
-
-/** Supported **cipher text** encodings for encrypted/hash outputs. */
 export type CipherEncoding = (typeof CIPHER_ENCODING)[number];
-
-/** Supported data encodings for **plain text/bytes** conversions. */
 export type Encoding = (typeof ENCODING)[number];
-
-/** Supported symmetric encryption algorithms */
 export type EncryptionAlgorithm = keyof typeof ENCRYPTION_ALGORITHMS;
-
-/** Supported digest algorithms for hashing */
 export type DigestAlgorithm = keyof typeof DIGEST_ALGORITHMS;
 
 /**
- * Options for creating a `SecretKey` via HKDF derivation.
+ * Options for creating a secret key (`NodeSecretKey` / `WebSecretKey`) via HKDF derivation.
  *
  * **Security note:** HKDF is a key expansion function, not a key stretching function.
  * It provides no brute-force resistance. The `secret` parameter must be high-entropy
@@ -44,11 +21,9 @@ export interface CreateSecretKeyOptions {
   /** Digest algorithm for HKDF (default: `'sha256'`). */
   digest?: DigestAlgorithm;
   /**
-   * Salt for HKDF (default: `'cipher-kit-salt'`, must be ≥ 8 characters).
+   * Salt for HKDF (default: `'cipher-kit'`, must be ≥ 8 characters).
    *
-   * **Security note:** The default salt is a fixed string. All keys derived from
-   * the same secret with the default salt produce identical output. For per-user
-   * or per-deployment uniqueness, provide a unique random salt.
+   * For per-user or per-deployment uniqueness, provide your own unique random salt.
    */
   salt?: string;
   /** Optional context info for HKDF (default: `'cipher-kit'`). */
@@ -87,11 +62,11 @@ export interface HashPasswordOptions {
   digest?: DigestAlgorithm;
   /** Encoding format for the output hash (default: `'base64url'`). */
   outputEncoding?: CipherEncoding;
-  /** Length of the salt in bytes (default: `16` bytes, min: `8` bytes). */
+  /** Length of the salt in bytes (default: `16`; min: `8`; max: `1024`). */
   saltLength?: number;
-  /** Number of iterations for key derivation (default: `320000`, min: `100000`). */
+  /** Number of iterations for key derivation (default: `320000`; min: `100000`; max: `10000000`). */
   iterations?: number;
-  /** Length of the derived key in bytes (default: `64` bytes, min: `16` bytes). */
+  /** Length of the derived key in bytes (default: `64`; min: `16`; max: `1024`). */
   keyLength?: number;
 }
 
@@ -101,8 +76,34 @@ export interface VerifyPasswordOptions {
   digest?: DigestAlgorithm;
   /** Encoding format of the input hash (default: `'base64url'`). */
   inputEncoding?: CipherEncoding;
-  /** Number of iterations for key derivation (default: `320000`). */
+  /** Number of iterations for key derivation (default: `320000`; min: `100000`; max: `10000000`). */
   iterations?: number;
-  /** Length of the derived key in bytes (default: `64` bytes). */
+  /** Length of the derived key in bytes (default: `64`; min: `16`; max: `1024`). */
   keyLength?: number;
+}
+
+export interface ValidatedKdfOptions {
+  algorithm: EncryptionAlgorithm;
+  digest: DigestAlgorithm;
+  salt: string;
+  info: string;
+  encryptAlgo: (typeof ENCRYPTION_ALGORITHMS)[EncryptionAlgorithm];
+  digestAlgo: (typeof DIGEST_ALGORITHMS)[DigestAlgorithm];
+}
+
+export interface ValidatedHashOptions {
+  digest: DigestAlgorithm;
+  digestAlgo: (typeof DIGEST_ALGORITHMS)[DigestAlgorithm];
+  outputEncoding: CipherEncoding;
+  saltLength: number;
+  iterations: number;
+  keyLength: number;
+}
+
+export interface ValidatedVerifyOptions {
+  digest: DigestAlgorithm;
+  digestAlgo: (typeof DIGEST_ALGORITHMS)[DigestAlgorithm];
+  inputEncoding: CipherEncoding;
+  iterations: number;
+  keyLength: number;
 }

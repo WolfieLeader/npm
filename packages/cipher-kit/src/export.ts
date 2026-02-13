@@ -1,6 +1,7 @@
 import * as nodeCryptoKit from "./node/kit.js";
 import * as webCryptoKit from "./web/kit.js";
 
+export type { Result } from "@internal/helpers";
 export {
   parseToObj,
   stringifyObj,
@@ -11,7 +12,22 @@ export {
   ENCRYPTED_REGEX,
   matchEncryptedPattern,
 } from "~/helpers/validate.js";
-export type * from "./helpers/types.js";
+export type {
+  CipherEncoding,
+  CreateSecretKeyOptions,
+  DecryptOptions,
+  DigestAlgorithm,
+  Encoding,
+  EncryptionAlgorithm,
+  EncryptOptions,
+  ErrorStruct,
+  HashOptions,
+  HashPasswordOptions,
+  VerifyPasswordOptions,
+} from "./helpers/types.js";
+
+export type { NodeSecretKey } from "./node/node-encrypt.js";
+export type { WebSecretKey } from "./web/web-encrypt.js";
 
 /**
  * Node.js cryptography kit using the built-in `crypto` module.

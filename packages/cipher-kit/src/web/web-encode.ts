@@ -1,35 +1,60 @@
-import { $convertBytesToStr as $sharedBytesToStr, $convertStrToBytes as $sharedStrToBytes } from "@internal/helpers";
-import { ENCODING } from "~/helpers/consts.js";
-import { $err, $ok, type Result } from "~/helpers/error.js";
-import type { Encoding } from "~/helpers/types.js";
-import { $isStr } from "~/helpers/validate.js";
-
-export {
-  $convertBytesToStr,
-  $convertStrToBytes,
-  textDecoder,
-  textEncoder,
+import {
+  $err,
+  $isStr,
+  $ok,
+  $convertBytesToStr as $sharedBytesToStr,
+  $convertStrToBytes as $sharedStrToBytes,
+  type Result,
 } from "@internal/helpers";
+import { ENCODING } from "~/helpers/consts.js";
+import type { Encoding } from "~/helpers/types.js";
+
+export { textDecoder, textEncoder } from "@internal/helpers";
+
+export function $convertStrToBytes(
+  data: string,
+  inputEncoding: Encoding = "utf8",
+): Result<{ result: Uint8Array<ArrayBuffer> }> {
+  const result = $sharedStrToBytes(data, inputEncoding);
+  if (result.error) {
+    return $err({
+      message: result.error.message.replace("strToBytes:", "web strToBytes:"),
+      description: result.error.description,
+    });
+  }
+  return result;
+}
+
+export function $convertBytesToStr(data: Uint8Array | ArrayBuffer, outputEncoding: Encoding = "utf8"): Result<string> {
+  const result = $sharedBytesToStr(data, outputEncoding);
+  if (result.error) {
+    return $err({
+      message: result.error.message.replace("bytesToStr:", "web bytesToStr:"),
+      description: result.error.description,
+    });
+  }
+  return result;
+}
 
 export function $convertEncoding(data: string, from: Encoding, to: Encoding): Result<string> {
   if (!$isStr(data)) {
     return $err({
-      msg: "Crypto Web API - Convert Format: Empty data",
-      desc: "Data must be a non-empty string",
+      message: "web convertEncoding: Data must be a non-empty string",
+      description: "Received empty or non-string value",
     });
   }
   if (!ENCODING.includes(from) || !ENCODING.includes(to)) {
     return $err({
-      msg: `Crypto Web API - Convert Format: Unsupported encoding: from ${from} to ${to}`,
-      desc: "Use base64, base64url, hex, utf8, or latin1",
+      message: `web convertEncoding: Unsupported encoding: from ${from} to ${to}`,
+      description: "Use base64, base64url, hex, utf8, or latin1",
     });
   }
 
-  const bytes = $sharedStrToBytes(data, from);
-  if (bytes.error) return $err({ msg: bytes.error.message, desc: bytes.error.description });
+  const bytes = $convertStrToBytes(data, from);
+  if (bytes.error) return $err(bytes.error);
 
-  const str = $sharedBytesToStr(bytes.result, to);
-  if (str.error) return $err({ msg: str.error.message, desc: str.error.description });
+  const str = $convertBytesToStr(bytes.result, to);
+  if (str.error) return $err(str.error);
 
-  return $ok({ result: str.result });
+  return $ok(str.result);
 }

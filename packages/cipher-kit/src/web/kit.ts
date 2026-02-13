@@ -1,4 +1,4 @@
-import { $fmtResultErr, type Result } from "~/helpers/error.js";
+import { $fmtResultErr, type Result } from "@internal/helpers";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -6,10 +6,8 @@ import type {
   EncryptOptions,
   HashOptions,
   HashPasswordOptions,
-  SecretKey,
   VerifyPasswordOptions,
 } from "~/helpers/types.js";
-import { $isSecretKey } from "~/helpers/validate.js";
 import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from "./web-encode.js";
 import {
   $createSecretKey,
@@ -20,14 +18,16 @@ import {
   $generateUuid,
   $hash,
   $hashPassword,
+  $isWebSecretKey,
   $verifyPassword,
+  type WebSecretKey,
 } from "./web-encrypt.js";
 
 /**
- * Checks whether a value is a `SecretKey` for the Web Crypto platform.
+ * Checks whether a value is a `WebSecretKey` for the Web Crypto platform.
  *
  * @param x - The value to check.
- * @returns `true` if `x` is a `SecretKey<"web">`.
+ * @returns `true` if `x` is a `WebSecretKey`.
  *
  * @example
  * ```ts
@@ -35,8 +35,8 @@ import {
  * isWebSecretKey({});     // false
  * ```
  */
-export function isWebSecretKey(x: unknown): x is SecretKey<"web"> {
-  return $isSecretKey(x, "web") !== null;
+export function isWebSecretKey(x: unknown): x is WebSecretKey {
+  return $isWebSecretKey(x) !== null;
 }
 
 /**
@@ -69,37 +69,37 @@ export function generateUuid(): string {
 }
 
 /**
- * Derives a `SecretKey` from a passphrase (non-throwing).
+ * Derives a `WebSecretKey` from a high-entropy secret (non-throwing).
  *
- * @returns `Promise<Result<{ result: SecretKey<"web"> }>>` with the derived key or error.
+ * @returns `Promise<Result<{ result: WebSecretKey }>>` with the derived key or error.
  * @see {@link createSecretKey} For full parameter/behavior docs.
  */
 export async function tryCreateSecretKey(
   secret: string,
   options: CreateSecretKeyOptions = {},
-): Promise<Result<{ result: SecretKey<"web"> }>> {
+): Promise<Result<{ result: WebSecretKey }>> {
   return await $createSecretKey(secret, options);
 }
 
 /**
- * Derives a `SecretKey` from a passphrase for encryption/decryption.
+ * Derives a `WebSecretKey` from a high-entropy secret for encryption/decryption.
  *
  * @remarks
  * Uses HKDF via the Web Crypto API to derive a symmetric key from the input string.
  *
- * @param secret - Passphrase to derive the key from (min 8 characters).
+ * @param secret - High-entropy secret (min 8 chars). For human-chosen passwords, use {@link hashPassword} instead.
  * @param options - Key derivation options.
- * @returns The derived `SecretKey`.
+ * @returns The derived `WebSecretKey`.
  * @throws {Error} If key derivation fails.
  *
  * @example
  * ```ts
- * const secretKey = await createSecretKey("my-secret");
+ * const secretKey = await createSecretKey("my-32-char-high-entropy-secret!!");
  * ```
  *
  * @see {@link tryCreateSecretKey} Non-throwing variant returning `Result`.
  */
-export async function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): Promise<SecretKey<"web">> {
+export async function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): Promise<WebSecretKey> {
   const { result, error } = await $createSecretKey(secret, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -113,20 +113,21 @@ export async function createSecretKey(secret: string, options: CreateSecretKeyOp
  */
 export async function tryEncrypt(
   data: string,
-  secretKey: SecretKey<"web">,
+  secretKey: WebSecretKey,
   options: EncryptOptions = {},
 ): Promise<Result<string>> {
   return await $encrypt(data, secretKey, options);
 }
 
 /**
- * Encrypts a UTF-8 string using the provided `SecretKey`.
+ * Encrypts a UTF-8 string using the provided `WebSecretKey`.
  *
  * @remarks
- * Output format: `"iv.cipherWithTag."` (two dot-separated base64url segments plus trailing dot).
+ * Output format: `"iv.cipher.tag."` (three dot-separated base64url segments plus trailing dot).
+ * Cross-platform compatible — data encrypted on Web can be decrypted on Node and vice versa.
  *
- * @param data - UTF-8 string to encrypt.
- * @param secretKey - The `SecretKey` used for encryption.
+ * @param data - UTF-8 string to encrypt. Must be a non-empty string (whitespace-only strings are rejected).
+ * @param secretKey - The `WebSecretKey` used for encryption.
  * @param options - Encryption options.
  * @returns The encrypted string.
  * @throws {Error} If the input or key is invalid, or encryption fails.
@@ -139,11 +140,7 @@ export async function tryEncrypt(
  *
  * @see {@link tryEncrypt} Non-throwing variant returning `Result<string>`.
  */
-export async function encrypt(
-  data: string,
-  secretKey: SecretKey<"web">,
-  options: EncryptOptions = {},
-): Promise<string> {
+export async function encrypt(data: string, secretKey: WebSecretKey, options: EncryptOptions = {}): Promise<string> {
   const { result, error } = await $encrypt(data, secretKey, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -157,20 +154,21 @@ export async function encrypt(
  */
 export async function tryDecrypt(
   encrypted: string,
-  secretKey: SecretKey<"web">,
+  secretKey: WebSecretKey,
   options: DecryptOptions = {},
 ): Promise<Result<string>> {
   return await $decrypt(encrypted, secretKey, options);
 }
 
 /**
- * Decrypts a ciphertext string using the provided `SecretKey`.
+ * Decrypts a ciphertext string using the provided `WebSecretKey`.
  *
  * @remarks
- * Expects input in the format `"iv.cipherWithTag."`.
+ * Expects input in the format `"iv.cipher.tag."`.
+ * Cross-platform compatible — data encrypted on Node can be decrypted on Web and vice versa.
  *
  * @param encrypted - The encrypted string to decrypt.
- * @param secretKey - The `SecretKey` used for decryption.
+ * @param secretKey - The `WebSecretKey` used for decryption.
  * @param options - Decryption options.
  * @returns The decrypted UTF-8 string.
  * @throws {Error} If the input or key is invalid, or decryption fails.
@@ -186,7 +184,7 @@ export async function tryDecrypt(
  */
 export async function decrypt(
   encrypted: string,
-  secretKey: SecretKey<"web">,
+  secretKey: WebSecretKey,
   options: DecryptOptions = {},
 ): Promise<string> {
   const { result, error } = await $decrypt(encrypted, secretKey, options);
@@ -202,21 +200,21 @@ export async function decrypt(
  */
 export async function tryEncryptObj<T extends object = Record<string, unknown>>(
   obj: T,
-  secretKey: SecretKey<"web">,
+  secretKey: WebSecretKey,
   options: EncryptOptions = {},
 ): Promise<Result<string>> {
   return await $encryptObj(obj, secretKey, options);
 }
 
 /**
- * Encrypts a plain object using the provided `SecretKey`.
+ * Encrypts a plain object using the provided `WebSecretKey`.
  *
  * @remarks
  * Only plain objects (POJOs) are accepted; class instances, Maps, Sets, etc. are rejected.
- * Output format: `"iv.cipherWithTag."`.
+ * Output format: `"iv.cipher.tag."`.
  *
  * @param obj - Plain object to encrypt.
- * @param secretKey - The `SecretKey` used for encryption.
+ * @param secretKey - The `WebSecretKey` used for encryption.
  * @param options - Encryption options.
  * @returns The encrypted string.
  * @throws {Error} If the input or key is invalid, or encryption fails.
@@ -231,7 +229,7 @@ export async function tryEncryptObj<T extends object = Record<string, unknown>>(
  */
 export async function encryptObj<T extends object = Record<string, unknown>>(
   obj: T,
-  secretKey: SecretKey<"web">,
+  secretKey: WebSecretKey,
   options: EncryptOptions = {},
 ): Promise<string> {
   const { result, error } = await $encryptObj(obj, secretKey, options);
@@ -247,7 +245,7 @@ export async function encryptObj<T extends object = Record<string, unknown>>(
  */
 export async function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<"web">,
+  secretKey: WebSecretKey,
   options: DecryptOptions = {},
 ): Promise<Result<{ result: T }>> {
   return await $decryptObj<T>(encrypted, secretKey, options);
@@ -257,10 +255,10 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
  * Decrypts an encrypted JSON string into a plain object.
  *
  * @remarks
- * Expects input in the format `"iv.cipherWithTag."`.
+ * Expects input in the format `"iv.cipher.tag."`.
  *
  * @param encrypted - The encrypted string.
- * @param secretKey - The `SecretKey` used for decryption.
+ * @param secretKey - The `WebSecretKey` used for decryption.
  * @param options - Decryption options.
  * @returns The decrypted object.
  * @throws {Error} If decryption or JSON parsing fails.
@@ -276,7 +274,7 @@ export async function tryDecryptObj<T extends object = Record<string, unknown>>(
  */
 export async function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<"web">,
+  secretKey: WebSecretKey,
   options: DecryptOptions = {},
 ): Promise<T> {
   const { result, error } = await $decryptObj<T>(encrypted, secretKey, options);
@@ -356,16 +354,37 @@ export async function hashPassword(
 }
 
 /**
+ * Verifies a password against a stored PBKDF2 hash (non-throwing).
+ *
+ * @returns `Promise<Result<boolean>>` — `true` if the password matches, `false` if not, or an error for invalid inputs/options.
+ * @see {@link verifyPassword} For full parameter/behavior docs.
+ */
+export async function tryVerifyPassword(
+  password: string,
+  hashedPassword: string,
+  salt: string,
+  options: VerifyPasswordOptions = {},
+): Promise<Result<boolean>> {
+  return await $verifyPassword(password, hashedPassword, salt, options);
+}
+
+/**
  * Verifies a password against a stored PBKDF2 hash.
  *
  * @remarks
- * Re-derives the key with the same parameters and compares in constant time to prevent timing attacks.
+ * Re-derives the key with the same parameters and compares using a full-loop XOR pattern.
+ * This is best-effort constant-time; JS JIT optimization may introduce timing variation.
+ * The Web Crypto API does not expose a `timingSafeEqual` equivalent.
+ * For timing-critical deployments, prefer the Node implementation which uses `crypto.timingSafeEqual`.
+ * Throws for invalid inputs/options (bad encoding, wrong parameters, non-decodable salt/hash).
+ * Returns `false` for password mismatch or length-mismatched hash.
  *
  * @param password - The plain password to verify.
  * @param hashedPassword - The stored hash (encoded).
  * @param salt - The stored salt (encoded).
  * @param options - Verification options (must match the parameters used to hash).
  * @returns `true` if the password matches, otherwise `false`.
+ * @throws {Error} If verification input/options are invalid.
  *
  * @example
  * ```ts
@@ -373,6 +392,8 @@ export async function hashPassword(
  * await verifyPassword("my-password", result, salt);    // true
  * await verifyPassword("wrong-password", result, salt); // false
  * ```
+ *
+ * @see {@link tryVerifyPassword} Non-throwing variant returning `Result<boolean>`.
  */
 export async function verifyPassword(
   password: string,
@@ -380,7 +401,9 @@ export async function verifyPassword(
   salt: string,
   options: VerifyPasswordOptions = {},
 ): Promise<boolean> {
-  return await $verifyPassword(password, hashedPassword, salt, options);
+  const { result, error } = await $verifyPassword(password, hashedPassword, salt, options);
+  if (error) throw new Error($fmtResultErr(error));
+  return result;
 }
 
 /**

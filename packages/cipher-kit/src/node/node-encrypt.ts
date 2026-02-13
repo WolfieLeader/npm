@@ -1,131 +1,134 @@
 import { Buffer } from "node:buffer";
 import nodeCrypto from "node:crypto";
-import { CIPHER_ENCODING, DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "~/helpers/consts.js";
-import { $err, $fmtError, $fmtResultErr, $ok, type Result, title } from "~/helpers/error.js";
-import { $parseToObj, $stringifyObj } from "~/helpers/object.js";
+import {
+  $err,
+  $fmtError,
+  $fmtResultErr,
+  $isPlainObj,
+  $isStr,
+  $ok,
+  $parseToObj,
+  $stringifyObj,
+  type Result,
+} from "@internal/helpers";
+import {
+  CIPHER_ENCODING,
+  DIGEST_ALGORITHMS,
+  type ENCRYPTION_ALGORITHMS,
+  GCM_IV_LENGTH,
+  GCM_TAG_BYTES,
+} from "~/helpers/consts.js";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
   EncryptOptions,
   HashOptions,
   HashPasswordOptions,
-  SecretKey,
   VerifyPasswordOptions,
 } from "~/helpers/types.js";
-import { $isPlainObj, $isSecretKey, $isStr, matchEncryptedPattern } from "~/helpers/validate.js";
+import {
+  $validateCreateSecretKeyOptions,
+  $validateHashPasswordOptions,
+  $validateSecretKeyBase,
+  $validateVerifyPasswordOptions,
+  matchEncryptedPattern,
+} from "~/helpers/validate.js";
 import { $convertBytesToStr, $convertStrToBytes } from "./node-encode.js";
+
+declare const __brand: unique symbol;
+
+export type NodeSecretKey = {
+  readonly platform: "node";
+  readonly digest: keyof typeof DIGEST_ALGORITHMS;
+  readonly algorithm: keyof typeof ENCRYPTION_ALGORITHMS;
+  readonly key: nodeCrypto.KeyObject;
+  readonly injected: (typeof ENCRYPTION_ALGORITHMS)[keyof typeof ENCRYPTION_ALGORITHMS];
+} & { readonly [__brand]: "secretKey-node" };
+
+export function $isNodeSecretKey(x: unknown): NodeSecretKey | null {
+  const base = $validateSecretKeyBase(x, "node");
+  if (!base) return null;
+
+  if (
+    !(base.obj.key instanceof nodeCrypto.KeyObject) ||
+    (typeof base.obj.key.symmetricKeySize === "number" && base.obj.key.symmetricKeySize !== base.algorithm.keyBytes)
+  ) {
+    return null;
+  }
+  return x as NodeSecretKey;
+}
 
 export function $generateUuid(): Result<string> {
   try {
     return $ok(nodeCrypto.randomUUID());
   } catch (error) {
-    return $err({ msg: `${title("node", "UUID Generation")}: Failed to generate UUID`, desc: $fmtError(error) });
+    return $err({ message: "node generateUuid: Failed to generate UUID", description: $fmtError(error) });
   }
 }
 
-export function $createSecretKey(
-  secret: string,
-  options: CreateSecretKeyOptions,
-): Result<{ result: SecretKey<"node"> }> {
-  if (!$isStr(secret, 8)) {
-    return $err({
-      msg: `${title("node", "Key Generation")}: Empty Secret`,
-      desc: "Secret must be a non-empty string with at least 8 characters",
-    });
-  }
+export function $createSecretKey(secret: string, options: CreateSecretKeyOptions): Result<{ result: NodeSecretKey }> {
+  const validated = $validateCreateSecretKeyOptions(secret, options, "node");
+  if (validated.error) return $err(validated.error);
 
-  if (!$isPlainObj<CreateSecretKeyOptions>(options)) {
-    return $err({
-      msg: `${title("node", "Key Generation")}: Invalid options`,
-      desc: "Options must be an object",
-    });
-  }
-
-  const algorithm = options.algorithm ?? "aes256gcm";
-  if (!(algorithm in ENCRYPTION_ALGORITHMS)) {
-    return $err({
-      msg: `${title("node", "Key Generation")}: Unsupported algorithm: ${algorithm}`,
-      desc: `Supported algorithms are: ${Object.keys(ENCRYPTION_ALGORITHMS).join(", ")}`,
-    });
-  }
-
-  const digest = options.digest ?? "sha256";
-  if (!(digest in DIGEST_ALGORITHMS)) {
-    return $err({
-      msg: `${title("node", "Key Generation")}: Unsupported digest: ${digest}`,
-      desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(", ")}`,
-    });
-  }
-
-  const salt = options.salt ?? "cipher-kit-salt";
-  if (!$isStr(salt, 8)) {
-    return $err({
-      msg: `${title("node", "Key Generation")}: Weak salt`,
-      desc: "Salt must be a non-empty string with at least 8 characters",
-    });
-  }
-
-  const info = options.info ?? "cipher-kit";
-  if (!$isStr(info)) {
-    return $err({
-      msg: `${title("node", "Key Generation")}: Invalid info`,
-      desc: "Info must be a non-empty string",
-    });
-  }
-
-  const encryptAlgo = ENCRYPTION_ALGORITHMS[algorithm];
-  const digestAlgo = DIGEST_ALGORITHMS[digest];
+  const { algorithm, digest, salt, info, encryptAlgo, digestAlgo } = validated;
 
   try {
-    const derivedKey = nodeCrypto.hkdfSync(
-      digestAlgo.node,
-      secret.normalize("NFKC"),
-      salt.normalize("NFKC"),
-      info.normalize("NFKC"),
-      encryptAlgo.keyBytes,
+    const derivedKey = Buffer.from(
+      nodeCrypto.hkdfSync(
+        digestAlgo.node,
+        secret.normalize("NFKC"),
+        salt.normalize("NFKC"),
+        info.normalize("NFKC"),
+        encryptAlgo.keyBytes,
+      ),
     );
-    const key = nodeCrypto.createSecretKey(Buffer.from(derivedKey));
-    const secretKey = Object.freeze({
-      platform: "node",
-      digest: digest,
-      algorithm: algorithm,
-      key: key,
-    }) as SecretKey<"node">;
+    try {
+      const key = nodeCrypto.createSecretKey(derivedKey);
+      const secretKey = Object.freeze({
+        platform: "node",
+        digest,
+        algorithm,
+        key,
+        injected: encryptAlgo,
+      }) as NodeSecretKey;
 
-    return $ok({ result: secretKey });
+      return $ok({ result: secretKey });
+    } finally {
+      derivedKey.fill(0);
+    }
   } catch (error) {
-    return $err({ msg: `${title("node", "Key Generation")}: Failed to create secret key`, desc: $fmtError(error) });
+    return $err({ message: "node createSecretKey: Failed to derive key", description: $fmtError(error) });
   }
 }
 
-export function $encrypt(data: string, secretKey: SecretKey<"node">, options: EncryptOptions): Result<string> {
+export function $encrypt(data: string, secretKey: NodeSecretKey, options: EncryptOptions): Result<string> {
   if (!$isStr(data)) {
     return $err({
-      msg: `${title("node", "Encryption")}: Empty data for encryption`,
-      desc: "Data must be a non-empty string",
+      message: "node encrypt: Data must be a non-empty string",
+      description: "Received empty or non-string value",
     });
   }
 
   if (!$isPlainObj<EncryptOptions>(options)) {
     return $err({
-      msg: `${title("node", "Encryption")}: Invalid options`,
-      desc: "Options must be an object",
+      message: "node encrypt: Options must be a plain object",
+      description: 'Pass an object like { outputEncoding: "base64url" }',
     });
   }
 
   const outputEncoding = options.outputEncoding ?? "base64url";
   if (!CIPHER_ENCODING.includes(outputEncoding)) {
     return $err({
-      msg: `${title("node", "Encryption")}: Unsupported output encoding: ${outputEncoding}`,
-      desc: "Use base64, base64url, or hex",
+      message: `node encrypt: Unsupported output encoding: ${outputEncoding}`,
+      description: "Use base64, base64url, or hex",
     });
   }
 
-  const injectedKey = $isSecretKey(secretKey, "node");
+  const injectedKey = $isNodeSecretKey(secretKey);
   if (!injectedKey) {
     return $err({
-      msg: `${title("node", "Encryption")}: Invalid Secret Key`,
-      desc: "Expected a Node SecretKey",
+      message: "node encrypt: Invalid secret key",
+      description: "Expected a NodeSecretKey created by nodeKit.createSecretKey()",
     });
   }
 
@@ -133,7 +136,7 @@ export function $encrypt(data: string, secretKey: SecretKey<"node">, options: En
   if (error) return $err(error);
 
   try {
-    const iv = nodeCrypto.randomBytes(injectedKey.injected.ivLength);
+    const iv = nodeCrypto.randomBytes(GCM_IV_LENGTH);
     const cipher = nodeCrypto.createCipheriv(injectedKey.injected.node, injectedKey.key, iv);
     const encrypted = Buffer.concat([cipher.update(result), cipher.final()]);
     const tag = cipher.getAuthTag();
@@ -144,53 +147,49 @@ export function $encrypt(data: string, secretKey: SecretKey<"node">, options: En
 
     if (ivStr.error || cipherStr.error || tagStr.error) {
       return $err({
-        msg: "Crypto NodeJS API - Encryption: Failed to convert IV or encrypted data or tag",
-        desc: `Conversion error: ${$fmtResultErr(ivStr.error || cipherStr.error || tagStr.error)}`,
+        message: "node encrypt: Failed to encode output",
+        description: `Conversion error: ${$fmtResultErr(ivStr.error || cipherStr.error || tagStr.error)}`,
       });
     }
 
     return $ok(`${ivStr.result}.${cipherStr.result}.${tagStr.result}.`);
   } catch (error) {
-    return $err({ msg: `${title("node", "Encryption")}: Failed to encrypt data`, desc: $fmtError(error) });
+    return $err({ message: "node encrypt: Failed to encrypt data", description: $fmtError(error) });
+  } finally {
+    result.fill(0);
   }
 }
 
-export function $decrypt(encrypted: string, secretKey: SecretKey<"node">, options: DecryptOptions): Result<string> {
-  if (!matchEncryptedPattern(encrypted, "node")) {
+export function $decrypt(encrypted: string, secretKey: NodeSecretKey, options: DecryptOptions): Result<string> {
+  if (!matchEncryptedPattern(encrypted)) {
     return $err({
-      msg: `${title("node", "Decryption")}: Invalid encrypted data format`,
-      desc: 'Encrypted data must be in the format "iv.cipher.tag."',
+      message: "node decrypt: Invalid encrypted data format",
+      description: 'Encrypted data must be in the format "iv.cipher.tag."',
     });
   }
 
   if (!$isPlainObj<DecryptOptions>(options)) {
     return $err({
-      msg: `${title("node", "Decryption")}: Invalid options`,
-      desc: "Options must be an object",
+      message: "node decrypt: Options must be a plain object",
+      description: 'Pass an object like { inputEncoding: "base64url" }',
     });
   }
 
   const inputEncoding = options.inputEncoding ?? "base64url";
   if (!CIPHER_ENCODING.includes(inputEncoding)) {
     return $err({
-      msg: `${title("node", "Decryption")}: Unsupported input encoding: ${inputEncoding}`,
-      desc: "Use base64, base64url, or hex",
+      message: `node decrypt: Unsupported input encoding: ${inputEncoding}`,
+      description: "Use base64, base64url, or hex",
     });
   }
 
-  const [iv, cipher, tag] = encrypted.split(".", 4);
-  if (!$isStr(iv) || !$isStr(cipher) || !$isStr(tag)) {
-    return $err({
-      msg: `${title("node", "Decryption")}: Invalid encrypted data`,
-      desc: "Encrypted data must contain valid IV, encrypted data, and tag components",
-    });
-  }
+  const [iv, cipher, tag] = encrypted.split(".", 4) as [string, string, string];
 
-  const injectedKey = $isSecretKey(secretKey, "node");
+  const injectedKey = $isNodeSecretKey(secretKey);
   if (!injectedKey) {
     return $err({
-      msg: "Crypto NodeJS API - Decryption: Invalid Secret Key",
-      desc: "Expected a Node SecretKey",
+      message: "node decrypt: Invalid secret key",
+      description: "Expected a NodeSecretKey created by nodeKit.createSecretKey()",
     });
   }
 
@@ -200,38 +199,42 @@ export function $decrypt(encrypted: string, secretKey: SecretKey<"node">, option
 
   if (ivBytes.error || cipherBytes.error || tagBytes.error) {
     return $err({
-      msg: `${title("node", "Decryption")}: Failed to convert IV or encrypted data or tag`,
-      desc: `Conversion error: ${$fmtResultErr(ivBytes.error || cipherBytes.error || tagBytes.error)}`,
+      message: "node decrypt: Failed to decode input",
+      description: `Conversion error: ${$fmtResultErr(ivBytes.error || cipherBytes.error || tagBytes.error)}`,
     });
   }
 
-  if (ivBytes.result.byteLength !== injectedKey.injected.ivLength) {
+  if (ivBytes.result.byteLength !== GCM_IV_LENGTH) {
     return $err({
-      msg: `${title("node", "Decryption")}: Invalid IV length`,
-      desc: `Expected ${injectedKey.injected.ivLength} bytes, got ${ivBytes.result.byteLength}`,
+      message: "node decrypt: Invalid IV length",
+      description: `Expected ${GCM_IV_LENGTH} bytes, got ${ivBytes.result.byteLength}`,
     });
   }
 
-  if (tagBytes.result.byteLength !== 16) {
+  if (tagBytes.result.byteLength !== GCM_TAG_BYTES) {
     return $err({
-      msg: `${title("node", "Decryption")}: Invalid auth tag length`,
-      desc: `Expected 16 bytes, got ${tagBytes.result.byteLength}`,
+      message: "node decrypt: Invalid auth tag length",
+      description: `Expected ${GCM_TAG_BYTES} bytes, got ${tagBytes.result.byteLength}`,
     });
   }
 
+  let decrypted: Buffer | undefined;
   try {
     const decipher = nodeCrypto.createDecipheriv(injectedKey.injected.node, injectedKey.key, ivBytes.result);
     decipher.setAuthTag(tagBytes.result);
-    const decrypted = Buffer.concat([decipher.update(cipherBytes.result), decipher.final()]);
+    decrypted = Buffer.concat([decipher.update(cipherBytes.result), decipher.final()]);
 
     return $convertBytesToStr(decrypted, "utf8");
   } catch (error) {
-    return $err({ msg: `${title("node", "Decryption")}: Failed to decrypt data`, desc: $fmtError(error) });
+    return $err({ message: "node decrypt: Failed to decrypt data", description: $fmtError(error) });
+  } finally {
+    decrypted?.fill(0);
   }
 }
+
 export function $encryptObj<T extends object = Record<string, unknown>>(
   data: T,
-  secretKey: SecretKey<"node">,
+  secretKey: NodeSecretKey,
   options: EncryptOptions,
 ): Result<string> {
   const { result, error } = $stringifyObj(data);
@@ -241,7 +244,7 @@ export function $encryptObj<T extends object = Record<string, unknown>>(
 
 export function $decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<"node">,
+  secretKey: NodeSecretKey,
   options: DecryptOptions,
 ): Result<{ result: T }> {
   const { result, error } = $decrypt(encrypted, secretKey, options);
@@ -252,31 +255,31 @@ export function $decryptObj<T extends object = Record<string, unknown>>(
 export function $hash(data: string, options: HashOptions = {}): Result<string> {
   if (!$isStr(data)) {
     return $err({
-      msg: `${title("node", "Hashing")}: Empty data for hashing`,
-      desc: "Data must be a non-empty string",
+      message: "node hash: Data must be a non-empty string",
+      description: "Received empty or non-string value",
     });
   }
 
   if (!$isPlainObj<HashOptions>(options)) {
     return $err({
-      msg: `${title("node", "Hashing")}: Invalid options`,
-      desc: "Options must be an object",
+      message: "node hash: Options must be a plain object",
+      description: 'Pass an object like { digest: "sha256" }',
     });
   }
 
   const outputEncoding = options.outputEncoding ?? "base64url";
   if (!CIPHER_ENCODING.includes(outputEncoding)) {
     return $err({
-      msg: `${title("node", "Hashing")}: Unsupported output encoding: ${outputEncoding}`,
-      desc: "Use base64, base64url, or hex",
+      message: `node hash: Unsupported output encoding: ${outputEncoding}`,
+      description: "Use base64, base64url, or hex",
     });
   }
 
   const digest = options.digest ?? "sha256";
   if (!(digest in DIGEST_ALGORITHMS)) {
     return $err({
-      msg: `${title("node", "Hashing")}: Unsupported digest: ${digest}`,
-      desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(", ")}`,
+      message: `node hash: Unsupported digest: ${digest}`,
+      description: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(", ")}`,
     });
   }
   const digestAlgo = DIGEST_ALGORITHMS[digest];
@@ -288,7 +291,7 @@ export function $hash(data: string, options: HashOptions = {}): Result<string> {
     const hashed = nodeCrypto.createHash(digestAlgo.node).update(result).digest();
     return $convertBytesToStr(hashed, outputEncoding);
   } catch (error) {
-    return $err({ msg: `${title("node", "Hashing")}: Failed to hash data with Crypto NodeJS`, desc: $fmtError(error) });
+    return $err({ message: "node hash: Failed to hash data", description: $fmtError(error) });
   }
 }
 
@@ -296,68 +299,27 @@ export function $hashPassword(
   password: string,
   options: HashPasswordOptions,
 ): Result<{ result: string; salt: string }> {
-  if (!$isStr(password)) {
-    return $err({
-      msg: `${title("node", "Password Hashing")}: Empty password for hashing`,
-      desc: "Password must be a non-empty string",
-    });
-  }
+  const validated = $validateHashPasswordOptions(password, options, "node");
+  if (validated.error) return $err(validated.error);
 
-  if (!$isPlainObj<HashPasswordOptions>(options)) {
-    return $err({
-      msg: `${title("node", "Password Hashing")}: Invalid options`,
-      desc: "Options must be an object",
-    });
-  }
+  const { digestAlgo, outputEncoding, saltLength, iterations, keyLength } = validated;
 
-  const digest = options.digest ?? "sha512";
-  if (!(digest in DIGEST_ALGORITHMS)) {
-    return $err({
-      msg: `${title("node", "Password Hashing")}: Unsupported digest: ${digest}`,
-      desc: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(", ")}`,
-    });
-  }
-  const digestAlgo = DIGEST_ALGORITHMS[digest];
-
-  const outputEncoding = options.outputEncoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(outputEncoding)) {
-    return $err({
-      msg: `${title("node", "Password Hashing")}: Unsupported encoding: ${outputEncoding}`,
-      desc: "Use base64, base64url, or hex",
-    });
-  }
-
-  const saltLength = options.saltLength ?? 16;
-  if (typeof saltLength !== "number" || saltLength < 8) {
-    return $err({
-      msg: `${title("node", "Password Hashing")}: Weak salt length`,
-      desc: "Salt length must be a number and at least 8 bytes (recommended 16 or more)",
-    });
-  }
-
-  const iterations = options.iterations ?? 320_000;
-  if (typeof iterations !== "number" || iterations < 100_000) {
-    return $err({
-      msg: `${title("node", "Password Hashing")}: Weak iterations count`,
-      desc: "Iterations must be a number and at least 100,000 (recommended 320,000 or more)",
-    });
-  }
-
-  const keyLength = options.keyLength ?? 64;
-  if (typeof keyLength !== "number" || keyLength < 16) {
-    return $err({
-      msg: `${title("node", "Password Hashing")}: Invalid key length`,
-      desc: "Key length must be a number and at least 16 bytes (recommended 64 or more)",
-    });
-  }
+  const salt = nodeCrypto.randomBytes(saltLength);
+  const hash = nodeCrypto.pbkdf2Sync(password.normalize("NFKC"), salt, iterations, keyLength, digestAlgo.node);
 
   try {
-    const salt = nodeCrypto.randomBytes(saltLength);
-    const hash = nodeCrypto.pbkdf2Sync(password.normalize("NFKC"), salt, iterations, keyLength, digestAlgo.node);
+    const saltStr = $convertBytesToStr(salt, outputEncoding);
+    if (saltStr.error) return $err(saltStr.error);
 
-    return $ok({ result: hash.toString(outputEncoding), salt: salt.toString(outputEncoding) });
+    const hashStr = $convertBytesToStr(hash, outputEncoding);
+    if (hashStr.error) return $err(hashStr.error);
+
+    return $ok({ result: hashStr.result, salt: saltStr.result });
   } catch (error) {
-    return $err({ msg: `${title("node", "Password Hashing")}: Failed to hash password`, desc: $fmtError(error) });
+    return $err({ message: "node hashPassword: Failed to hash password", description: $fmtError(error) });
+  } finally {
+    salt.fill(0);
+    hash.fill(0);
   }
 }
 
@@ -366,36 +328,48 @@ export function $verifyPassword(
   hashedPassword: string,
   salt: string,
   options: VerifyPasswordOptions,
-): boolean {
-  if (!$isStr(password) || !$isStr(hashedPassword) || !$isStr(salt) || !$isPlainObj<VerifyPasswordOptions>(options)) {
-    return false;
-  }
+): Result<boolean> {
+  const validated = $validateVerifyPasswordOptions(password, hashedPassword, salt, options, "node");
+  if (validated.error) return $err(validated.error);
 
-  const digest = options.digest ?? "sha512";
-  if (!(digest in DIGEST_ALGORITHMS)) return false;
-  const digestAlgo = DIGEST_ALGORITHMS[digest];
-
-  const inputEncoding = options.inputEncoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(inputEncoding)) return false;
-
-  const iterations = options.iterations ?? 320_000;
-  if (typeof iterations !== "number" || iterations < 1000) return false;
-
-  const keyLength = options.keyLength ?? 64;
-  if (typeof keyLength !== "number" || keyLength < 16) return false;
+  const { digestAlgo, inputEncoding, iterations, keyLength } = validated;
 
   const saltBytes = $convertStrToBytes(salt, inputEncoding);
-  if (saltBytes.error) return false;
+  if (saltBytes.error) return $err(saltBytes.error);
 
   const hashedPasswordBytes = $convertStrToBytes(hashedPassword, inputEncoding);
-  if (hashedPasswordBytes.error) return false;
+  if (hashedPasswordBytes.error) return $err(hashedPasswordBytes.error);
+
+  if (hashedPasswordBytes.result.byteLength !== keyLength) return $ok(false);
 
   try {
-    return nodeCrypto.timingSafeEqual(
-      nodeCrypto.pbkdf2Sync(password.normalize("NFKC"), saltBytes.result, iterations, keyLength, digestAlgo.node),
-      hashedPasswordBytes.result,
+    const derived = nodeCrypto.pbkdf2Sync(
+      password.normalize("NFKC"),
+      saltBytes.result,
+      iterations,
+      keyLength,
+      digestAlgo.node,
     );
-  } catch {
-    return false;
+
+    const expected = hashedPasswordBytes.result;
+
+    const left = Buffer.alloc(keyLength);
+    const right = Buffer.alloc(keyLength);
+    derived.copy(left);
+    expected.copy(right);
+
+    try {
+      const matches = nodeCrypto.timingSafeEqual(left, right);
+      return $ok(matches);
+    } finally {
+      left.fill(0);
+      right.fill(0);
+      derived.fill(0);
+    }
+  } catch (error) {
+    return $err({ message: "node verifyPassword: Verification failed", description: $fmtError(error) });
+  } finally {
+    saltBytes.result.fill(0);
+    hashedPasswordBytes.result.fill(0);
   }
 }

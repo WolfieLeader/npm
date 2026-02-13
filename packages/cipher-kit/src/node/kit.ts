@@ -1,5 +1,5 @@
 import type { Buffer } from "node:buffer";
-import { $fmtResultErr, type Result } from "~/helpers/error.js";
+import { $fmtResultErr, type Result } from "@internal/helpers";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -7,10 +7,8 @@ import type {
   EncryptOptions,
   HashOptions,
   HashPasswordOptions,
-  SecretKey,
   VerifyPasswordOptions,
 } from "~/helpers/types.js";
-import { $isSecretKey } from "~/helpers/validate.js";
 import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from "./node-encode.js";
 import {
   $createSecretKey,
@@ -21,14 +19,16 @@ import {
   $generateUuid,
   $hash,
   $hashPassword,
+  $isNodeSecretKey,
   $verifyPassword,
+  type NodeSecretKey,
 } from "./node-encrypt.js";
 
 /**
- * Checks whether a value is a `SecretKey` for the Node.js platform.
+ * Checks whether a value is a `NodeSecretKey` for the Node.js platform.
  *
  * @param x - The value to check.
- * @returns `true` if `x` is a `SecretKey<"node">`.
+ * @returns `true` if `x` is a `NodeSecretKey`.
  *
  * @example
  * ```ts
@@ -36,8 +36,8 @@ import {
  * isNodeSecretKey({});      // false
  * ```
  */
-export function isNodeSecretKey(x: unknown): x is SecretKey<"node"> {
-  return $isSecretKey(x, "node") !== null;
+export function isNodeSecretKey(x: unknown): x is NodeSecretKey {
+  return $isNodeSecretKey(x) !== null;
 }
 
 /**
@@ -70,37 +70,37 @@ export function generateUuid(): string {
 }
 
 /**
- * Derives a `SecretKey` from a passphrase (non-throwing).
+ * Derives a `NodeSecretKey` from a high-entropy secret (non-throwing).
  *
- * @returns `Result<{ result: SecretKey<"node"> }>` with the derived key or error.
+ * @returns `Result<{ result: NodeSecretKey }>` with the derived key or error.
  * @see {@link createSecretKey} For full parameter/behavior docs.
  */
 export function tryCreateSecretKey(
   secret: string,
   options: CreateSecretKeyOptions = {},
-): Result<{ result: SecretKey<"node"> }> {
+): Result<{ result: NodeSecretKey }> {
   return $createSecretKey(secret, options);
 }
 
 /**
- * Derives a `SecretKey` from a passphrase for encryption/decryption.
+ * Derives a `NodeSecretKey` from a high-entropy secret for encryption/decryption.
  *
  * @remarks
  * Uses HKDF to derive a symmetric key from the input string.
  *
- * @param secret - Passphrase to derive the key from (min 8 characters).
+ * @param secret - High-entropy secret (min 8 chars). For human-chosen passwords, use {@link hashPassword} instead.
  * @param options - Key derivation options.
- * @returns The derived `SecretKey`.
+ * @returns The derived `NodeSecretKey`.
  * @throws {Error} If key derivation fails.
  *
  * @example
  * ```ts
- * const secretKey = createSecretKey("my-secret");
+ * const secretKey = createSecretKey("my-32-char-high-entropy-secret!!");
  * ```
  *
  * @see {@link tryCreateSecretKey} Non-throwing variant returning `Result`.
  */
-export function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): SecretKey<"node"> {
+export function createSecretKey(secret: string, options: CreateSecretKeyOptions = {}): NodeSecretKey {
   const { result, error } = $createSecretKey(secret, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -112,18 +112,19 @@ export function createSecretKey(secret: string, options: CreateSecretKeyOptions 
  * @returns `Result<string>` with the ciphertext or error.
  * @see {@link encrypt} For full parameter/behavior docs.
  */
-export function tryEncrypt(data: string, secretKey: SecretKey<"node">, options: EncryptOptions = {}): Result<string> {
+export function tryEncrypt(data: string, secretKey: NodeSecretKey, options: EncryptOptions = {}): Result<string> {
   return $encrypt(data, secretKey, options);
 }
 
 /**
- * Encrypts a UTF-8 string using the provided `SecretKey`.
+ * Encrypts a UTF-8 string using the provided `NodeSecretKey`.
  *
  * @remarks
  * Output format: `"iv.cipher.tag."` (three dot-separated base64url segments plus trailing dot).
+ * Cross-platform compatible — data encrypted on Node can be decrypted on Web and vice versa.
  *
- * @param data - UTF-8 string to encrypt.
- * @param secretKey - The `SecretKey` used for encryption.
+ * @param data - UTF-8 string to encrypt. Must be a non-empty string (whitespace-only strings are rejected).
+ * @param secretKey - The `NodeSecretKey` used for encryption.
  * @param options - Encryption options.
  * @returns The encrypted string.
  * @throws {Error} If the input or key is invalid, or encryption fails.
@@ -136,7 +137,7 @@ export function tryEncrypt(data: string, secretKey: SecretKey<"node">, options: 
  *
  * @see {@link tryEncrypt} Non-throwing variant returning `Result<string>`.
  */
-export function encrypt(data: string, secretKey: SecretKey<"node">, options: EncryptOptions = {}): string {
+export function encrypt(data: string, secretKey: NodeSecretKey, options: EncryptOptions = {}): string {
   const { result, error } = $encrypt(data, secretKey, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -148,22 +149,19 @@ export function encrypt(data: string, secretKey: SecretKey<"node">, options: Enc
  * @returns `Result<string>` with the plaintext or error.
  * @see {@link decrypt} For full parameter/behavior docs.
  */
-export function tryDecrypt(
-  encrypted: string,
-  secretKey: SecretKey<"node">,
-  options: DecryptOptions = {},
-): Result<string> {
+export function tryDecrypt(encrypted: string, secretKey: NodeSecretKey, options: DecryptOptions = {}): Result<string> {
   return $decrypt(encrypted, secretKey, options);
 }
 
 /**
- * Decrypts a ciphertext string using the provided `SecretKey`.
+ * Decrypts a ciphertext string using the provided `NodeSecretKey`.
  *
  * @remarks
  * Expects input in the format `"iv.cipher.tag."`.
+ * Cross-platform compatible — data encrypted on Web can be decrypted on Node and vice versa.
  *
  * @param encrypted - The encrypted string to decrypt.
- * @param secretKey - The `SecretKey` used for decryption.
+ * @param secretKey - The `NodeSecretKey` used for decryption.
  * @param options - Decryption options.
  * @returns The decrypted UTF-8 string.
  * @throws {Error} If the input or key is invalid, or decryption fails.
@@ -177,7 +175,7 @@ export function tryDecrypt(
  *
  * @see {@link tryDecrypt} Non-throwing variant returning `Result<string>`.
  */
-export function decrypt(encrypted: string, secretKey: SecretKey<"node">, options: DecryptOptions = {}): string {
+export function decrypt(encrypted: string, secretKey: NodeSecretKey, options: DecryptOptions = {}): string {
   const { result, error } = $decrypt(encrypted, secretKey, options);
   if (error) throw new Error($fmtResultErr(error));
   return result;
@@ -191,21 +189,21 @@ export function decrypt(encrypted: string, secretKey: SecretKey<"node">, options
  */
 export function tryEncryptObj<T extends object = Record<string, unknown>>(
   obj: T,
-  secretKey: SecretKey<"node">,
+  secretKey: NodeSecretKey,
   options: EncryptOptions = {},
 ): Result<string> {
   return $encryptObj(obj, secretKey, options);
 }
 
 /**
- * Encrypts a plain object using the provided `SecretKey`.
+ * Encrypts a plain object using the provided `NodeSecretKey`.
  *
  * @remarks
  * Only plain objects (POJOs) are accepted; class instances, Maps, Sets, etc. are rejected.
  * Output format: `"iv.cipher.tag."`.
  *
  * @param obj - Plain object to encrypt.
- * @param secretKey - The `SecretKey` used for encryption.
+ * @param secretKey - The `NodeSecretKey` used for encryption.
  * @param options - Encryption options.
  * @returns The encrypted string.
  * @throws {Error} If the input or key is invalid, or encryption fails.
@@ -220,7 +218,7 @@ export function tryEncryptObj<T extends object = Record<string, unknown>>(
  */
 export function encryptObj<T extends object = Record<string, unknown>>(
   obj: T,
-  secretKey: SecretKey<"node">,
+  secretKey: NodeSecretKey,
   options: EncryptOptions = {},
 ): string {
   const { result, error } = $encryptObj(obj, secretKey, options);
@@ -236,7 +234,7 @@ export function encryptObj<T extends object = Record<string, unknown>>(
  */
 export function tryDecryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<"node">,
+  secretKey: NodeSecretKey,
   options: DecryptOptions = {},
 ): Result<{ result: T }> {
   return $decryptObj<T>(encrypted, secretKey, options);
@@ -249,7 +247,7 @@ export function tryDecryptObj<T extends object = Record<string, unknown>>(
  * Expects input in the format `"iv.cipher.tag."`.
  *
  * @param encrypted - The encrypted string.
- * @param secretKey - The `SecretKey` used for decryption.
+ * @param secretKey - The `NodeSecretKey` used for decryption.
  * @param options - Decryption options.
  * @returns The decrypted object.
  * @throws {Error} If decryption or JSON parsing fails.
@@ -265,7 +263,7 @@ export function tryDecryptObj<T extends object = Record<string, unknown>>(
  */
 export function decryptObj<T extends object = Record<string, unknown>>(
   encrypted: string,
-  secretKey: SecretKey<"node">,
+  secretKey: NodeSecretKey,
   options: DecryptOptions = {},
 ): T {
   const { result, error } = $decryptObj<T>(encrypted, secretKey, options);
@@ -323,6 +321,10 @@ export function tryHashPassword(
  * @remarks
  * Defaults: `sha512`, 320 000 iterations, 64-byte key, 16-byte random salt.
  *
+ * **Performance note:** Uses synchronous `pbkdf2Sync` which blocks the event loop
+ * (~100-300 ms at default iterations). For server-side use under load, prefer the
+ * Web Crypto API (async) via `webKit.hashPassword` instead.
+ *
  * @param password - The password to hash.
  * @param options - Password hashing options.
  * @returns `{ result, salt }` for storage.
@@ -342,16 +344,38 @@ export function hashPassword(password: string, options: HashPasswordOptions = {}
 }
 
 /**
+ * Verifies a password against a stored PBKDF2 hash (non-throwing).
+ *
+ * @returns `Result<boolean>` — `true` if the password matches, `false` if not, or an error for invalid inputs/options.
+ * @see {@link verifyPassword} For full parameter/behavior docs.
+ */
+export function tryVerifyPassword(
+  password: string,
+  hashedPassword: string,
+  salt: string,
+  options: VerifyPasswordOptions = {},
+): Result<boolean> {
+  return $verifyPassword(password, hashedPassword, salt, options);
+}
+
+/**
  * Verifies a password against a stored PBKDF2 hash.
  *
  * @remarks
  * Re-derives the key with the same parameters and compares in constant time to prevent timing attacks.
+ * Throws for invalid inputs/options (bad encoding, wrong parameters, non-decodable salt/hash).
+ * Returns `false` for password mismatch or length-mismatched hash.
+ *
+ * **Performance note:** Uses synchronous `pbkdf2Sync` which blocks the event loop
+ * (~100-300 ms at default iterations). For server-side use under load, prefer the
+ * Web Crypto API (async) via `webKit.verifyPassword` instead.
  *
  * @param password - The plain password to verify.
  * @param hashedPassword - The stored hash (encoded).
  * @param salt - The stored salt (encoded).
  * @param options - Verification options (must match the parameters used to hash).
  * @returns `true` if the password matches, otherwise `false`.
+ * @throws {Error} If verification input/options are invalid.
  *
  * @example
  * ```ts
@@ -359,6 +383,8 @@ export function hashPassword(password: string, options: HashPasswordOptions = {}
  * verifyPassword("my-password", result, salt);    // true
  * verifyPassword("wrong-password", result, salt); // false
  * ```
+ *
+ * @see {@link tryVerifyPassword} Non-throwing variant returning `Result<boolean>`.
  */
 export function verifyPassword(
   password: string,
@@ -366,7 +392,9 @@ export function verifyPassword(
   salt: string,
   options: VerifyPasswordOptions = {},
 ): boolean {
-  return $verifyPassword(password, hashedPassword, salt, options);
+  const { result, error } = $verifyPassword(password, hashedPassword, salt, options);
+  if (error) throw new Error($fmtResultErr(error));
+  return result;
 }
 
 /**

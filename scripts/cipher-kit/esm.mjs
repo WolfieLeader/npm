@@ -51,7 +51,7 @@ assert.equal(typeof parseToObj, "function");
 assert.equal(typeof stringifyObj, "function");
 assert.equal(typeof tryParseToObj, "function");
 assert.equal(typeof tryStringifyObj, "function");
-assert.ok(typeof ENCRYPTED_REGEX === "object" && ENCRYPTED_REGEX.node instanceof RegExp);
+assert.ok(ENCRYPTED_REGEX instanceof RegExp);
 assert.equal(typeof matchEncryptedPattern, "function");
 
 // Node exports
@@ -85,7 +85,7 @@ assert.equal(typeof nodeStringifyObj, "function");
 assert.equal(typeof nodeTryParseToObj, "function");
 assert.equal(typeof nodeTryStringifyObj, "function");
 assert.equal(typeof nodeMatchEncryptedPattern, "function");
-assert.ok(typeof NODE_ENCRYPTED_REGEX === "object" && NODE_ENCRYPTED_REGEX.node instanceof RegExp);
+assert.ok(NODE_ENCRYPTED_REGEX instanceof RegExp);
 
 // Web API exports
 assert.equal(typeof webApi.isWebSecretKey, "function");
@@ -118,7 +118,7 @@ assert.equal(typeof webApi.stringifyObj, "function");
 assert.equal(typeof webApi.tryParseToObj, "function");
 assert.equal(typeof webApi.tryStringifyObj, "function");
 assert.equal(typeof webApi.matchEncryptedPattern, "function");
-assert.ok(typeof webApi.ENCRYPTED_REGEX === "object" && webApi.ENCRYPTED_REGEX.node instanceof RegExp);
+assert.ok(webApi.ENCRYPTED_REGEX instanceof RegExp);
 
 // Node functional: sync encrypt/decrypt roundtrip
 const key = createSecretKey("smoke-test-secret");

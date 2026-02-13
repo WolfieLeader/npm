@@ -1,6 +1,5 @@
-// @ts-nocheck
 import type {
-  CipherEncoding,
+  CompressEncoding,
   CompressOptions,
   DecompressOptions,
   EightToFifteen,
@@ -24,7 +23,7 @@ const _tryCompressObj: typeof tryCompressObj = {} as typeof tryCompressObj;
 const _tryDecompress: typeof tryDecompress = {} as typeof tryDecompress;
 const _tryDecompressObj: typeof tryDecompressObj = {} as typeof tryDecompressObj;
 
-const _encoding: CipherEncoding = "base64url";
+const _encoding: CompressEncoding = "base64url";
 const _compressOpts: CompressOptions = { level: 6, outputEncoding: "hex" };
 const _decompressOpts: DecompressOptions = { inputEncoding: "base64url", maxOutputSize: 1024 };
 const _level: OneToNine = 9;

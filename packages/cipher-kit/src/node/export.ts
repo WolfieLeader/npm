@@ -23,4 +23,4 @@ export {
   matchEncryptedPattern,
 } from "~/helpers/validate.js";
 export * from "./kit.js";
-export type { NodeSecretKey } from "./node-encrypt.js";
+export type { NodeSecretKey } from "./node-secret-key.js";

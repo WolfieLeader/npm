@@ -1,4 +1,4 @@
-import { $fmtResultErr, type Result } from "@internal/helpers";
+import { $err, $fmtError, $fmtResultErr, $ok, type Result } from "@internal/helpers";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -9,19 +9,9 @@ import type {
   VerifyPasswordOptions,
 } from "~/helpers/types.js";
 import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from "./web-encode.js";
-import {
-  $createSecretKey,
-  $decrypt,
-  $decryptObj,
-  $encrypt,
-  $encryptObj,
-  $generateUuid,
-  $hash,
-  $hashPassword,
-  $isWebSecretKey,
-  $verifyPassword,
-  type WebSecretKey,
-} from "./web-encrypt.js";
+import { $decrypt, $decryptObj, $encrypt, $encryptObj } from "./web-encrypt.js";
+import { $hash, $hashPassword, $verifyPassword } from "./web-hash.js";
+import { $createSecretKey, $isWebSecretKey, type WebSecretKey } from "./web-secret-key.js";
 
 /**
  * Checks whether a value is a `WebSecretKey` for the Web Crypto platform.
@@ -46,7 +36,11 @@ export function isWebSecretKey(x: unknown): x is WebSecretKey {
  * @see {@link generateUuid} For full parameter/behavior docs.
  */
 export function tryGenerateUuid(): Result<string> {
-  return $generateUuid();
+  try {
+    return $ok(globalThis.crypto.randomUUID());
+  } catch (error) {
+    return $err({ message: "web generateUuid: Failed to generate UUID", description: $fmtError(error) });
+  }
 }
 
 /**
@@ -63,9 +57,7 @@ export function tryGenerateUuid(): Result<string> {
  * @see {@link tryGenerateUuid} Non-throwing variant returning `Result<string>`.
  */
 export function generateUuid(): string {
-  const { result, error } = $generateUuid();
-  if (error) throw new Error($fmtResultErr(error));
-  return result;
+  return globalThis.crypto.randomUUID();
 }
 
 /**

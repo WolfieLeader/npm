@@ -1,5 +1,6 @@
 import type { Buffer } from "node:buffer";
-import { $fmtResultErr, type Result } from "@internal/helpers";
+import nodeCrypto from "node:crypto";
+import { $err, $fmtError, $fmtResultErr, $ok, type Result } from "@internal/helpers";
 import type {
   CreateSecretKeyOptions,
   DecryptOptions,
@@ -10,19 +11,9 @@ import type {
   VerifyPasswordOptions,
 } from "~/helpers/types.js";
 import { $convertBytesToStr, $convertEncoding, $convertStrToBytes } from "./node-encode.js";
-import {
-  $createSecretKey,
-  $decrypt,
-  $decryptObj,
-  $encrypt,
-  $encryptObj,
-  $generateUuid,
-  $hash,
-  $hashPassword,
-  $isNodeSecretKey,
-  $verifyPassword,
-  type NodeSecretKey,
-} from "./node-encrypt.js";
+import { $decrypt, $decryptObj, $encrypt, $encryptObj } from "./node-encrypt.js";
+import { $hash, $hashPassword, $verifyPassword } from "./node-hash.js";
+import { $createSecretKey, $isNodeSecretKey, type NodeSecretKey } from "./node-secret-key.js";
 
 /**
  * Checks whether a value is a `NodeSecretKey` for the Node.js platform.
@@ -47,7 +38,11 @@ export function isNodeSecretKey(x: unknown): x is NodeSecretKey {
  * @see {@link generateUuid} For full parameter/behavior docs.
  */
 export function tryGenerateUuid(): Result<string> {
-  return $generateUuid();
+  try {
+    return $ok(nodeCrypto.randomUUID());
+  } catch (error) {
+    return $err({ message: "node generateUuid: Failed to generate UUID", description: $fmtError(error) });
+  }
 }
 
 /**
@@ -64,9 +59,7 @@ export function tryGenerateUuid(): Result<string> {
  * @see {@link tryGenerateUuid} Non-throwing variant returning `Result<string>`.
  */
 export function generateUuid(): string {
-  const { result, error } = $generateUuid();
-  if (error) throw new Error($fmtResultErr(error));
-  return result;
+  return nodeCrypto.randomUUID();
 }
 
 /**

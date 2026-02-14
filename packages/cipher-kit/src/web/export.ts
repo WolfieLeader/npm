@@ -23,4 +23,4 @@ export {
   matchEncryptedPattern,
 } from "~/helpers/validate.js";
 export * from "./kit.js";
-export type { WebSecretKey } from "./web-encrypt.js";
+export type { WebSecretKey } from "./web-secret-key.js";

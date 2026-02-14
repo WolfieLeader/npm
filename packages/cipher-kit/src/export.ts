@@ -26,8 +26,8 @@ export type {
   VerifyPasswordOptions,
 } from "./helpers/types.js";
 
-export type { NodeSecretKey } from "./node/node-encrypt.js";
-export type { WebSecretKey } from "./web/web-encrypt.js";
+export type { NodeSecretKey } from "./node/node-secret-key.js";
+export type { WebSecretKey } from "./web/web-secret-key.js";
 
 /**
  * Node.js cryptography kit using the built-in `crypto` module.

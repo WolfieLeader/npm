@@ -18,8 +18,8 @@
 ## Highlights ✨
 
 - **Simple API** — `setCookie`, `getCookie`, and `deleteCookie`
-- **Automatic security enforcement** for `__Secure-` and `__Host-` cookie prefixes
-- **`sameSite: "none"` enforcement** — automatically forces `secure: true`
+- **Framework compatibility** — supports Express v5/v4 and NestJS (Express adapter)
+- **Security-first enforcement** — enforces `__Secure-`/`__Host-` rules and auto-forces `secure: true` for `sameSite: "none"`
 - **Graceful error handling** — returns `boolean`, never throws
 - **Built on** the RFC-compliant [`cookie`](https://www.npmjs.com/package/cookie) library
 

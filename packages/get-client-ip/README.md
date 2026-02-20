@@ -19,8 +19,8 @@
 
 - **Checks 14 sources** (headers + socket) in priority order
 - **Handles** comma-separated, array, and RFC 7239 `Forwarded` formats
-- **Works standalone** or as Express/NestJS middleware
-- **Auto-populates** `req.clientIp` and `req.clientIps` with full TypeScript support
+- **Framework compatibility** — supports Express v5/v4 and NestJS (Express adapter)
+- **Flexible usage** — works standalone or as middleware, and auto-populates typed `req.clientIp` and `req.clientIps`
 - **Zero config** — validates IPs using Node.js `net.isIP()`
 
 ## Installation 📦

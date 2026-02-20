@@ -61,7 +61,7 @@ npm install compress-kit
 Extract the real client IP from HTTP requests behind any proxy or CDN.
 
 - **12+ proxy headers** checked in priority order (Cloudflare, Fastly, Akamai, AWS)
-- **Standalone function** or Express/NestJS middleware
+- **Express v5/v4 + NestJS support** — use as a standalone function or middleware
 - **Auto-populates** `req.clientIp` and `req.clientIps` with TypeScript support
 - **Zero config** — validates IPs using Node.js `net.isIP()`
 
@@ -100,7 +100,7 @@ npm install -D generate-certs
 
 Type-safe cookie management for Express and NestJS with automatic security enforcement.
 
-- **`setCookie`, `getCookie`, `deleteCookie`** — complete cookie API
+- **Express v5/v4 + NestJS support** — `setCookie`, `getCookie`, `deleteCookie`
 - **Auto-enforces** `__Secure-` and `__Host-` prefix rules
 - **`sameSite: "none"` forces `secure: true`** — prevents silent browser rejection
 - **Graceful error handling** — returns `boolean`, never throws

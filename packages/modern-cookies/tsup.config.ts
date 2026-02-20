@@ -14,6 +14,5 @@ export default defineConfig((options: Options) => ({
   cjsInterop: true,
   tsconfig: "tsconfig.json",
   skipNodeModulesBundle: true,
-  external: ["express"],
   ...options,
 }));

@@ -1,20 +1,19 @@
-import type { Request } from "express";
 import { describe, expect, test, vi } from "vitest";
-import { getClientIp } from "~/index.js";
+import { getClientIp, type IpRequest } from "~/index.js";
 
-function mockReq(overrides: Partial<Request> = {}): Request {
+function mockReq(overrides: Partial<IpRequest> = {}): IpRequest {
   return {
     headers: {},
     socket: { remoteAddress: "127.0.0.1" },
     ip: undefined,
     ...overrides,
-  } as unknown as Request;
+  };
 }
 
 describe("getClientIp", () => {
   describe("standalone usage", () => {
     test("returns undefined when no IP is found", () => {
-      const req = mockReq({ socket: { remoteAddress: undefined } } as unknown as Partial<Request>);
+      const req = mockReq({ socket: { remoteAddress: undefined } });
       expect(getClientIp(req)).toBeUndefined();
     });
 
@@ -24,11 +23,11 @@ describe("getClientIp", () => {
     });
 
     test("throws when req is undefined", () => {
-      expect(() => getClientIp(undefined as unknown as Request)).toThrow("Request is undefined");
+      expect(() => getClientIp(undefined as unknown as IpRequest)).toThrow("Request is undefined");
     });
 
     test("extracts IP from req.ip", () => {
-      const req = mockReq({ ip: "10.0.0.1" } as Partial<Request>);
+      const req = mockReq({ ip: "10.0.0.1" });
       expect(getClientIp(req)).toBe("10.0.0.1");
     });
 
@@ -63,15 +62,15 @@ describe("getClientIp", () => {
     });
 
     test("extracts IP from req.socket.remoteAddress", () => {
-      const req = mockReq({ socket: { remoteAddress: "127.0.0.1" } } as Partial<Request>);
+      const req = mockReq({ socket: { remoteAddress: "127.0.0.1" } });
       expect(getClientIp(req)).toBe("127.0.0.1");
     });
 
     test("returns undefined when headers is undefined and socket has no IP", () => {
       const req = mockReq({
-        headers: undefined as unknown as Request["headers"],
+        headers: undefined as unknown as IpRequest["headers"],
         socket: { remoteAddress: undefined },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBeUndefined();
     });
 
@@ -99,7 +98,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "10.0.0.1" },
         socket: { remoteAddress: "203.0.113.10" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.10");
     });
 
@@ -107,7 +106,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "10.0.0.1" },
         socket: { remoteAddress: undefined },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBeUndefined();
     });
 
@@ -115,7 +114,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "10.0.0.1" },
         socket: undefined,
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBeUndefined();
     });
   });
@@ -233,7 +232,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         ip: "1.1.1.1",
         headers: { forwarded: "for=2.2.2.2", "cf-connecting-ip": "3.3.3.3", "x-forwarded-for": "4.4.4.4" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("1.1.1.1");
     });
 
@@ -269,7 +268,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-real-ip": "5.5.5.5" },
         socket: { remoteAddress: "127.0.0.1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("5.5.5.5");
     });
   });
@@ -279,7 +278,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "203.0.113.50" },
         socket: { remoteAddress: "::1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.50");
     });
 
@@ -287,7 +286,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "203.0.113.50" },
         socket: { remoteAddress: "fe80::1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.50");
     });
 
@@ -295,7 +294,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "203.0.113.50" },
         socket: { remoteAddress: "fd12::1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.50");
     });
 
@@ -303,7 +302,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "203.0.113.50" },
         socket: { remoteAddress: "fc00::1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.50");
     });
 
@@ -311,7 +310,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "203.0.113.50" },
         socket: { remoteAddress: "::ffff:127.0.0.1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.50");
     });
 
@@ -319,7 +318,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "203.0.113.50" },
         socket: { remoteAddress: "::ffff:10.0.0.1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.50");
     });
 
@@ -327,7 +326,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "203.0.113.50" },
         socket: { remoteAddress: "::ffff:192.168.1.1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.50");
     });
 
@@ -335,7 +334,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "203.0.113.50" },
         socket: { remoteAddress: "::ffff:172.20.0.1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("203.0.113.50");
     });
 
@@ -343,7 +342,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "10.0.0.1" },
         socket: { remoteAddress: "2001:db8::1" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("2001:db8::1");
     });
 
@@ -351,7 +350,7 @@ describe("getClientIp", () => {
       const req = mockReq({
         headers: { "x-forwarded-for": "10.0.0.1" },
         socket: { remoteAddress: "::ffff:203.0.113.10" },
-      } as unknown as Partial<Request>);
+      });
       expect(getClientIp(req)).toBe("::ffff:203.0.113.10");
     });
   });
@@ -369,7 +368,7 @@ describe("getClientIp", () => {
     });
 
     test("calls next() even when no IP is found (CRITICAL-3 regression)", () => {
-      const req = mockReq({ socket: { remoteAddress: undefined } } as unknown as Partial<Request>);
+      const req = mockReq({ socket: { remoteAddress: undefined } });
       const next = vi.fn();
       const result = getClientIp(req, undefined, next);
 
@@ -387,7 +386,7 @@ describe("getClientIp", () => {
     });
 
     test("calls next() when IP from socket", () => {
-      const req = mockReq({ socket: { remoteAddress: "127.0.0.1" } } as Partial<Request>);
+      const req = mockReq({ socket: { remoteAddress: "127.0.0.1" } });
       const next = vi.fn();
       getClientIp(req, undefined, next);
 

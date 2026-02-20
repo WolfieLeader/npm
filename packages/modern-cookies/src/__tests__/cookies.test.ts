@@ -1,21 +1,20 @@
-import type { Request, Response } from "express";
 import { describe, expect, test, vi } from "vitest";
-import { deleteCookie, getCookie, setCookie } from "~/index.js";
+import { type CookieRequest, type CookieResponse, deleteCookie, getCookie, setCookie } from "~/index.js";
 
-function mockReq(cookieHeader?: string): Request {
+function mockReq(cookieHeader?: string): CookieRequest {
   return {
     get: (name: string) => (name.toLowerCase() === "cookie" ? cookieHeader : undefined),
-  } as unknown as Request;
+  };
 }
 
-function mockRes(): Response & { _cookies: string[] } {
+function mockRes(): CookieResponse & { _cookies: string[] } {
   const cookies: string[] = [];
   return {
     _cookies: cookies,
     append: vi.fn((name: string, value: string) => {
       if (name === "Set-Cookie") cookies.push(value);
     }),
-  } as unknown as Response & { _cookies: string[] };
+  };
 }
 
 describe("getCookie", () => {
@@ -42,11 +41,11 @@ describe("getCookie", () => {
 
   test("logs error with logError: true when parsing fails", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const req = {
+    const req: CookieRequest = {
       get: () => {
         throw new Error("Header read failure");
       },
-    } as unknown as Request;
+    };
 
     const result = getCookie(req, "session", true);
     expect(result).toBeUndefined();
@@ -248,7 +247,7 @@ describe("error logging", () => {
       append: () => {
         throw new Error("Serialize failed");
       },
-    } as unknown as Response;
+    } as CookieResponse;
 
     setCookie(res, "token", "secret-session-value", {}, true);
     expect(consoleSpy).toHaveBeenCalled();
@@ -263,7 +262,7 @@ describe("error logging", () => {
       append: () => {
         throw new Error("Serialize\nfailed");
       },
-    } as unknown as Response;
+    } as CookieResponse;
 
     setCookie(res, "token\nname", "value", {}, true);
     expect(consoleSpy).toHaveBeenCalled();
@@ -281,7 +280,7 @@ describe("error logging", () => {
       append: () => {
         throw new Error("Serialize failed");
       },
-    } as unknown as Response;
+    } as CookieResponse;
 
     expect(setCookie(res, "token", "value", {}, true)).toBe(false);
     consoleSpy.mockRestore();

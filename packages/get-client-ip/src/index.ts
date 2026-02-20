@@ -1,7 +1,16 @@
+import type { IncomingHttpHeaders } from "node:http";
 import { isIP } from "node:net";
-import type { NextFunction, Request, Response } from "express";
 
 type NonEmptyArray<T> = [T, ...T[]];
+
+/** Minimal request interface — any object with headers and socket (Express v4, v5, etc.). */
+export interface IpRequest {
+  ip?: string;
+  headers: IncomingHttpHeaders;
+  socket?: { remoteAddress?: string };
+  clientIp?: string;
+  clientIps?: NonEmptyArray<string>;
+}
 
 function $isIP(ip: unknown): ip is string {
   return typeof ip === "string" && isIP(ip) !== 0;
@@ -115,7 +124,7 @@ const LOOKUP_HEADERS = [
   "x-cluster-client-ip",
 ];
 
-function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
+function $extractIpFromHeaders(req: IpRequest): NonEmptyArray<string> | null {
   if ($isIP(req.ip)) return [req.ip];
 
   if (!req.headers) return null;
@@ -142,6 +151,7 @@ function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
 }
 
 // biome-ignore-start lint/correctness/noUnusedFunctionParameters: Needed for Express middleware signature
+// biome-ignore-start lint/suspicious/noExplicitAny: Needed for Express next function
 
 /**
  * Extracts the client's IP address from an incoming Express request.
@@ -188,7 +198,7 @@ function $extractIpFromHeaders(req: Request): NonEmptyArray<string> | null {
  *   res.status(200).json({ ip: req.clientIp, ips: req.clientIps });
  * });
  */
-export function getClientIp(req: Request, res?: Response, next?: NextFunction): string | undefined {
+export function getClientIp(req: IpRequest, res?: unknown, next?: (...args: any[]) => void): string | undefined {
   if (!req) throw new Error("Request is undefined");
 
   const ips = $extractIpFromHeaders(req);
@@ -211,6 +221,7 @@ export function getClientIp(req: Request, res?: Response, next?: NextFunction): 
 }
 
 // biome-ignore-end lint/correctness/noUnusedFunctionParameters: Needed for Express middleware signature
+// biome-ignore-end lint/suspicious/noExplicitAny: Needed for Express next function
 
 declare global {
   namespace Express {

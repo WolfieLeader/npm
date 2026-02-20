@@ -1,5 +1,14 @@
 import { parse, serialize } from "cookie";
-import type { Request, Response } from "express";
+
+/** Minimal request interface — any object with a `get` method (Express v4, v5, etc.). */
+export interface CookieRequest {
+  get(name: string): string | undefined;
+}
+
+/** Minimal response interface — any object with an `append` method (Express v4, v5, etc.). */
+export interface CookieResponse {
+  append(field: string, value: string | string[]): unknown;
+}
 
 function $sanitizeForLog(input: unknown, maxLength = 160): string {
   const value = typeof input === "string" ? input : input instanceof Error ? input.message : String(input);
@@ -49,7 +58,7 @@ export interface CookieOptions {
  * @param logError - If `true`, logs parsing errors to the console.
  * @returns The cookie value if found, otherwise `undefined`.
  */
-export function getCookie(req: Request, name: string, logError = false): string | undefined {
+export function getCookie(req: CookieRequest, name: string, logError = false): string | undefined {
   try {
     const header = req.get("cookie");
     if (!header) return undefined;
@@ -84,7 +93,7 @@ export function getCookie(req: Request, name: string, logError = false): string 
  * @returns `true` if the cookie was set successfully, otherwise `false`.
  */
 export function setCookie(
-  res: Response,
+  res: CookieResponse,
   name: string,
   value: string,
   options: CookieOptions,
@@ -127,6 +136,11 @@ const UNIX_EPOCH = new Date(0);
  * @param logError - If `true`, logs errors to the console.
  * @returns `true` if the deletion request was added successfully, otherwise `false`.
  */
-export function deleteCookie(res: Response, name: string, options: CookieOptions = {}, logError = false): boolean {
+export function deleteCookie(
+  res: CookieResponse,
+  name: string,
+  options: CookieOptions = {},
+  logError = false,
+): boolean {
   return setCookie(res, name, "", { ...options, maxAge: 0, expires: UNIX_EPOCH }, logError);
 }

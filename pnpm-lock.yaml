@@ -30,11 +30,11 @@ importers:
         specifier: 3.0.0-beta.0
         version: 3.0.0-beta.0
       get-client-ip:
-        specifier: 4.0.0-beta.1
-        version: 4.0.0-beta.1(express@4.22.1)
+        specifier: 4.0.0-beta.2
+        version: 4.0.0-beta.2
       modern-cookies:
-        specifier: 2.0.0-beta.1
-        version: 2.0.0-beta.1(express@4.22.1)
+        specifier: 2.0.0-beta.2
+        version: 2.0.0-beta.2
     devDependencies:
       '@types/express':
         specifier: 4.17.25
@@ -58,11 +58,11 @@ importers:
         specifier: 3.0.0-beta.0
         version: 3.0.0-beta.0
       get-client-ip:
-        specifier: 4.0.0-beta.1
-        version: 4.0.0-beta.1(express@5.2.1)
+        specifier: 4.0.0-beta.2
+        version: 4.0.0-beta.2
       modern-cookies:
-        specifier: 2.0.0-beta.1
-        version: 2.0.0-beta.1(express@5.2.1)
+        specifier: 2.0.0-beta.2
+        version: 2.0.0-beta.2
     devDependencies:
       '@types/express':
         specifier: ^5.0.6
@@ -92,11 +92,11 @@ importers:
         specifier: 3.0.0-beta.0
         version: 3.0.0-beta.0
       get-client-ip:
-        specifier: 4.0.0-beta.1
-        version: 4.0.0-beta.1(express@5.2.1)
+        specifier: 4.0.0-beta.2
+        version: 4.0.0-beta.2
       modern-cookies:
-        specifier: 2.0.0-beta.1
-        version: 2.0.0-beta.1(express@5.2.1)
+        specifier: 2.0.0-beta.2
+        version: 2.0.0-beta.2
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -1716,14 +1716,9 @@ packages:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
 
-  get-client-ip@4.0.0-beta.1:
-    resolution: {integrity: sha512-A5sTSU4P8gYtMXdYnheEhgFZj8byB8vZhYnFK2aUZ0sbW9iTADrLw2GD+c8DKVdCy3WaSap3XKYrTx64JLeHtg==}
+  get-client-ip@4.0.0-beta.2:
+    resolution: {integrity: sha512-LQlzWPpwhZM9sGzxWlLgTkRMBSsjs2WaAblEx9B16f0+DZ5p/N9KzRRaQqFTcZa/Olzaz5ZvVjbRjaFuulWIuw==}
     engines: {node: '>=18.0.0'}
-    peerDependencies:
-      express: '>=4.21.0'
-    peerDependenciesMeta:
-      express:
-        optional: true
 
   get-intrinsic@1.3.0:
     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
@@ -1978,14 +1973,9 @@ packages:
   mlly@1.8.0:
     resolution: {integrity: sha512-l8D9ODSRWLe2KHJSifWGwBqpTZXIXTeo8mlKjY+E2HAakaTeNpqAyBZ8GSqLzHgw4XmHmC8whvpjJNMbFZN7/g==}
 
-  modern-cookies@2.0.0-beta.1:
-    resolution: {integrity: sha512-vzsWRqLj6IqOPyWxKtF7H5bRNpZ+BIP5ilIlJB0SZQa6HjRyJwdRZo/+BRqJHYLDQfMQ95CLT9pSL4nOiZU8NQ==}
+  modern-cookies@2.0.0-beta.2:
+    resolution: {integrity: sha512-FFTa598owTC18BLUQBHDz6N8nAwkJfnItP0weg+WRkiu4dg48SzFQsDEwfG6dSn4bSBW2jZ1A+9EWGxe+uU1LA==}
     engines: {node: '>=18.0.0'}
-    peerDependencies:
-      express: '>=4.21.0'
-    peerDependenciesMeta:
-      express:
-        optional: true
 
   ms@2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
@@ -4124,13 +4114,7 @@ snapshots:
 
   get-caller-file@2.0.5: {}
 
-  get-client-ip@4.0.0-beta.1(express@4.22.1):
-    optionalDependencies:
-      express: 4.22.1
-
-  get-client-ip@4.0.0-beta.1(express@5.2.1):
-    optionalDependencies:
-      express: 5.2.1
+  get-client-ip@4.0.0-beta.2: {}
 
   get-intrinsic@1.3.0:
     dependencies:
@@ -4350,17 +4334,9 @@ snapshots:
       pkg-types: 1.3.1
       ufo: 1.6.1
 
-  modern-cookies@2.0.0-beta.1(express@4.22.1):
+  modern-cookies@2.0.0-beta.2:
     dependencies:
       cookie: 1.1.1
-    optionalDependencies:
-      express: 4.22.1
-
-  modern-cookies@2.0.0-beta.1(express@5.2.1):
-    dependencies:
-      cookie: 1.1.1
-    optionalDependencies:
-      express: 5.2.1
 
   ms@2.0.0: {}
 

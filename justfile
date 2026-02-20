@@ -1,5 +1,6 @@
 workspace_packages := "cipher-kit compress-kit generate-certs get-client-ip modern-cookies @internal/helpers"
 public_packages := "cipher-kit compress-kit generate-certs get-client-ip modern-cookies"
+example_packages := "express4 express5 nestjs typescript"
 
 _default:
   just --list
@@ -119,6 +120,23 @@ full-verify target="all":
   if [ "{{ target }}" != "@internal/helpers" ]; then just attw {{ target }}; fi
   if [ "{{ target }}" != "@internal/helpers" ]; then just smoke {{ target }}; fi
 
+# ── Examples ─────────────────────────────────────
+
+[group('examples')]
+dev target:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  valid=false
+  for pkg in {{ example_packages }}; do
+    if [ "$pkg" = "{{ target }}" ]; then valid=true; break; fi
+  done
+  if [ "$valid" != "true" ]; then
+    echo "Unknown example: {{ target }}"
+    echo "Available examples: {{ example_packages }}"
+    exit 1
+  fi
+  pnpm --filter "example-{{ target }}" start
+
 # ── Maintenance ──────────────────────────────────
 
 [group('maintenance')]
@@ -143,3 +161,4 @@ update target="all":
 clean:
   rm -rf node_modules .turbo
   for dir in packages/*; do rm -rf "$dir/dist" "$dir/node_modules" "$dir/.turbo"; done
+  for dir in examples/*; do rm -rf "$dir/dist" "$dir/node_modules" "$dir/.turbo"; done

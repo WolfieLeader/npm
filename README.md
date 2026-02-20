@@ -115,15 +115,15 @@ npm install modern-cookies
 
 ## Tooling ⚒️
 
-| Tool                                              | Purpose                                                            |
-| ------------------------------------------------- | ------------------------------------------------------------------ |
-| [TypeScript 5.9](https://www.typescriptlang.org/) | Strict types with `verbatimModuleSyntax` and `nodenext` resolution |
-| [pnpm](https://pnpm.io/)                          | Workspace management and dependency resolution                     |
-| [Turborepo](https://turbo.build/)                 | Cached, dependency-aware builds across packages                    |
-| [Just](https://just.systems/)                     | Handy way to save and run project-specific commands                |
-| [tsup](https://tsup.egoist.dev/)                  | Dual ESM/CJS output for every package                              |
-| [Biome](https://biomejs.dev/)                     | Linting and formatting (replaces ESLint + Prettier)                |
-| [Vitest](https://vitest.dev/)                     | Testing with TypeScript type checking                              |
+| Tool                                          | Purpose                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| [TypeScript](https://www.typescriptlang.org/) | Strict types with `verbatimModuleSyntax` and `nodenext` resolution |
+| [pnpm](https://pnpm.io/)                      | Workspace management and dependency resolution                     |
+| [Turborepo](https://turbo.build/)             | Cached, dependency-aware builds across packages                    |
+| [Just](https://just.systems/)                 | Handy way to save and run project-specific commands                |
+| [tsup](https://tsup.egoist.dev/)              | Dual ESM/CJS output for every package                              |
+| [Biome](https://biomejs.dev/)                 | Linting and formatting (replaces ESLint + Prettier)                |
+| [Vitest](https://vitest.dev/)                 | Testing with TypeScript type checking                              |
 
 ## Contributing 🤝
 

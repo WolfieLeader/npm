@@ -25,7 +25,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 18. Express is an optional peer dependency.
+Requires Node.js >= 18.
 
 ```bash
 npm install modern-cookies

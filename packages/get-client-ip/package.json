@@ -1,6 +1,6 @@
 {
   "name": "get-client-ip",
-  "version": "4.0.0-beta.0",
+  "version": "4.0.0-beta.2",
   "description": "📍 A Lightweight Utility for Extracting the Real Client IP Address from Incoming HTTP Requests",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/get-client-ip#readme",
   "repository": {
@@ -33,16 +33,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
-  "peerDependencies": {
-    "express": ">=4.21.0"
-  },
-  "peerDependenciesMeta": {
-    "express": {
-      "optional": true
-    }
-  },
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@types/node": "^25.3.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",

@@ -96,7 +96,10 @@ export function $toBase64(bytes: Uint8Array): string {
   return btoa($toLatin1(bytes));
 }
 
+const BASE64_REGEX = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}={2}|[A-Za-z0-9+/]{3}=)?$/;
+
 export function $fromBase64(data: string): Uint8Array<ArrayBuffer> {
+  if (!BASE64_REGEX.test(data)) throw new Error("Invalid base64 string");
   return $fromLatin1(atob(data));
 }
 
@@ -104,7 +107,12 @@ export function $toBase64Url(bytes: Uint8Array): string {
   return $toBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+const BASE64URL_REGEX = /^[A-Za-z0-9_-]*={0,2}$/;
+
 export function $fromBase64Url(data: string): Uint8Array<ArrayBuffer> {
+  if (!BASE64URL_REGEX.test(data) || data.replace(/=+$/, "").length % 4 === 1) {
+    throw new Error("Invalid base64url string");
+  }
   let base64 = data.replace(/-/g, "+").replace(/_/g, "/");
   const padLen = (4 - (base64.length % 4)) % 4;
   base64 += "=".repeat(padLen);

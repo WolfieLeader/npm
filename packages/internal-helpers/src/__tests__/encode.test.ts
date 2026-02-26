@@ -10,7 +10,9 @@ import {
   $toBase64Url,
   $toHex,
   $toLatin1,
+  bytesToStr,
   type Encoding,
+  strToBytes,
   textEncoder,
 } from "~/encode.js";
 
@@ -69,6 +71,14 @@ describe("Base64", () => {
     const encoded = $toBase64(latin1Bytes);
     expect($fromBase64(encoded)).toEqual(latin1Bytes);
   });
+
+  test("rejects whitespace in base64", () => {
+    expect(() => $fromBase64("A B==")).toThrow("Invalid base64 string");
+  });
+
+  test("rejects invalid characters in base64", () => {
+    expect(() => $fromBase64("SGVs!bG8=")).toThrow("Invalid base64 string");
+  });
 });
 
 describe("Base64URL", () => {
@@ -94,6 +104,14 @@ describe("Base64URL", () => {
     expect(urlSafe).not.toContain("+");
     expect(urlSafe).not.toContain("/");
     expect($fromBase64Url(urlSafe)).toEqual(bytes);
+  });
+
+  test("rejects + character (not valid in base64url)", () => {
+    expect(() => $fromBase64Url("abc+def")).toThrow("Invalid base64url string");
+  });
+
+  test("rejects / character (not valid in base64url)", () => {
+    expect(() => $fromBase64Url("abc/def")).toThrow("Invalid base64url string");
   });
 });
 
@@ -255,4 +273,16 @@ describe("Encoding roundtrips", () => {
     expect(back.success).toBe(true);
     if (back.success) expect(back.result).toBe(unicode);
   });
+});
+
+describe("Full byte range encoding roundtrips", () => {
+  const allBytes = Uint8Array.from({ length: 256 }, (_, i) => i);
+
+  for (const encoding of ["base64", "base64url", "hex", "latin1"] as const) {
+    test(`roundtrips 0-255 via ${encoding}`, () => {
+      const encoded = bytesToStr[encoding](allBytes);
+      const decoded = strToBytes[encoding](encoded);
+      expect(decoded).toEqual(allBytes);
+    });
+  }
 });

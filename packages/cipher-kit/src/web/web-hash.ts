@@ -144,7 +144,7 @@ export async function $verifyPassword(
   } catch (error) {
     return $err({ message: "web verifyPassword: Verification failed", description: $fmtError(error) });
   } finally {
-    saltBytes.result?.fill(0);
-    hashedPasswordBytes.result?.fill(0);
+    saltBytes.result.fill(0);
+    hashedPasswordBytes.result.fill(0);
   }
 }

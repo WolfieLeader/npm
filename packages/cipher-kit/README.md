@@ -247,7 +247,7 @@ isWebSecretKey(key); // true if key is WebSecretKey
 
 ### Regex Utilities
 
-Validate the structural shape of encrypted payloads before decryption.
+Validate the structural shape of encrypted payloads before decryption. This is a **structural** check only — it validates the dot-separated format but does not verify whether individual segments contain valid base64, base64url, or hex encoding.
 
 ```typescript
 import { ENCRYPTED_REGEX, matchEncryptedPattern } from "cipher-kit";

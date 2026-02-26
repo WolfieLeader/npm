@@ -131,4 +131,28 @@ describe("Encryption Tests", () => {
     expect(webKey.error).toBeDefined();
     expect(webKey.result).toBeUndefined();
   });
+
+  test("Fail: Forgery attempt with plain object key is rejected", () => {
+    const forgedNode = {
+      platform: "node",
+      digest: "sha256",
+      algorithm: "aes256gcm",
+      key: { type: "secret", symmetricKeySize: 32 },
+      injected: { keyBytes: 32, node: "aes-256-gcm", web: "AES-GCM" },
+    };
+    expect(nodeKit.isNodeSecretKey(forgedNode)).toBe(false);
+
+    const forgedWeb = {
+      platform: "web",
+      digest: "sha256",
+      algorithm: "aes256gcm",
+      key: {
+        type: "secret",
+        algorithm: { name: "AES-GCM", length: 256 },
+        usages: ["encrypt", "decrypt"],
+      },
+      injected: { keyBytes: 32, node: "aes-256-gcm", web: "AES-GCM" },
+    };
+    expect(webKit.isWebSecretKey(forgedWeb)).toBe(false);
+  });
 });

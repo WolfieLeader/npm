@@ -64,7 +64,10 @@ export function $validateSecretKeyBase(
 export const ENCRYPTED_REGEX =
   /^([A-Za-z0-9+/_-][A-Za-z0-9+/=_-]*)\.([A-Za-z0-9+/_-][A-Za-z0-9+/=_-]*)\.([A-Za-z0-9+/_-][A-Za-z0-9+/=_-]*)\.$/;
 
-/** Validates structural shape only, not whether content is valid base64/hex. */
+/**
+ * Structural check only — validates the dot-separated `"iv.cipher.tag."` format
+ * but does NOT verify that individual segments contain valid base64, base64url, or hex encoding.
+ */
 export function matchEncryptedPattern(data: string): boolean {
   return typeof data === "string" && ENCRYPTED_REGEX.test(data);
 }

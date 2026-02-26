@@ -16,6 +16,7 @@ function $isIP(ip: unknown): ip is string {
   return typeof ip === "string" && isIP(ip) !== 0;
 }
 
+/** Checks if an IP is a recognized private/proxy address. CGNAT (100.64.0.0/10, RFC 6598) is excluded — it's shared ISP address space, not a trusted local proxy. */
 function $isTrustedProxyAddress(ip: string): boolean {
   const ipVersion = isIP(ip);
 

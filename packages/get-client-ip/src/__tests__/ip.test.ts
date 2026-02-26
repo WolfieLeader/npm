@@ -355,6 +355,46 @@ describe("getClientIp", () => {
     });
   });
 
+  describe("CGNAT and special addresses", () => {
+    test("CGNAT address 100.64.0.1 as remoteAddress — headers NOT trusted", () => {
+      const req = mockReq({
+        headers: { "x-forwarded-for": "10.0.0.1" },
+        socket: { remoteAddress: "100.64.0.1" },
+      });
+      expect(getClientIp(req)).toBe("100.64.0.1");
+    });
+
+    test("link-local 169.254.1.1 as remoteAddress — headers ARE trusted", () => {
+      const req = mockReq({
+        headers: { "x-forwarded-for": "203.0.113.50" },
+        socket: { remoteAddress: "169.254.1.1" },
+      });
+      expect(getClientIp(req)).toBe("203.0.113.50");
+    });
+
+    test("extremely long header value (10K+ entries) — no crash", () => {
+      const longValue = Array.from({ length: 10_000 }, (_, i) => `10.0.${Math.floor(i / 256)}.${i % 256}`).join(", ");
+      const req = mockReq({ headers: { "x-forwarded-for": longValue } });
+      const result = getClientIp(req);
+      expect(typeof result).toBe("string");
+    });
+
+    test("empty/whitespace-only forwarded header — graceful fallback", () => {
+      const req = mockReq({ headers: { forwarded: "   " } });
+      expect(getClientIp(req)).toBe("127.0.0.1");
+    });
+
+    test("0.0.0.0 in forwarding headers", () => {
+      const req = mockReq({ headers: { "x-forwarded-for": "0.0.0.0" } });
+      expect(getClientIp(req)).toBe("0.0.0.0");
+    });
+
+    test("255.255.255.255 in forwarding headers", () => {
+      const req = mockReq({ headers: { "x-forwarded-for": "255.255.255.255" } });
+      expect(getClientIp(req)).toBe("255.255.255.255");
+    });
+  });
+
   describe("middleware usage", () => {
     test("calls next() and populates req.clientIp when IP found", () => {
       const req = mockReq({ headers: { "x-forwarded-for": "10.0.0.1" } });

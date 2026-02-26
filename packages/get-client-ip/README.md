@@ -125,6 +125,8 @@ export class AppController {
 2. This ensures the function returns `req.ip` first and avoids fallback ambiguity
 3. Without `trust proxy`, forwarding headers may still be ignored when the peer is public
 
+> **CGNAT addresses:** Addresses in the `100.64.0.0/10` range (RFC 6598) are treated as public, not trusted proxy addresses. Headers are not trusted when the socket peer is a CGNAT address. If your application is behind a load balancer (e.g., AWS ALB), configure Express's `trust proxy` setting so `req.ip` is populated correctly.
+
 ## Credits 🙏
 
 Inspired by [Petar Bojinov's](https://github.com/pbojinov) work on client IP detection.

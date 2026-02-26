@@ -445,4 +445,36 @@ describe("Encryption Tests", () => {
     const result = await webKit.tryDecrypt(truncated, key);
     expect(result.success).toBe(false);
   });
+
+  test("Node: decrypt() throwing variant with wrong key", () => {
+    const key1 = nodeKit.createSecretKey(secret);
+    const key2 = nodeKit.createSecretKey(`${secret}!`);
+    const enc = nodeKit.encrypt(data, key1);
+    expect(() => nodeKit.decrypt(enc, key2)).toThrow();
+  });
+
+  test("Web: decrypt() throwing variant with wrong key", async () => {
+    const key1 = await webKit.createSecretKey(secret);
+    const key2 = await webKit.createSecretKey(`${secret}!`);
+    const enc = await webKit.encrypt(data, key1);
+    await expect(webKit.decrypt(enc, key2)).rejects.toThrow();
+  });
+
+  test("Node: encrypt/decrypt rejects empty string", () => {
+    const key = nodeKit.createSecretKey(secret);
+    const encResult = nodeKit.tryEncrypt("", key);
+    expect(encResult.success).toBe(false);
+
+    const encWsResult = nodeKit.tryEncrypt("   ", key);
+    expect(encWsResult.success).toBe(false);
+  });
+
+  test("Web: encrypt/decrypt rejects empty string", async () => {
+    const key = await webKit.createSecretKey(secret);
+    const encResult = await webKit.tryEncrypt("", key);
+    expect(encResult.success).toBe(false);
+
+    const encWsResult = await webKit.tryEncrypt("   ", key);
+    expect(encWsResult.success).toBe(false);
+  });
 });

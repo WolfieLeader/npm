@@ -117,6 +117,7 @@ export async function tryEncrypt(
  * @remarks
  * Output format: `"iv.cipher.tag."` (three dot-separated base64url segments plus trailing dot).
  * Cross-platform compatible — data encrypted on Web can be decrypted on Node and vice versa.
+ * AES-GCM uses random 96-bit IVs. Rotate keys before ~2^32 encryptions with the same key to avoid nonce collision.
  *
  * @param data - UTF-8 string to encrypt. Must be a non-empty string (whitespace-only strings are rejected).
  * @param secretKey - The `WebSecretKey` used for encryption.

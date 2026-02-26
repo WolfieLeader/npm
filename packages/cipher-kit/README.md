@@ -137,6 +137,8 @@ if (result.success) {
 ```
 
 > **Wire format:** Both platforms output `iv.cipher.tag.` (3 dot-separated segments with trailing dot). The format is **cross-platform compatible** — data encrypted on Node can be decrypted on Web and vice versa.
+>
+> **Nonce exhaustion:** AES-GCM uses random 96-bit IVs. Rotate keys before ~2^32 encryptions with the same key to avoid nonce collision.
 
 ### `encryptObj` / `decryptObj` / `tryEncryptObj` / `tryDecryptObj`
 

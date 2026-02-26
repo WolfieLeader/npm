@@ -129,6 +129,7 @@ export async function $verifyPassword(
     left.set(bits);
     right.set(expected);
 
+    // Best-effort constant-time comparison; JS JIT may introduce timing variation
     let diff = 0;
     for (let i = 0; i < keyLength; i++) {
       diff |= (left[i] as number) ^ (right[i] as number);

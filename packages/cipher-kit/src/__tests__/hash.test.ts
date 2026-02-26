@@ -207,4 +207,25 @@ describe("Hashing", () => {
     const nodeVerify = nodeKit.verifyPassword(password, webHash.result as string, webHash.salt as string, verifyOpts);
     expect(nodeVerify).toBe(true);
   });
+
+  test("Known SHA-256 vector for cross-platform determinism", async () => {
+    const knownHex = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+    const nodeResult = nodeKit.hash("abc", { digest: "sha256", outputEncoding: "hex" });
+    const webResult = await webKit.hash("abc", { digest: "sha256", outputEncoding: "hex" });
+    expect(nodeResult).toBe(knownHex);
+    expect(webResult).toBe(knownHex);
+  });
+
+  test("Unicode normalization: caf\u00e9 vs cafe\\u0301", async () => {
+    const composed = "caf\u00e9";
+    const decomposed = "cafe\u0301";
+
+    const nodeHash1 = nodeKit.hashPassword(composed);
+    const nodeVerify = nodeKit.verifyPassword(decomposed, nodeHash1.result, nodeHash1.salt);
+    expect(nodeVerify).toBe(true);
+
+    const webHash1 = await webKit.hashPassword(composed);
+    const webVerify = await webKit.verifyPassword(decomposed, webHash1.result, webHash1.salt);
+    expect(webVerify).toBe(true);
+  });
 });

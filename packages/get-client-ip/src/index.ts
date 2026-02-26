@@ -35,7 +35,7 @@ function $isTrustedProxyAddress(ip: string): boolean {
     const lower = ip.toLowerCase();
     return (
       lower === "::1" ||
-      (Number.parseInt(lower.slice(0, 4), 16) & 0xffc0) === 0xfe80 ||
+      lower.startsWith("fe80:") ||
       lower.startsWith("fc") ||
       lower.startsWith("fd") ||
       lower.startsWith("::ffff:10.") ||

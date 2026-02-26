@@ -31,6 +31,14 @@ describe("getClientIp", () => {
       expect(getClientIp(req)).toBe("10.0.0.1");
     });
 
+    test("falls through when req.ip is a non-IP string", () => {
+      const req = mockReq({
+        ip: "not-an-ip",
+        headers: { "x-forwarded-for": "203.0.113.50" },
+      });
+      expect(getClientIp(req)).toBe("203.0.113.50");
+    });
+
     test("extracts IP from x-forwarded-for header", () => {
       const req = mockReq({ headers: { "x-forwarded-for": "192.168.1.1" } });
       expect(getClientIp(req)).toBe("192.168.1.1");

@@ -3,9 +3,9 @@
   "private": true,
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@biomejs/biome": "2.4.3",
+    "@biomejs/biome": "2.4.4",
     "prettier": "^3.8.1",
-    "turbo": "^2.8.10"
+    "turbo": "^2.8.11"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

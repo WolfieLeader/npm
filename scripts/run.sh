@@ -92,10 +92,10 @@ EOF
 
 npm install --prefix "$TMP_DIR" \
   "${TARBALLS[@]}" \
-  express@4.21.2 \
+  express@5.2.1 \
   typescript@5.9.3 \
-  @types/node@25.2.2 \
-  @types/express@5.0.2 \
+  @types/node@25.3.1 \
+  @types/express@5.0.6 \
   --save-exact --silent
 
 for pkg in "${SELECTED_PKGS[@]}"; do

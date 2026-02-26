@@ -166,6 +166,8 @@ bootstrap();
 - **Browser warnings are expected** — self-signed certificates will show "Not Secure"; click Advanced → Proceed to localhost
 - **Suppress logs** with `activateLogs: false` when running in CI or test environments
 
+> **Windows:** File permission checks are skipped on Windows. Lock file stale detection uses a 60-second timeout as a cross-platform fallback.
+
 ## Type Exports 🏷️
 
 ```typescript

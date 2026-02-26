@@ -36,6 +36,7 @@ function $evictStaleLock(lockPath: string): boolean {
     const lockPid = Number.parseInt(fs.readFileSync(lockPath, "utf8"), 10);
     if (!Number.isNaN(lockPid)) {
       try {
+        // On Windows, process.kill(pid, 0) may throw even for alive processes; the stale timeout above serves as fallback
         process.kill(lockPid, 0);
       } catch {
         fs.unlinkSync(lockPath);

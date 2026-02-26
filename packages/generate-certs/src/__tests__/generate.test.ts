@@ -363,4 +363,38 @@ describe("generateCerts", () => {
     const firstByte = Number.parseInt(cert.serialNumber.slice(0, 2), 16);
     expect((firstByte & 0x80) === 0).toBe(true);
   });
+
+  it("evicts lock file with garbage (non-numeric) content via stale timeout", () => {
+    const certsPath = makeTmpDir();
+    const lockPath = path.join(certsPath, ".generate-certs.lock");
+
+    fs.writeFileSync(lockPath, "not-a-pid", { flag: "wx" });
+    const pastTime = Date.now() - 120_000;
+    fs.utimesSync(lockPath, new Date(pastTime), new Date(pastTime));
+
+    const result = generateCerts({ certsPath, ...OPTS });
+    expect(result.key).toContain("-----BEGIN RSA PRIVATE KEY-----");
+    expect(fs.existsSync(lockPath)).toBe(false);
+  });
+
+  it("evicts lock held by current PID once stale timeout exceeded", () => {
+    const certsPath = makeTmpDir();
+    const lockPath = path.join(certsPath, ".generate-certs.lock");
+
+    fs.writeFileSync(lockPath, `${process.pid}`, { flag: "wx" });
+    const pastTime = Date.now() - 120_000;
+    fs.utimesSync(lockPath, new Date(pastTime), new Date(pastTime));
+
+    const result = generateCerts({ certsPath, ...OPTS });
+    expect(result.key).toContain("-----BEGIN RSA PRIVATE KEY-----");
+    expect(fs.existsSync(lockPath)).toBe(false);
+  });
+
+  it("handles certsPath that is a file instead of a directory", () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gen-certs-"));
+    const filePath = path.join(tmpDir, "not-a-dir");
+    fs.writeFileSync(filePath, "content");
+
+    expect(() => generateCerts({ certsPath: filePath, ...OPTS })).toThrow();
+  });
 });

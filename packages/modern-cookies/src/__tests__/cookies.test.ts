@@ -217,6 +217,60 @@ describe("edge cases", () => {
   });
 });
 
+describe("cookie edge cases - extended", () => {
+  test("very long cookie name (2000+ chars)", () => {
+    const res = mockRes();
+    const longName = "x".repeat(2000);
+    const result = setCookie(res, longName, "val", {});
+    // Should not crash - cookie library handles serialization
+    expect(typeof result).toBe("boolean");
+  });
+
+  test("cookie value with unicode", () => {
+    const res = mockRes();
+    const result = setCookie(res, "test", "café ☕", {});
+    expect(result).toBe(true);
+    expect(res._cookies[0]).toContain("test=");
+  });
+
+  test("getCookie with malformed header (;;;)", () => {
+    const req = mockReq(";;;");
+    const result = getCookie(req, "test");
+    expect(result).toBeUndefined();
+  });
+
+  test("getCookie with empty name", () => {
+    const req = mockReq("=value; test=abc");
+    const result = getCookie(req, "");
+    // The cookie spec says empty-name cookies parse as the value before first =
+    // Behavior depends on the `cookie` library — just verify no crash
+    expect(result === undefined || typeof result === "string").toBe(true);
+  });
+
+  test("deleteCookie preserves custom domain (non-__Host- case)", () => {
+    const res = mockRes();
+    deleteCookie(res, "session", { domain: "example.com" });
+    expect(res._cookies[0]).toContain("Domain=example.com");
+    expect(res._cookies[0]).toContain("Max-Age=0");
+  });
+
+  test("maxAge: -1 behavior", () => {
+    const res = mockRes();
+    setCookie(res, "test", "val", { maxAge: -1 });
+    expect(res._cookies[0]).toContain("Max-Age=-1");
+  });
+
+  test("setCookie where res.append throws non-Error object", () => {
+    const res = {
+      append: () => {
+        throw "string error";
+      },
+    } as unknown as CookieResponse;
+    const result = setCookie(res, "test", "val", {});
+    expect(result).toBe(false);
+  });
+});
+
 describe("sameSite=none enforcement", () => {
   test("forces secure: true when sameSite is none", () => {
     const res = mockRes();

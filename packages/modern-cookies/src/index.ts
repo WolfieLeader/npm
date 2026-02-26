@@ -102,13 +102,11 @@ export function setCookie(
   try {
     const sameSite = $normalizeSameSite(options.sameSite);
     const cookieOptions = { ...options, sameSite, path: options.path ?? "/" };
-    const normalizedName = name.toLowerCase();
-
-    if (normalizedName.startsWith("__host-")) {
+    if (name.startsWith("__Host-")) {
       cookieOptions.secure = true;
       cookieOptions.path = "/";
       cookieOptions.domain = undefined;
-    } else if (normalizedName.startsWith("__secure-")) {
+    } else if (name.startsWith("__Secure-")) {
       cookieOptions.secure = true;
     }
 

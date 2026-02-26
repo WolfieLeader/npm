@@ -101,7 +101,7 @@ const ok = setCookie(res, "lang", "en", { maxAge: 60 * 60 * 24 * 365 });
 
 ### `deleteCookie(res, name, options?, logError?): boolean`
 
-Deletes a cookie by setting `maxAge: 0`. If the cookie was set with a specific `path` or `domain`, pass the same values to ensure the correct cookie is removed.
+Deletes a cookie by setting `maxAge: 0` **and** `expires` to the Unix epoch for maximum browser compatibility. If the cookie was set with a specific `path` or `domain`, pass the same values to ensure the correct cookie is removed. Similarly, if the cookie was set with `sameSite: "none"`, pass `sameSite: "none"` in the delete options so the browser matches and removes the correct cookie.
 
 | Parameter  | Type            | Default | Description                                 |
 | ---------- | --------------- | ------- | ------------------------------------------- |
@@ -115,6 +115,9 @@ deleteCookie(res, "session");
 
 // If the cookie was set with a specific path/domain, match them
 deleteCookie(res, "tracking", { path: "/app", domain: "example.com" });
+
+// If the cookie was set with sameSite: "none", pass it on delete too
+deleteCookie(res, "cross-origin", { sameSite: "none" });
 ```
 
 ### `CookieOptions`

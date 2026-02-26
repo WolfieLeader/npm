@@ -128,10 +128,10 @@ describe("setCookie", () => {
       expect(res._cookies[0]).toContain("Path=/admin");
     });
 
-    test("enforces secure for lowercase __secure- prefix", () => {
+    test("does not enforce secure for non-standard case __secure- prefix", () => {
       const res = mockRes();
       setCookie(res, "__secure-session", "abc", {});
-      expect(res._cookies[0]).toContain("Secure");
+      expect(res._cookies[0]).not.toContain("Secure");
     });
   });
 
@@ -202,18 +202,17 @@ describe("edge cases", () => {
     expect(res._cookies).toHaveLength(0);
   });
 
-  test("enforces __HOST- (fully uppercase) prefix security", () => {
+  test("does not enforce __HOST- (non-standard case) prefix security", () => {
     const res = mockRes();
     setCookie(res, "__HOST-session", "abc", { path: "/admin" });
-    expect(res._cookies[0]).toContain("Secure");
-    expect(res._cookies[0]).toContain("Path=/");
-    expect(res._cookies[0]).not.toContain("Path=/admin");
+    expect(res._cookies[0]).not.toContain("Secure");
+    expect(res._cookies[0]).toContain("Path=/admin");
   });
 
-  test("enforces __SECURE- (fully uppercase) prefix security", () => {
+  test("does not enforce __SECURE- (non-standard case) prefix security", () => {
     const res = mockRes();
     setCookie(res, "__SECURE-token", "abc", {});
-    expect(res._cookies[0]).toContain("Secure");
+    expect(res._cookies[0]).not.toContain("Secure");
   });
 });
 

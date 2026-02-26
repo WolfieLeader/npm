@@ -214,13 +214,6 @@ export function $decompress(compressed: string, options: DecompressOptions): Res
       return $err({ message: "decompress: Failed to decompress data", description: $fmtError(error) });
     }
 
-    if (inflater.err) {
-      return $err({
-        message: "decompress: Failed to decompress data",
-        description: inflater.msg || "Unknown inflate error",
-      });
-    }
-
     try {
       parts.push(decoder.decode());
     } catch (error) {

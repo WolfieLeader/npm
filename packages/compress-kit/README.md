@@ -129,7 +129,18 @@ const original = decompressObj<{ users: string[] }>(compressed);
 console.log(original.users); // ["Alice", "Bob"]
 ```
 
-Each function has a `try*` variant (`tryCompressObj`, `tryDecompressObj`).
+Each function has a `try*` variant (`tryCompressObj`, `tryDecompressObj`). Note that `tryDecompressObj` returns `Result<{ result: T }>`, so the object is accessed via `result.result`:
+
+```typescript
+import { compressObj, tryDecompressObj } from "compress-kit";
+
+const compressed = compressObj({ users: ["Alice", "Bob"] });
+const result = tryDecompressObj<{ users: string[] }>(compressed);
+
+if (result.success) {
+  console.log(result.result.users); // ["Alice", "Bob"]
+}
+```
 
 ## Output Format 📤
 

@@ -129,7 +129,7 @@ export function compressObj<T extends object = Record<string, unknown>>(obj: T, 
 /**
  * Decompresses a tagged string to a plain object (non-throwing).
  *
- * @returns `Result<{ result: T }>` with the object or error.
+ * @returns `Result<{ result: T }>` — on success, access the object via `result.result`.
  * @see {@link decompressObj} For full parameter/behavior docs.
  */
 export function tryDecompressObj<T extends object = Record<string, unknown>>(

@@ -27,14 +27,14 @@ importers:
         specifier: 4.22.1
         version: 4.22.1
       generate-certs:
-        specifier: 3.0.0-beta.0
-        version: 3.0.0-beta.0
+        specifier: 3.0.0
+        version: 3.0.0
       get-client-ip:
-        specifier: 4.0.0-beta.2
-        version: 4.0.0-beta.2
+        specifier: 4.0.0
+        version: 4.0.0
       modern-cookies:
-        specifier: 2.0.0-beta.2
-        version: 2.0.0-beta.2
+        specifier: 2.0.0
+        version: 2.0.0
     devDependencies:
       '@types/express':
         specifier: 4.17.25
@@ -55,14 +55,14 @@ importers:
         specifier: ^5.2.1
         version: 5.2.1
       generate-certs:
-        specifier: 3.0.0-beta.0
-        version: 3.0.0-beta.0
+        specifier: 3.0.0
+        version: 3.0.0
       get-client-ip:
-        specifier: 4.0.0-beta.2
-        version: 4.0.0-beta.2
+        specifier: 4.0.0
+        version: 4.0.0
       modern-cookies:
-        specifier: 2.0.0-beta.2
-        version: 2.0.0-beta.2
+        specifier: 2.0.0
+        version: 2.0.0
     devDependencies:
       '@types/express':
         specifier: ^5.0.6
@@ -89,14 +89,14 @@ importers:
         specifier: ^11.1.14
         version: 11.1.14(@nestjs/common@11.1.14(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.14)
       generate-certs:
-        specifier: 3.0.0-beta.0
-        version: 3.0.0-beta.0
+        specifier: 3.0.0
+        version: 3.0.0
       get-client-ip:
-        specifier: 4.0.0-beta.2
-        version: 4.0.0-beta.2
+        specifier: 4.0.0
+        version: 4.0.0
       modern-cookies:
-        specifier: 2.0.0-beta.2
-        version: 2.0.0-beta.2
+        specifier: 2.0.0
+        version: 2.0.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -120,11 +120,11 @@ importers:
   examples/typescript:
     dependencies:
       cipher-kit:
-        specifier: 3.0.0-beta.0
-        version: 3.0.0-beta.0
+        specifier: 3.0.0
+        version: 3.0.0
       compress-kit:
-        specifier: 3.0.0-beta.0
-        version: 3.0.0-beta.0
+        specifier: 3.0.0
+        version: 3.0.0
     devDependencies:
       '@types/node':
         specifier: ^25.3.0
@@ -1383,8 +1383,8 @@ packages:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
     engines: {node: '>=6.0'}
 
-  cipher-kit@3.0.0-beta.0:
-    resolution: {integrity: sha512-vQwLnS/vO73LTWpvtd8kPr6ELblfiNRroqkG3YHHXASBb8QI6PWELEhiOkdpuqOyy2YQhR8tJguHw0j0VDvzfg==}
+  cipher-kit@3.0.0:
+    resolution: {integrity: sha512-A+MkROCRctzXGWaW+Snyz1PavY8TZ/1eubSAkBhcJcwO5pstmM1BFft5qlXQuEO+wb11OjYzD8swsWjzfb08vg==}
     engines: {node: '>=18.0.0'}
 
   cjs-module-lexer@1.4.3:
@@ -1440,8 +1440,8 @@ packages:
     resolution: {integrity: sha512-r1To31BQD5060QdkC+Iheai7gHwoSZobzunqkf2/kQ6xIAfJyrKNAFUwdKvkK7Qgu7pVTKQEa7ok7Ed3ycAJgg==}
     engines: {node: '>= 6'}
 
-  compress-kit@3.0.0-beta.0:
-    resolution: {integrity: sha512-MCeg/KlpXi3CPpNcHMBDjer5yQAU5Rk/4wBhKDeGbnhgOEqS9mGDDF02HbTHqrpIBWsoW9KM1xuCyEEMR4Xq9A==}
+  compress-kit@3.0.0:
+    resolution: {integrity: sha512-/5AKPjzlZqNXThT0+VE4NBu6DmRz0jp9BnJqKg6haXaTAhbY0azIMaFOCdREQULUCSy01f7wjhemzuvvPJ3GUQ==}
     engines: {node: '>=18.0.0'}
 
   concat-map@0.0.1:
@@ -1711,16 +1711,16 @@ packages:
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
-  generate-certs@3.0.0-beta.0:
-    resolution: {integrity: sha512-NoIKarjvWBJpvtM8v4Txvnr4k+MBkQnZ1ouMIUSPUGBbcDC/J6UhoEF2/vyABny4DLBhTA/RqrWfew1NDHmTsg==}
+  generate-certs@3.0.0:
+    resolution: {integrity: sha512-mmhaOrLTSxw+PztB1yYbOUw0+FYKQBP7gJFhzw2RYX9hEsNIb9zvZKIhsun1+IftEjBXUYzU7OqenGKNG5vTZA==}
     engines: {node: '>=18.0.0'}
 
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
 
-  get-client-ip@4.0.0-beta.2:
-    resolution: {integrity: sha512-LQlzWPpwhZM9sGzxWlLgTkRMBSsjs2WaAblEx9B16f0+DZ5p/N9KzRRaQqFTcZa/Olzaz5ZvVjbRjaFuulWIuw==}
+  get-client-ip@4.0.0:
+    resolution: {integrity: sha512-LsbDXfKna3AZKxI8COBs3jUp8BkMo/uIv3YSl+vzblWCDLW662UzoohW1VoNnRqk9HRBk99y+SNoC3lcF474Lw==}
     engines: {node: '>=18.0.0'}
 
   get-intrinsic@1.3.0:
@@ -1976,8 +1976,8 @@ packages:
   mlly@1.8.0:
     resolution: {integrity: sha512-l8D9ODSRWLe2KHJSifWGwBqpTZXIXTeo8mlKjY+E2HAakaTeNpqAyBZ8GSqLzHgw4XmHmC8whvpjJNMbFZN7/g==}
 
-  modern-cookies@2.0.0-beta.2:
-    resolution: {integrity: sha512-FFTa598owTC18BLUQBHDz6N8nAwkJfnItP0weg+WRkiu4dg48SzFQsDEwfG6dSn4bSBW2jZ1A+9EWGxe+uU1LA==}
+  modern-cookies@2.0.0:
+    resolution: {integrity: sha512-IpW3qhs9DJDfszdSZeldv+2EklKw2QJmKWg7bCJhjBMHqr0sZVh1ddX9yZQ+6g2kMJmRl+CopL1CgAUM2ssEjQ==}
     engines: {node: '>=18.0.0'}
 
   ms@2.0.0:
@@ -3741,7 +3741,7 @@ snapshots:
 
   chrome-trace-event@1.0.4: {}
 
-  cipher-kit@3.0.0-beta.0: {}
+  cipher-kit@3.0.0: {}
 
   cjs-module-lexer@1.4.3: {}
 
@@ -3794,7 +3794,7 @@ snapshots:
       core-util-is: 1.0.3
       esprima: 4.0.1
 
-  compress-kit@3.0.0-beta.0:
+  compress-kit@3.0.0:
     dependencies:
       pako: 2.1.0
 
@@ -4115,13 +4115,13 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  generate-certs@3.0.0-beta.0:
+  generate-certs@3.0.0:
     dependencies:
       node-forge: 1.3.3
 
   get-caller-file@2.0.5: {}
 
-  get-client-ip@4.0.0-beta.2: {}
+  get-client-ip@4.0.0: {}
 
   get-intrinsic@1.3.0:
     dependencies:
@@ -4341,7 +4341,7 @@ snapshots:
       pkg-types: 1.3.1
       ufo: 1.6.1
 
-  modern-cookies@2.0.0-beta.2:
+  modern-cookies@2.0.0:
     dependencies:
       cookie: 1.1.1
 

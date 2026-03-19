@@ -121,7 +121,7 @@ npm install modern-cookies
 | [pnpm](https://pnpm.io/)                      | Workspace management and dependency resolution                     |
 | [Turborepo](https://turbo.build/)             | Cached, dependency-aware builds across packages                    |
 | [Just](https://just.systems/)                 | Handy way to save and run project-specific commands                |
-| [tsup](https://tsup.egoist.dev/)              | Dual ESM/CJS output for every package                              |
+| [tsdown](https://tsdown.dev/)                 | Dual ESM/CJS output for every package                              |
 | [Biome](https://biomejs.dev/)                 | Linting and formatting (replaces ESLint + Prettier)                |
 | [Vitest](https://vitest.dev/)                 | Testing with TypeScript type checking                              |
 

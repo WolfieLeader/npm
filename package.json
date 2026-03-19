@@ -3,14 +3,15 @@
   "private": true,
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@biomejs/biome": "2.4.4",
+    "@biomejs/biome": "2.4.8",
     "prettier": "^3.8.1",
-    "turbo": "^2.8.11"
+    "turbo": "^2.8.19"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "@nestjs/core",
-      "esbuild"
+      "esbuild",
+      "rolldown"
     ]
   },
   "packageManager": "pnpm@10.30.1",

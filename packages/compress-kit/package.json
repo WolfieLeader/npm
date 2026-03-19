@@ -28,7 +28,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "prepare": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest"
@@ -38,11 +38,11 @@
   },
   "devDependencies": {
     "@internal/helpers": "workspace:*",
-    "@types/node": "^25.3.1",
+    "@types/node": "^25.5.0",
     "@types/pako": "^2.0.4",
-    "tsup": "^8.5.1",
+    "tsdown": "latest",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   },
   "engines": {
     "node": ">=18.0.0"

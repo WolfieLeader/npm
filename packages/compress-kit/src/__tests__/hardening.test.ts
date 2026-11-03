@@ -153,6 +153,13 @@ describe("Round-trip and input-size edge cases", () => {
     }
   });
 
+  test("a 0x prefix on hex input does not count toward the size limit", () => {
+    expect(tryDecompress("0x414243.0.", { inputEncoding: "hex", maxOutputSize: 3 })).toStrictEqual({
+      success: true,
+      result: "ABC",
+    });
+  });
+
   test("rejects a long run of padding in linear time", () => {
     // A trailing-padding regex here once took seconds: each start position rescanned the whole run.
     const start = performance.now();

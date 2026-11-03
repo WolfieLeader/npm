@@ -135,11 +135,14 @@ export function $compress(data: string, options: CompressOptions): Result<string
   }
 }
 
+function $hexDecodedLength(data: string): number | null {
+  // The hex decoder accepts a 0x prefix.
+  const digits = data.startsWith("0x") || data.startsWith("0X") ? data.length - 2 : data.length;
+  return digits % 2 === 0 ? digits / 2 : null;
+}
+
 function $estimateDecodedByteLength(data: string, encoding: CompressEncoding): number | null {
-  if (encoding === "hex") {
-    if (data.length % 2 !== 0) return null;
-    return data.length / 2;
-  }
+  if (encoding === "hex") return $hexDecodedLength(data);
 
   if (encoding === "base64") {
     if (data.length % 4 !== 0) return null;

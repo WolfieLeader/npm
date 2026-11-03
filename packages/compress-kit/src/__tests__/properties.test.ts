@@ -72,6 +72,7 @@ describe("compress-kit properties", () => {
           expect(JSON.stringify(result.error ?? null)).not.toContain(SENTINEL);
         }
       }),
+      { numRuns: 300 },
     );
   });
 });

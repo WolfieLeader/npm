@@ -15,8 +15,10 @@ on:
 permissions:
   contents: read
 
+# One group per package: GitHub keeps one pending run per group and cancels older pending ones,
+# so a shared group dropped every release queued behind another. Runs for the same package still never overlap.
 concurrency:
-  group: release
+  group: release-${{ inputs.package }}
   cancel-in-progress: false
 
 env:

@@ -38,14 +38,14 @@
     "@arethetypeswrong/core": "catalog:",
     "@types/node": "catalog:",
     "@types/node-forge": "catalog:",
-    "node-forge": "^1.4.2",
+    "node-forge": "catalog:",
     "publint": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.19.0"
   },
   "author": "WolfieLeader",
   "license": "MIT",

@@ -4,7 +4,7 @@
 
 - Drops `node-forge`. Node's `crypto` makes and signs the key, and a small DER encoder writes the certificate, so there are no runtime dependencies.
 - The Common Name is a `UTF8String` instead of a `PrintableString`, serial numbers are always minimal DER, and PEM lines end with `\n` instead of `\r\n`.
-- Supports Node.js 20 and later, and is tested on Bun and Deno 2.
+- Supports Node.js 20.19 and later, and is tested on Bun and Deno 2.
 
 ## 4.0.0
 

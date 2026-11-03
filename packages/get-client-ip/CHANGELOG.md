@@ -2,7 +2,7 @@
 
 ## 5.1.0
 
-- Supports Node.js 20 and later, and is tested on Bun and Deno 2.
+- Supports Node.js 20.19 and later, and is tested on Bun and Deno 2.
 
 ## 5.0.0
 
@@ -47,7 +47,7 @@ Other changes:
 Breaking changes:
 
 - **`getClientIp` is a named Express middleware.** Use `import { getClientIp } from "get-client-ip"`, then `app.use(getClientIp)` or call `getClientIp(req)`. It sets `req.clientIp` (the first address) and `req.clientIps` (all addresses) and returns nothing. Read `req.clientIp` after the call.
-- **`req.ip` is checked first**, then the headers, then the socket.
+- **`req.ip` is checked first**, then the headers, then `req.socket.remoteAddress`, then `req.connection.remoteAddress`.
 - **Only Express requests are supported.** The `req.info.remoteAddress` and `req.requestContext.identity.sourceIp` fallbacks are removed. `express` >= 4.21 is a peer dependency.
 - **A missing request throws** `Request is undefined`. 1.1 returned `null`.
 

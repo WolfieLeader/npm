@@ -4,8 +4,10 @@ import { generateCerts } from "generate-certs";
 
 assert.equal(typeof generateCerts, "function");
 
-const certs = generateCerts({ certsPath: fileURLToPath(new URL("certs", import.meta.url)) });
+const certsPath = fileURLToPath(new URL("certs", import.meta.url));
+const certs = generateCerts({ certsPath });
 assert.ok(typeof certs.cert === "string" && certs.cert.length > 0);
 assert.ok(typeof certs.key === "string" && certs.key.length > 0);
+assert.deepEqual(generateCerts({ certsPath }), certs, "a second call reuses the certificate");
 
 console.log("generate-certs: all ESM tests OK");

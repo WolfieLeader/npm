@@ -28,7 +28,8 @@
 
 ## Installation 📦
 
-Requires Node.js 20 or later. Also tested on Bun and Deno 2. Recommended as a dev dependency.
+Requires Node.js 20.19 or later. Also tested on Bun and Deno 2. Recommended as a dev dependency.
+See the [changelog](https://github.com/WolfieLeader/npm/blob/main/packages/generate-certs/CHANGELOG.md) for what changed in each version.
 
 ```bash
 npm install -D generate-certs
@@ -49,8 +50,6 @@ const certs = generateCerts({ certsPath: path.resolve(import.meta.dirname, "../c
 const app = express();
 https.createServer(certs, app).listen(3443);
 ```
-
-`import.meta.dirname` needs Node.js 20.11 or later. On older Node.js, use `fileURLToPath(new URL("../certs", import.meta.url))` from `node:url`.
 
 ## API Reference 📖
 

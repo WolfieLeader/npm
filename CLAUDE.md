@@ -67,19 +67,23 @@ People and agents copy what they see. The codebase and its checks carry the rule
 
 ## Library invariants
 
-- Semver is strict. Changing an output format is a breaking change: ciphertext or compressed string format,
-  default salt or KDF parameters, cookie attributes, or the returned IP address.
+- Semver is strict. A change is breaking when a consumer would read the output differently: ciphertext or compressed
+  string format, default salt or KDF parameters, cookie attributes, or the returned IP address. Bytes that differ but
+  parse to the same value, such as PEM line endings, are not breaking.
 - The Node and Web implementations of `cipher-kit` produce identical results for the same input.
 - Every package ships dual ESM and CJS with types. The build runs publint and attw; both must pass.
-- Runtime support is `engines.node` (Node 20 and later), Bun, Deno 2 and, for cipher-kit and compress-kit, Workers.
-  CI runs the tests on the first release of Node 20.19, 22 and 24, on Node 26, Bun and Deno, and the smoke test on Node 20.0 and 21.
+- Runtime support is `engines.node` (Node 20.19 and later), Bun, Deno 2 and, for cipher-kit and compress-kit, Workers.
+  `.github/workflows/ci.yml` lists the Node versions CI runs. vitest cannot start on Node 21, so it runs only the smoke test there.
+  `pnpm typecheck` also checks every package against the floor's `@types/node`.
 
 ## Upgrades
 
 - Dependabot opens grouped weekly PRs. pnpm's `minimumReleaseAge` holds a new version back for a day.
 - To adopt a release sooner, add its exact `name@version` to `minimumReleaseAgeExclude`; pnpm prunes the entry later.
-- Dependabot cannot update tools a workflow downloads with curl. The weekly `Tool pins` workflow (`pnpm tool-pins`) fails when one is behind; bump its URL version and SHA-256 together.
+- Dependabot cannot update tools a workflow downloads with curl, or CI's Bun and Deno versions. The weekly `Tool pins` workflow (`pnpm tool-pins`) fails when one is behind; bump a URL version and its SHA-256 together.
 - On an oxlint upgrade, recheck the rules marked nursery in `.oxlintrc.json`.
+- modern-cookies bundles `cookie`, so a `cookie` bump reaches users only through a modern-cookies release.
+- cipher-kit's Workers check runs local workerd, which has no PBKDF2 cap. Deployed Workers cap it at 100,000 iterations.
 
 ## Release
 

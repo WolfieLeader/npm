@@ -42,8 +42,9 @@ jobs:
       - run: pnpm knip
       - run: pnpm smoke
       - run: pnpm workers
+      - run: pnpm changelogs
 
-  # The published packages declare engines.node >=20.0.0. Each major's oldest release catches an API it lacks.
+  # The published packages declare engines.node >=20.19.0. Each major's oldest release catches an API it lacks.
   runtime:
     name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
@@ -53,9 +54,7 @@ jobs:
       matrix:
         node: ["20.19.0", "22.0.0", "24.0.0", "26"]
         include:
-          # vitest cannot start on Node 20.0 to 20.18 or 21, so these run only the packed-tarball smoke test.
-          - node: "20.0.0"
-            smoke-only: true
+          # vitest cannot start on Node 21, so it runs only the packed-tarball smoke test.
           - node: "21"
             smoke-only: true
     steps:
@@ -77,10 +76,7 @@ jobs:
       # Only the published packages: tools/lint-rules loads TypeScript through Node 26 type stripping.
       - if: ${{ !matrix.smoke-only }}
         run: pnpm exec turbo run test --filter "./packages/*"
-      # The Checks job resolves the types. TypeScript 7 cannot start on Node 20.0.
       - run: pnpm smoke
-        env:
-          SMOKE_TYPES: "0"
 
   # vitest runs inside Bun or Deno, so every test file executes on that runtime.
   other-runtimes:
@@ -102,15 +98,15 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      # The latest releases, so a runtime update that breaks a package fails here first.
+      # Exact versions, so a new runtime release never blocks a PR. `pnpm tool-pins` reports newer ones weekly.
       - if: matrix.runtime == 'bun'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: latest
+          bun-version: 1.4.4
       - if: matrix.runtime == 'deno'
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
-          deno-version: 2.x
+          deno-version: 2.9.8
       - run: bash scripts/test-on.sh "$RUNTIME"
         env:
           RUNTIME: ${{ matrix.runtime }}

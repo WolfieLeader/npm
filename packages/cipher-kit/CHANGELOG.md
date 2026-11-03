@@ -2,7 +2,8 @@
 
 ## 4.1.0
 
-- Supports Node.js 20 and later, and is tested on Bun, Deno 2 and Cloudflare Workers.
+- Supports Node.js 20.19 and later, and is tested on Bun, Deno 2 and Cloudflare Workers.
+- On deployed Cloudflare Workers, pass `iterations: 100_000` to `hashPassword` and `verifyPassword`. Workers reject PBKDF2 above 100,000 iterations, and the default is 320,000.
 
 ## 4.0.0
 
@@ -42,7 +43,13 @@ Other changes:
 
 ## 2.1.2
 
-- Exports the `NodeSecretKey` and `WebSecretKey` types, plus `isNodeSecretKey` and `isWebSecretKey`, from `cipher-kit`. They leave the `nodeKit` and `webKit` namespaces; 3.0.0 puts them back.
+- **The `SecretKey` type is replaced by `NodeSecretKey` and `WebSecretKey`.** Code that imports `SecretKey` must switch to one of them.
+- Exports `isNodeSecretKey` and `isWebSecretKey` from `cipher-kit`. They leave the `nodeKit` and `webKit` namespaces; 3.0.0 puts them back.
+
+## 2.1.1
+
+- **`ResultErr` is renamed `ErrorStruct`, and `Result` takes one type parameter.** `Result<T, E>` becomes `Result<T>`.
+- `stringifyObj` and `parseToObj` error messages start with `JSON:` instead of `Utility:`.
 
 ## 2.1.0
 

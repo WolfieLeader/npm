@@ -1,0 +1,8 @@
+{
+  "name": "@internal/node-floor",
+  "private": true,
+  "description": "The Node.js types of engines.node's floor, for `scripts/node-floor.ts`.",
+  "devDependencies": {
+    "@types/node": "catalog:node-floor"
+  }
+}

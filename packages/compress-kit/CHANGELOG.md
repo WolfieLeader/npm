@@ -2,7 +2,7 @@
 
 ## 4.1.0
 
-- Supports Node.js 20 and later, and is tested on Bun, Deno 2 and Cloudflare Workers.
+- Supports Node.js 20.19 and later, and is tested on Bun, Deno 2 and Cloudflare Workers.
 
 ## 4.0.0
 

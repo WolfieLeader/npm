@@ -147,6 +147,14 @@ for pkg in "${SELECTED_PKGS[@]}"; do
   rm "$TMP_DIR/cjs.cjs"
 done
 
+# Type resolution does not depend on the Node version under test, and TypeScript 7 cannot start on Node 20.0.
+# The runtime matrix sets SMOKE_TYPES=0; the Checks job runs it.
+if [[ "${SMOKE_TYPES:-1}" == "0" ]]; then
+  echo ""
+  echo "Smoke test passed! (type resolution skipped: SMOKE_TYPES=0)"
+  exit 0
+fi
+
 echo "==> Running TypeScript type resolution (ESM and CJS consumers)"
 
 # Each types.ts is checked twice: as .mts (import condition) and as .cts (require condition).

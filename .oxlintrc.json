@@ -467,9 +467,12 @@
     },
     {
       // Smoke fixtures import the packed packages and run in a temporary directory, where those packages resolve.
-      // In this repo they do not, so every type-aware rule would see `any`. `pnpm smoke` type-checks them instead.
+      // The Workers checks import them through esbuild's nodePaths. In the repo they do not resolve, so every
+      // type-aware rule would see `any`. `pnpm smoke` type-checks the smoke fixtures instead.
       "files": ["scripts/*/**"],
       "rules": {
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-return": "off",
         "typescript/no-unsafe-assignment": "off",
         "typescript/no-unsafe-call": "off",
         "typescript/no-unsafe-member-access": "off",

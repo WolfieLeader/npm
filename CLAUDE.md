@@ -10,9 +10,11 @@ Use Node 26 (`.node-version`) and the pnpm in `packageManager`. Run every comman
 
 - `pnpm install`: install. It also points git at `.githooks/`.
 - `pnpm verify`: CI's checks, stopping at the first failure, plus gitleaks, actionlint and zizmor when installed.
-  Run it after each change and before you push. The Node version matrix and the security scans run only in CI.
+  Run it after each change and before you push. The Node matrix, Bun, Deno and the security scans run only in CI.
 - `pnpm build`, `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm fmt`: Turbo tasks and the formatter.
 - `pnpm smoke`, `pnpm knip`: packed-tarball imports and types, unused code. The build itself runs publint and attw.
+- `pnpm workers`: cipher-kit and compress-kit inside workerd, the Cloudflare Workers runtime.
+- `bash scripts/test-on.sh bun` or `deno`: every test suite inside that runtime.
 - One package: `pnpm --filter cipher-kit test`. One example: `pnpm --filter example-express5 start`.
 
 ## How we build
@@ -69,7 +71,8 @@ People and agents copy what they see. The codebase and its checks carry the rule
   default salt or KDF parameters, cookie attributes, or the returned IP address.
 - The Node and Web implementations of `cipher-kit` produce identical results for the same input.
 - Every package ships dual ESM and CJS with types. The build runs publint and attw; both must pass.
-- Runtime support is `engines.node`. CI runs the built packages on the oldest supported Node and on the current LTS.
+- Runtime support is `engines.node` (Node 20 and later), Bun, Deno 2 and, for cipher-kit and compress-kit, Workers.
+  CI runs the tests on the first release of Node 20.19, 22 and 24, on Node 26, Bun and Deno, and the smoke test on Node 20.0 and 21.
 
 ## Upgrades
 

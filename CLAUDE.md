@@ -77,6 +77,12 @@ People and agents copy what they see. The codebase and its checks carry the rule
 - To adopt a release sooner, add its exact `name@version` to `minimumReleaseAgeExclude`; pnpm prunes the entry later.
 - On an oxlint upgrade, recheck the rules marked nursery in `.oxlintrc.json`.
 
+## Release
+
+- Bump the package version and its README breaking-changes section in a PR.
+- After the merge, the owner runs Actions → Release and picks the package. It publishes from `main` through npm
+  trusted publishing, so no npm token exists.
+
 ## Never
 
 - Publish, push to `main`, or merge, unless the owner names that exact action. The `pre-push` hook refuses `main`.

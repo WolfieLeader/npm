@@ -38,7 +38,7 @@
     "@arethetypeswrong/core": "catalog:",
     "@types/node": "catalog:",
     "@types/node-forge": "catalog:",
-    "node-forge": "^1.4.2",
+    "node-forge": "catalog:",
     "publint": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",

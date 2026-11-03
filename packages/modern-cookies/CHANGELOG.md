@@ -22,7 +22,7 @@ Breaking changes:
 - **`__Host-` cookies always get `Path=/`.** 1.x kept a custom `path`.
 - **`sameSite: "none"` forces `secure: true`.**
 - **An invalid `sameSite` fails.** `setCookie` returns `false`. `"Strict"`, `"Lax"`, and `"None"` are accepted as well as the lowercase values.
-- **`logError` output changed.** Logs carry only the cookie name and the reason, with control characters stripped. 1.x also logged the cookie value and options.
+- **`logError` output changed.** Logs carry only the cookie name and the reason, with control characters replaced by spaces and each cut to 160 characters. 1.x also logged the cookie value and options.
 
 Other changes:
 

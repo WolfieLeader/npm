@@ -42,6 +42,7 @@ jobs:
       - run: pnpm knip
       - run: pnpm smoke
       - run: pnpm workers
+      - run: pnpm changelogs
 
   # The published packages declare engines.node >=20.0.0. Each major's oldest release catches an API it lacks.
   runtime:

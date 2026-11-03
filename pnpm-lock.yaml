@@ -191,6 +191,9 @@ catalogs:
     knip:
       specifier: 6.44.1
       version: 6.44.1
+    node-forge:
+      specifier: 1.4.2
+      version: 1.4.2
     oxfmt:
       specifier: 0.76.0
       version: 0.76.0
@@ -475,7 +478,7 @@ importers:
         specifier: 'catalog:'
         version: 1.3.14
       node-forge:
-        specifier: ^1.4.2
+        specifier: 'catalog:'
         version: 1.4.2
       publint:
         specifier: 'catalog:'

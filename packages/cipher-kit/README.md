@@ -27,7 +27,9 @@
 ## Installation 📦
 
 Requires Node.js 20 or later. Tested on Node.js 20 to 26, Bun, Deno 2, and Cloudflare Workers (with and without `nodejs_compat`).
+Deployed Workers reject PBKDF2 above 100,000 iterations, so pass `iterations: 100_000` to `hashPassword` and `verifyPassword` there.
 On Deno, the Node kit has no AES-192-GCM, because Deno's `node:crypto` lacks it. The Web kit supports it everywhere.
+See the [changelog](https://github.com/WolfieLeader/npm/blob/main/packages/cipher-kit/CHANGELOG.md) for what changed in each version.
 
 ```bash
 npm install cipher-kit
@@ -195,6 +197,8 @@ const custom = hashPassword("user-password", {
 **`hashPassword` options:** `digest` (default `"sha512"`), `outputEncoding` (default `"base64url"`), `saltLength` (default `16`, min `8`), `iterations` (default `320000`, min `100000`), `keyLength` (default `64`, min `16`).
 
 **`verifyPassword` options:** `digest` (default `"sha512"`), `inputEncoding` (default `"base64url"`), `iterations` (default `320000`), `keyLength` (default `64`). Must match the values used during hashing.
+
+> **Cloudflare Workers:** deployed Workers reject PBKDF2 above 100,000 iterations, in both kits. Pass `iterations: 100_000` to `hashPassword` and `verifyPassword`. Local workerd does not enforce it.
 
 > **Note:** Node uses `crypto.timingSafeEqual` for constant-time comparison. The Web implementation uses a best-effort full-loop XOR pattern since the Web Crypto API does not expose a `timingSafeEqual` equivalent.
 >

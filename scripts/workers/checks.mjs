@@ -29,9 +29,9 @@ const checks = {
     const back = await web.decryptObj(await web.encryptObj({ a: 1, b: ["x"] }, key), key);
     return JSON.stringify(back) === '{"a":1,"b":["x"]}';
   },
-  "hashPassword with the default iterations": async () => {
-    const { result, salt } = await web.hashPassword("correct horse");
-    return await web.verifyPassword("correct horse", result, salt);
+  "hashPassword at the deployed Workers PBKDF2 cap of 100,000 iterations": async () => {
+    const { result, salt } = await web.hashPassword("correct horse", { iterations: 100_000 });
+    return await web.verifyPassword("correct horse", result, salt, { iterations: 100_000 });
   },
   generateUuid: () => /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/.test(web.generateUuid()),
   "compress round trip": () => decompress(compress(TEXT.repeat(50))) === TEXT.repeat(50),

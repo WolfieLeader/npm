@@ -27,6 +27,7 @@
 ## Installation 📦
 
 Requires Node.js 20 or later. Tested on Node.js 20 to 26, Bun, Deno 2, and Cloudflare Workers.
+See the [changelog](https://github.com/WolfieLeader/npm/blob/main/packages/compress-kit/CHANGELOG.md) for what changed in each version.
 
 ```bash
 npm install compress-kit

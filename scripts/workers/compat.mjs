@@ -8,9 +8,9 @@ export default {
     return run({
       "nodeKit decrypts a Node ciphertext": () =>
         nodeKit.decrypt(NODE_CIPHERTEXT, nodeKit.createSecretKey(SECRET)) === "héllo 🌍 from Node",
-      "nodeKit hashPassword with the default iterations": () => {
-        const { result, salt } = nodeKit.hashPassword("correct horse");
-        return nodeKit.verifyPassword("correct horse", result, salt);
+      "nodeKit hashPassword at the deployed Workers PBKDF2 cap of 100,000 iterations": () => {
+        const { result, salt } = nodeKit.hashPassword("correct horse", { iterations: 100_000 });
+        return nodeKit.verifyPassword("correct horse", result, salt, { iterations: 100_000 });
       },
       "webKit decrypts nodeKit output": async () => {
         const ciphertext = nodeKit.encrypt("cross", nodeKit.createSecretKey(SECRET));

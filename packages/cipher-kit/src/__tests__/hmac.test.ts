@@ -287,3 +287,20 @@ describe("$timingSafeEqual", () => {
     expect($timingSafeEqual(new Uint8Array([1, 2]), new Uint8Array([1, 2, 3]))).toBe(false);
   });
 });
+
+describe("caller's bytes", () => {
+  test("hmac and verifyHmac leave the caller's key and data unchanged, since they wipe only their own copies", async () => {
+    const key = Uint8Array.from({ length: 32 }, (_, i) => i + 1);
+    const data = Uint8Array.from({ length: 16 }, (_, i) => 200 - i);
+    const keyBefore = Uint8Array.from(key);
+    const dataBefore = Uint8Array.from(data);
+
+    const nodeMac = nodeKit.hmac(data, key);
+    expect(nodeKit.verifyHmac(data, nodeMac, key)).toBe(true);
+    const webMac = await webKit.hmac(data, key);
+    expect(await webKit.verifyHmac(data, webMac, key)).toBe(true);
+
+    expect(key).toStrictEqual(keyBefore);
+    expect(data).toStrictEqual(dataBefore);
+  });
+});

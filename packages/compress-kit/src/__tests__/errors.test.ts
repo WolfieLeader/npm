@@ -1,26 +1,28 @@
 import { describe, expect, test } from "vitest";
-import {
-  type CompressOptions,
-  compress,
-  compressObj,
-  type DecompressOptions,
-  decompress,
-  decompressObj,
-  tryCompress,
-  tryDecompress,
-} from "~/index.js";
+import { compress, compressObj, decompress, decompressObj, tryCompress, tryDecompress } from "~/index.js";
+import type { CompressOptions, DecompressOptions } from "~/index.js";
 
 describe("Compress Error Paths", () => {
   test("rejects empty string", () => {
     const result = tryCompress("");
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result).toStrictEqual({
+      success: false,
+      error: {
+        message: "compress: Data must be a non-empty string",
+        description: "Provide a non-empty, non-whitespace string to compress",
+      },
+    });
   });
 
   test("rejects whitespace-only string", () => {
     const result = tryCompress("   ");
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result).toStrictEqual({
+      success: false,
+      error: {
+        message: "compress: Data must be a non-empty string",
+        description: "Provide a non-empty, non-whitespace string to compress",
+      },
+    });
   });
 
   test("rejects invalid options type", () => {
@@ -30,43 +32,45 @@ describe("Compress Error Paths", () => {
   });
 
   test("rejects invalid output encoding", () => {
-    const result = tryCompress("hello", { outputEncoding: "utf8" as CompressOptions["outputEncoding"] });
+    const result = tryCompress("hello", { outputEncoding: "utf8" as NonNullable<CompressOptions["outputEncoding"]> });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Unsupported output encoding");
   });
 
   test("rejects invalid compression level", () => {
-    const result = tryCompress("hello", { level: 0 as CompressOptions["level"] });
+    const result = tryCompress("hello", { level: 0 as NonNullable<CompressOptions["level"]> });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Invalid level");
   });
 
   test("rejects level above 9", () => {
-    const result = tryCompress("hello", { level: 10 as CompressOptions["level"] });
+    const result = tryCompress("hello", { level: 10 as NonNullable<CompressOptions["level"]> });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Invalid level");
   });
 
   test("rejects invalid windowBits", () => {
-    const result = tryCompress("hello", { windowBits: 7 as CompressOptions["windowBits"] });
+    const result = tryCompress("hello", { windowBits: 7 as NonNullable<CompressOptions["windowBits"]> });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Invalid windowBits");
   });
+});
 
+describe("Compress Error Paths: memLevel and strategy", () => {
   test("rejects invalid memLevel", () => {
-    const result = tryCompress("hello", { memLevel: 0 as CompressOptions["memLevel"] });
+    const result = tryCompress("hello", { memLevel: 0 as NonNullable<CompressOptions["memLevel"]> });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Invalid memLevel");
   });
 
   test("rejects invalid strategy", () => {
-    const result = tryCompress("hello", { strategy: "bogus" as CompressOptions["strategy"] });
+    const result = tryCompress("hello", { strategy: "bogus" as NonNullable<CompressOptions["strategy"]> });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Invalid strategy");
   });
 
   test("rejects inherited strategy key", () => {
-    const result = tryCompress("hello", { strategy: "toString" as CompressOptions["strategy"] });
+    const result = tryCompress("hello", { strategy: "toString" as NonNullable<CompressOptions["strategy"]> });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Invalid strategy");
   });
@@ -98,23 +102,17 @@ describe("Decompress Error Paths", () => {
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Options must be a plain object");
   });
+});
 
+describe("Decompress Error Paths: options and payloads", () => {
   test("rejects invalid input encoding", () => {
     const compressed = tryCompress("hello");
     expect(compressed.success).toBe(true);
     const result = tryDecompress(compressed.result as string, {
-      inputEncoding: "utf8" as DecompressOptions["inputEncoding"],
+      inputEncoding: "utf8" as NonNullable<DecompressOptions["inputEncoding"]>,
     });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Unsupported input encoding");
-  });
-
-  test("rejects invalid windowBits", () => {
-    const compressed = tryCompress("hello");
-    expect(compressed.success).toBe(true);
-    const result = tryDecompress(compressed.result as string, { windowBits: 7 as DecompressOptions["windowBits"] });
-    expect(result.success).toBe(false);
-    expect(result.error?.message).toContain("Invalid windowBits");
   });
 
   test("handles corrupt compressed data", () => {
@@ -126,11 +124,10 @@ describe("Decompress Error Paths", () => {
   test("handles .0. suffix (uncompressed passthrough)", () => {
     const compressed = tryCompress("hi");
     expect(compressed.success).toBe(true);
-    if ((compressed.result as string).endsWith(".0.")) {
-      const result = tryDecompress(compressed.result as string);
-      expect(result.success).toBe(true);
-      expect(result.result).toBe("hi");
-    }
+    expect((compressed.result as string).endsWith(".0.")).toBe(true);
+    const result = tryDecompress(compressed.result as string);
+    expect(result.success).toBe(true);
+    expect(result.result).toBe("hi");
   });
 });
 
@@ -172,15 +169,17 @@ describe("Decompress maxOutputSize", () => {
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("exceeds size limit");
   });
+});
 
-  test("maxOutputSize: 0 is treated as no limit", () => {
+describe("Decompress maxOutputSize validation", () => {
+  test("rejects maxOutputSize: 0 (no longer means unlimited)", () => {
     const longString = "x".repeat(10_000);
     const compressed = tryCompress(longString);
     expect(compressed.success).toBe(true);
 
     const result = tryDecompress(compressed.result as string, { maxOutputSize: 0 });
-    expect(result.success).toBe(true);
-    expect(result.result).toBe(longString);
+    expect(result.success).toBe(false);
+    expect(result.error?.message).toContain("Invalid maxOutputSize");
   });
 
   test("aborts decompression early on large payload exceeding limit", () => {
@@ -194,8 +193,20 @@ describe("Decompress maxOutputSize", () => {
     expect(result.error?.message).toContain("exceeds size limit");
   });
 
-  test("rejects maxOutputSize: Infinity", () => {
-    const result = tryDecompress("data.0.", { maxOutputSize: Number.POSITIVE_INFINITY });
+  test("accepts maxOutputSize: Infinity (no limit)", () => {
+    const result = tryDecompress("aGk.0.", { maxOutputSize: Number.POSITIVE_INFINITY });
+    expect(result.success).toBe(true);
+    expect(result.result).toBe("hi");
+  });
+
+  test("rejects maxOutputSize: -Infinity", () => {
+    const result = tryDecompress("aGk.0.", { maxOutputSize: Number.NEGATIVE_INFINITY });
+    expect(result.success).toBe(false);
+    expect(result.error?.message).toContain("Invalid maxOutputSize");
+  });
+
+  test("rejects maxOutputSize: 1.5", () => {
+    const result = tryDecompress("aGk.0.", { maxOutputSize: 1.5 });
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Invalid maxOutputSize");
   });
@@ -222,8 +233,13 @@ describe("Decompress malformed UTF-8 with maxOutputSize", () => {
     const payload = `${b64}.1.`;
 
     const result = tryDecompress(payload, { maxOutputSize: 1000 });
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result).toStrictEqual({
+      success: false,
+      error: {
+        message: "decompress: Failed to decode output",
+        description: "The encoded data was not valid for encoding utf-8",
+      },
+    });
   });
 
   test("returns error instead of throwing for trailing incomplete UTF-8 with maxOutputSize", async () => {
@@ -235,8 +251,13 @@ describe("Decompress malformed UTF-8 with maxOutputSize", () => {
     const payload = `${b64}.1.`;
 
     const result = tryDecompress(payload, { maxOutputSize: 1000 });
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result).toStrictEqual({
+      success: false,
+      error: {
+        message: "decompress: Failed to decode output",
+        description: "The encoded data was not valid for encoding utf-8",
+      },
+    });
     expect(result.error?.message).toContain("Failed to decode output");
   });
 
@@ -321,12 +342,46 @@ describe("Throwing: roundtrip", () => {
 
   test("compressObj/decompressObj roundtrip", () => {
     const obj = { key: "value", nested: { a: 1 } };
-    expect(decompressObj(compressObj(obj))).toEqual(obj);
+    expect(decompressObj(compressObj(obj))).toStrictEqual(obj);
   });
 });
 
 describe("Throwing: compressObj", () => {
   test("throws on non-POJO input", () => {
-    expect(() => compressObj([] as unknown as object)).toThrow();
+    expect(() => compressObj([])).toThrow("stringifyObj: Input must be a plain object");
+  });
+});
+
+describe("Hostile option values return an error that does not echo them", () => {
+  const sym = Symbol("bad");
+
+  test("tryCompress with a symbol level", () => {
+    const result = tryCompress("hello", { level: sym as unknown as NonNullable<CompressOptions["level"]> });
+    expect(result.error?.message).toBe("compress: Invalid level");
+  });
+
+  test("tryCompress with a symbol outputEncoding", () => {
+    const result = tryCompress("hello", {
+      outputEncoding: sym as unknown as NonNullable<CompressOptions["outputEncoding"]>,
+    });
+    expect(result.error?.message).toBe("compress: Unsupported output encoding");
+  });
+
+  test("tryCompress with a symbol strategy", () => {
+    const result = tryCompress("hello", { strategy: sym as unknown as NonNullable<CompressOptions["strategy"]> });
+    expect(result.error?.message).toBe("compress: Invalid strategy");
+  });
+
+  test("tryDecompress with a symbol inputEncoding", () => {
+    const result = tryDecompress("aGk.0.", {
+      inputEncoding: sym as unknown as NonNullable<DecompressOptions["inputEncoding"]>,
+    });
+    expect(result.error?.message).toBe("decompress: Unsupported input encoding");
+  });
+
+  test("tryCompress with a prototype-less object level", () => {
+    // String() throws on an object with no toString, so an echoed value used to escape the Result.
+    const level = Object.create(null) as NonNullable<CompressOptions["level"]>;
+    expect(tryCompress("hello", { level }).error?.message).toBe("compress: Invalid level");
   });
 });

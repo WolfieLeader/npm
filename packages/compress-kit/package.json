@@ -1,6 +1,6 @@
 {
   "name": "compress-kit",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "🔬 Reliable, Cross-Platform Compression & Decompression for Web, Node.js, Deno, Bun and Cloudflare Workers",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/compress-kit#readme",
   "repository": {
@@ -29,23 +29,26 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsdown",
-    "prepare": "npm run build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest run",
+    "lint": "oxlint --type-aware -c ../../.oxlintrc.json .",
+    "prepublishOnly": "turbo run build --filter=compress-kit"
   },
   "dependencies": {
-    "pako": "^2.1.0"
+    "pako": "^3.0.3"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "catalog:",
     "@internal/helpers": "workspace:*",
-    "@types/node": "^25.5.0",
-    "@types/pako": "^2.0.4",
-    "tsdown": "latest",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.0"
+    "@types/node": "catalog:",
+    "fast-check": "catalog:",
+    "publint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   },
   "author": "WolfieLeader",
   "license": "MIT",

@@ -11,7 +11,10 @@ export interface CompressOptions {
   outputEncoding?: CompressEncoding;
   /** Compression level (1-9; default: 6). */
   level?: OneToNine;
-  /** Size of the compression window: 2^windowBits (8-15; default: 15). */
+  /**
+   * Size of the compression window: 2^windowBits (8-15; default: 15).
+   * zlib cannot write an 8-bit window, so `8` compresses with `9`.
+   */
   windowBits?: EightToFifteen;
   /** Memory usage for compression match finder (1-9; default: 8). */
   memLevel?: OneToNine;
@@ -31,11 +34,11 @@ export interface CompressOptions {
 export interface DecompressOptions {
   /** Encoding format for the input compressed data (default: `'base64url'`). */
   inputEncoding?: CompressEncoding;
-  /** Size of the compression window: 2^windowBits (8-15; default: 15). */
-  windowBits?: EightToFifteen;
   /**
-   * Maximum allowed decompressed output size in bytes.
-   * For `.1.` (deflated) payloads, decompression uses streaming mode and aborts
+   * Maximum decompressed output size in bytes (default: 10 MiB = `10_485_760`).
+   * Pass a positive integer to change it, or `Infinity` to disable the limit.
+   *
+   * For `.1.` (deflated) payloads, decompression streams and aborts
    * as soon as the next chunk would exceed this limit.
    * For `.0.` (stored) payloads, the encoded size is pre-checked before decode,
    * then validated again against actual decoded bytes.

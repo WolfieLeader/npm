@@ -1,13 +1,61 @@
-export const data = "The quick brown fox (🦊) jumps over the lazy dog (🐶)";
-export const repeated = "Hēl!0, ".repeat(1000).trim();
+import { expect } from "vitest";
 
-export const smallObj = {
+export const data = "The quick brown fox (🦊) jumps over the lazy dog (🐶)";
+export const repeated: string = "Hēl!0, ".repeat(1000).trim();
+
+export interface SmallObj {
+  name: string;
+  age: number;
+  isAdmin: boolean;
+}
+
+export interface LargeObj {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    isActive: boolean;
+    preferences: {
+      theme: string;
+      language: string;
+      notifications: { email: boolean; sms: boolean; push: boolean };
+    };
+    roles: string[];
+    stats: { posts: number; comments: number; likes: number; lastLogin: string };
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      zip: string;
+      geo: { lat: number; lng: number };
+    };
+  };
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+    tags: string[];
+    notes: { id: string; title: string; content: string; pinned: boolean }[];
+  };
+  config: {
+    features: {
+      featureA: boolean;
+      featureB: boolean;
+      featureC: boolean;
+      experimental: { newUI: boolean; searchV2: boolean };
+    };
+    limits: { maxItems: number; timeout: number; retries: number };
+  };
+  session: { token: string; expiresIn: number; refreshToken: string };
+  logs: { timestamp: string; message: string; level: string | undefined }[];
+}
+
+export const smallObj: SmallObj = {
   name: "Alice",
   age: 30,
   isAdmin: false,
 };
 
-export const largeObj = {
+export const largeObj: LargeObj = {
   user: {
     id: "user_1234567890",
     name: "John Doe",
@@ -68,3 +116,16 @@ export const largeObj = {
     level: ["info", "warn", "error"][i % 3],
   })),
 };
+
+/** A deflated payload: base64url bytes followed by the `.1.` marker. */
+export const DEFLATED: RegExp = /^[\w-]+\.1\.$/;
+
+/** The payload `compress()` writes when deflate does not shrink `text`: its UTF-8 bytes in base64url, then `.0.`. */
+export function stored(text: string): string {
+  return `${Buffer.from(text, "utf8").toString("base64url")}.0.`;
+}
+
+/** `expect.stringMatching(pattern)`, typed as the string it stands in for. */
+export function stringMatching(pattern: RegExp): string {
+  return expect.stringMatching(pattern) as string;
+}

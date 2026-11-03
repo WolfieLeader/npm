@@ -1,55 +1,86 @@
-import { $err, $fmtError, $ok, type Result } from "./error.js";
+import { $err, $ok } from "./error.js";
+import type { ErrResult, Result } from "./error.js";
 import { $isPlainObj, $isStr } from "./validate.js";
 
-class ProtoTraversalLimitError extends Error {
-  constructor(limit: number) {
-    super(`Object graph exceeded prototype-scan limit (${limit} nodes)`);
-    this.name = "ProtoTraversalLimitError";
-  }
+/**
+ * Maximum number of objects and arrays (combined, root included) that `$stringifyObj` and
+ * `$parseToObj` accept. Both sides enforce the same limit, so anything that stringifies also parses.
+ */
+export const MAX_OBJ_CONTAINERS = 100_000;
+
+const LIMIT_DESCRIPTION = `The limit is ${MAX_OBJ_CONTAINERS.toLocaleString("en-US")} objects and arrays combined`;
+
+function $isObjLike(x: unknown): x is Record<string, unknown> {
+  return typeof x === "object" && x !== null;
 }
 
-const MAX_PROTO_SCAN_NODES = 100_000;
+/** True when `obj` has `__proto__` as an own key, or a `constructor` object with an object `prototype`. */
+function $isPollutionVector(obj: Record<string, unknown>): boolean {
+  if (Object.hasOwn(obj, "__proto__")) return true;
+  if (!Object.hasOwn(obj, "constructor")) return false;
+  const ctor = obj.constructor;
+  return $isObjLike(ctor) && Object.hasOwn(ctor, "prototype") && $isObjLike(ctor.prototype);
+}
 
-function $hasProtoKey(obj: unknown): boolean {
-  if (typeof obj !== "object" || obj === null) return false;
-
+/** Scans the object graph for prototype pollution vectors. Iterative, so deep nesting cannot overflow the stack. */
+function $scanProtoKeys(root: object): "clean" | "polluted" | "limit" {
   const seen = new WeakSet<object>();
-  const stack: unknown[] = [obj];
-  let scannedNodes = 0;
+  const stack: unknown[] = [root];
+  let scanned = 0;
 
   while (stack.length > 0) {
     const current = stack.pop();
-    if (typeof current !== "object" || current === null) continue;
-    if (seen.has(current)) continue;
-
+    if (!$isObjLike(current) || seen.has(current)) continue;
     seen.add(current);
-    scannedNodes++;
-    if (scannedNodes > MAX_PROTO_SCAN_NODES) {
-      throw new ProtoTraversalLimitError(MAX_PROTO_SCAN_NODES);
-    }
+    // Backstop only: the JSON pre-scan already enforces this limit.
+    if (++scanned > MAX_OBJ_CONTAINERS) return "limit";
+    if ($isPollutionVector(current)) return "polluted";
 
-    if (Object.hasOwn(current, "__proto__")) return true;
-
-    const currentObj = current as Record<string, unknown>;
-    if (
-      Object.hasOwn(currentObj, "constructor") &&
-      typeof currentObj.constructor === "object" &&
-      currentObj.constructor !== null &&
-      Object.hasOwn(currentObj.constructor as object, "prototype") &&
-      typeof (currentObj.constructor as Record<string, unknown>).prototype === "object" &&
-      (currentObj.constructor as Record<string, unknown>).prototype !== null
-    ) {
-      return true;
-    }
-
-    for (const val of Object.values(currentObj)) {
-      if (typeof val === "object" && val !== null) {
-        stack.push(val);
-      }
+    for (const val of Object.values(current)) {
+      if ($isObjLike(val)) stack.push(val);
     }
   }
+  return "clean";
+}
 
+/** Index just past the closing quote of the JSON string that opens at `start`. */
+function $skipJsonString(json: string, start: number): number {
+  let i = start + 1;
+  while (i < json.length) {
+    // Only ASCII code units are compared, so a surrogate pair's code point never matches.
+    const c = json.codePointAt(i);
+    if (c === 34) return i + 1; // closing "
+    i += c === 92 ? 2 : 1; // a backslash escapes the next char
+  }
+  return i;
+}
+
+/** True when the JSON text opens more than `MAX_OBJ_CONTAINERS` objects and arrays. Linear time. */
+function $exceedsContainerLimit(json: string): boolean {
+  let count = 0;
+  let i = 0;
+  while (i < json.length) {
+    const c = json.codePointAt(i);
+    if (c === 34) {
+      i = $skipJsonString(json, i);
+      continue;
+    }
+    if (c === 123 || c === 91) count++; // { or [
+    if (count > MAX_OBJ_CONTAINERS) return true;
+    i++;
+  }
   return false;
+}
+
+function $pollutionErr(prefix: string): ErrResult {
+  return $err({
+    message: `${prefix}: Object contains a prototype pollution vector`,
+    description: "Objects with __proto__ or constructor.prototype keys are rejected",
+  });
+}
+
+function $limitErr(prefix: string): ErrResult {
+  return $err({ message: `${prefix}: Object has too many nested objects or arrays`, description: LIMIT_DESCRIPTION });
 }
 
 export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T): Result<string> {
@@ -58,11 +89,32 @@ export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T
       message: "stringifyObj: Input must be a plain object",
       description: "Only plain objects ({...}) are accepted, not arrays, class instances, or built-ins",
     });
+
+  let json: string | undefined;
   try {
-    return $ok(JSON.stringify(obj));
-  } catch (error) {
-    return $err({ message: "stringifyObj: Failed to stringify object", description: $fmtError(error) });
+    json = JSON.stringify(obj);
+  } catch {
+    // Engine messages can quote property names, so use a fixed description.
+    return $err({
+      message: "stringifyObj: Failed to stringify object",
+      description:
+        "The object contains a value JSON cannot serialize (such as a BigInt or a circular reference) or is nested too deeply",
+    });
   }
+
+  // A root `toJSON` that returns undefined makes JSON.stringify return undefined, despite its `string` type.
+  if (typeof json !== "string") {
+    return $err({
+      message: "stringifyObj: Failed to stringify object",
+      description: "The object's toJSON method returned a value JSON cannot represent",
+    });
+  }
+  if ($exceedsContainerLimit(json)) return $limitErr("stringifyObj");
+  // Reject what $parseToObj rejects, so anything written can be read back.
+  const scan = $scanProtoKeys(obj);
+  if (scan === "limit") return $limitErr("stringifyObj");
+  if (scan === "polluted") return $pollutionErr("stringifyObj");
+  return $ok(json);
 }
 
 export function $parseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
@@ -72,31 +124,26 @@ export function $parseToObj<T extends object = Record<string, unknown>>(str: str
       description: "Expected a non-empty JSON string to parse",
     });
 
+  if ($exceedsContainerLimit(str)) return $limitErr("parseToObj");
+
+  let obj: unknown;
   try {
-    const obj = JSON.parse(str);
-
-    if (!$isPlainObj(obj)) {
-      return $err({
-        message: "parseToObj: Parsed data is not a plain object",
-        description: "JSON parsed successfully but the result is not a plain object (e.g. array, string, number)",
-      });
-    }
-
-    if ($hasProtoKey(obj)) {
-      return $err({
-        message: "parseToObj: Input contains a prototype pollution vector",
-        description: "Objects with __proto__ or constructor.prototype keys are rejected",
-      });
-    }
-
-    return $ok({ result: obj as T });
-  } catch (error) {
-    if (error instanceof ProtoTraversalLimitError) {
-      return $err({
-        message: "parseToObj: Input object is too deeply nested to validate safely",
-        description: error.message,
-      });
-    }
-    return $err({ message: "parseToObj: Failed to parse JSON", description: $fmtError(error) });
+    obj = JSON.parse(str);
+  } catch {
+    // Engine messages quote the input, which may be decrypted plaintext, so use a fixed description.
+    return $err({ message: "parseToObj: Failed to parse JSON", description: "The input is not valid JSON" });
   }
+
+  if (!$isPlainObj<T>(obj)) {
+    return $err({
+      message: "parseToObj: Parsed data is not a plain object",
+      description: "JSON parsed successfully but the result is not a plain object (e.g. array, string, number)",
+    });
+  }
+
+  const scan = $scanProtoKeys(obj);
+  if (scan === "limit") return $limitErr("parseToObj");
+  if (scan === "polluted") return $pollutionErr("parseToObj");
+
+  return $ok({ result: obj });
 }

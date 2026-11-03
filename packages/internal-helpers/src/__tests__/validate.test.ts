@@ -84,11 +84,11 @@ describe("$isIntIn", () => {
   });
 
   test("rejects string", () => {
-    expect($isIntIn("5" as unknown as number, 1, 10)).toBe(false);
+    expect($isIntIn("5", 1, 10)).toBe(false);
   });
 
   test("rejects null", () => {
-    expect($isIntIn(null as unknown as number, 1, 10)).toBe(false);
+    expect($isIntIn(null, 1, 10)).toBe(false);
   });
 
   test("works with negative range", () => {
@@ -136,7 +136,9 @@ describe("$isPlainObj", () => {
   });
 
   test("rejects class instance", () => {
-    class Foo {}
+    class Foo {
+      readonly x = 1;
+    }
     expect($isPlainObj(new Foo())).toBe(false);
   });
 

@@ -33,18 +33,24 @@ export function $ok<T>(result: T): Result<T> {
   if ($isPlainObj(result)) {
     const obj = result as Record<string, unknown>;
     if (Object.hasOwn(obj, "success") || Object.hasOwn(obj, "error")) {
-      return { success: true, result } as Result<T>;
+      return { success: true, result };
     }
-    return { success: true, ...obj } as Result<T>;
+    return { success: true, ...obj };
   }
-  return { success: true, result } as Result<T>;
+  return { success: true, result };
 }
 
-export function $err(err: ErrorStruct): Result<never> {
+/** A failed result. Every `ErrType<T>` key besides `success` and `error` is optional, so it fits any `Result<T>`. */
+export interface ErrResult {
+  readonly success: false;
+  readonly error: ErrorStruct;
+}
+
+export function $err(err: ErrorStruct): ErrResult {
   return {
     success: false,
     error: { message: err.message, description: err.description },
-  } as Result<never>;
+  };
 }
 
 export function $fmtError(error: unknown): string {

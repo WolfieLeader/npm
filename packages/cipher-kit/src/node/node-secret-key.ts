@@ -1,5 +1,6 @@
 import nodeCrypto from "node:crypto";
-import { $err, $fmtError, $ok, type Result } from "@internal/helpers";
+import { $err, $fmtError, $ok } from "@internal/helpers";
+import type { Result } from "@internal/helpers";
 import type { CreateSecretKeyOptions } from "~/export.js";
 import type { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "~/helpers/consts.js";
 import { $validateCreateSecretKeyOptions, $validateSecretKeyBase } from "~/helpers/validate.js";
@@ -14,17 +15,20 @@ export type NodeSecretKey = {
   readonly injected: (typeof ENCRYPTION_ALGORITHMS)[keyof typeof ENCRYPTION_ALGORITHMS];
 } & { readonly [__brand]: "secretKey-node" };
 
-export function $isNodeSecretKey(x: unknown): NodeSecretKey | null {
+/** Runtime shape check for a key made by {@link $createSecretKey}. The brand exists only in types. */
+function $hasNodeSecretKeyShape(x: unknown): x is NodeSecretKey {
   const base = $validateSecretKeyBase(x, "node");
-  if (!base) return null;
+  if (!base) return false;
 
-  if (
-    !(base.obj.key instanceof nodeCrypto.KeyObject) ||
-    (typeof base.obj.key.symmetricKeySize === "number" && base.obj.key.symmetricKeySize !== base.algorithm.keyBytes)
-  ) {
-    return null;
-  }
-  return x as NodeSecretKey;
+  return (
+    base.obj["key"] instanceof nodeCrypto.KeyObject &&
+    (typeof base.obj["key"].symmetricKeySize !== "number" ||
+      base.obj["key"].symmetricKeySize === base.algorithm.keyBytes)
+  );
+}
+
+export function $isNodeSecretKey(x: unknown): NodeSecretKey | null {
+  return $hasNodeSecretKeyShape(x) ? x : null;
 }
 
 export function $createSecretKey(secret: string, options: CreateSecretKeyOptions): Result<{ result: NodeSecretKey }> {
@@ -45,6 +49,7 @@ export function $createSecretKey(secret: string, options: CreateSecretKeyOptions
     );
     try {
       const key = nodeCrypto.createSecretKey(derivedKey);
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mints the brand, which has no runtime value to check
       const secretKey = Object.freeze({
         platform: "node",
         digest,

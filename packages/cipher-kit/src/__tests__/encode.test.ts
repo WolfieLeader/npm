@@ -32,14 +32,14 @@ describe("Hex encoding with 0x prefix", () => {
     const webResult = webKit.tryConvertStrToBytes("0xABCD", "hex");
     expect(nodeResult.success).toBe(true);
     expect(webResult.success).toBe(true);
-    expect(Array.from(nodeResult.result as Buffer)).toEqual([0xab, 0xcd]);
-    expect(Array.from(nodeResult.result as Buffer)).toEqual(Array.from(webResult.result as Uint8Array));
+    expect(Array.from(nodeResult.result as Buffer)).toStrictEqual([0xab, 0xcd]);
+    expect(Array.from(nodeResult.result as Buffer)).toStrictEqual(Array.from(webResult.result as Uint8Array));
   });
 
   test("0x00ff10 produces correct bytes (was empty before fix)", () => {
     const nodeResult = nodeKit.tryConvertStrToBytes("0x00ff10", "hex");
     expect(nodeResult.success).toBe(true);
-    expect(Array.from(nodeResult.result as Buffer)).toEqual([0x00, 0xff, 0x10]);
+    expect(Array.from(nodeResult.result as Buffer)).toStrictEqual([0x00, 0xff, 0x10]);
   });
 
   test("hex roundtrip: Node encode → decode matches Web", () => {
@@ -98,45 +98,65 @@ describe("generateUuid", () => {
   });
 });
 
+/** Decodes `input` with both kits. Each side is its bytes on success, or `null` on error. */
+function decodeOnBoth(
+  input: string,
+  encoding: "base64" | "base64url",
+): { node: number[] | null; web: number[] | null } {
+  const n = nodeKit.tryConvertStrToBytes(input, encoding);
+  const w = webKit.tryConvertStrToBytes(input, encoding);
+  return { node: n.success ? Array.from(n.result) : null, web: w.success ? Array.from(w.result) : null };
+}
+
+const HELLO = [0x48, 0x65, 0x6c, 0x6c, 0x6f];
+const bothError = { node: null, web: null };
+
 describe("Base64/Base64url Node-Web parity", () => {
-  function bothSucceed(input: string, encoding: "base64" | "base64url") {
-    const n = nodeKit.tryConvertStrToBytes(input, encoding);
-    const w = webKit.tryConvertStrToBytes(input, encoding);
-    expect(n.success).toBe(true);
-    expect(w.success).toBe(true);
-    expect(Array.from(n.result as Buffer)).toEqual(Array.from(w.result as Uint8Array));
-  }
-
-  function bothError(input: string, encoding: "base64" | "base64url") {
-    const n = nodeKit.tryConvertStrToBytes(input, encoding);
-    const w = webKit.tryConvertStrToBytes(input, encoding);
-    expect(n.success).toBe(false);
-    expect(w.success).toBe(false);
-  }
-
   describe("valid base64 inputs (both succeed with equal bytes)", () => {
-    test("standard padded base64", () => bothSucceed("SGVsbG8=", "base64"));
-    test("1-byte payload", () => bothSucceed("AA==", "base64"));
-    test("no-padding multiple of 4", () => bothSucceed("AQID", "base64"));
+    test("standard padded base64", () => {
+      expect(decodeOnBoth("SGVsbG8=", "base64")).toStrictEqual({ node: HELLO, web: HELLO });
+    });
+    test("1-byte payload", () => {
+      expect(decodeOnBoth("AA==", "base64")).toStrictEqual({ node: [0], web: [0] });
+    });
+    test("no-padding multiple of 4", () => {
+      expect(decodeOnBoth("AQID", "base64")).toStrictEqual({ node: [1, 2, 3], web: [1, 2, 3] });
+    });
   });
 
   describe("valid base64url inputs (both succeed with equal bytes)", () => {
-    test("unpadded base64url", () => bothSucceed("SGVsbG8", "base64url"));
-    test("padded base64url", () => bothSucceed("SGVsbG8=", "base64url"));
+    test("unpadded base64url", () => {
+      expect(decodeOnBoth("SGVsbG8", "base64url")).toStrictEqual({ node: HELLO, web: HELLO });
+    });
+    test("padded base64url", () => {
+      expect(decodeOnBoth("SGVsbG8=", "base64url")).toStrictEqual({ node: HELLO, web: HELLO });
+    });
   });
 
   describe("malformed base64 inputs (both error)", () => {
-    test("invalid length (1 char)", () => bothError("A", "base64"));
-    test("bad padding (A=)", () => bothError("A=", "base64"));
-    test("excess padding (AAAA=)", () => bothError("AAAA=", "base64"));
-    test("non-ASCII character", () => bothError("SGVs\u00e9bG8=", "base64"));
+    test("invalid length (1 char)", () => {
+      expect(decodeOnBoth("A", "base64")).toStrictEqual(bothError);
+    });
+    test("bad padding (A=)", () => {
+      expect(decodeOnBoth("A=", "base64")).toStrictEqual(bothError);
+    });
+    test("excess padding (AAAA=)", () => {
+      expect(decodeOnBoth("AAAA=", "base64")).toStrictEqual(bothError);
+    });
+    test("non-ASCII character", () => {
+      expect(decodeOnBoth("SGVs\u00e9bG8=", "base64")).toStrictEqual(bothError);
+    });
   });
 
   describe("malformed base64url inputs (both error)", () => {
-    test("invalid length (1 char)", () => bothError("A", "base64url"));
+    test("invalid length (1 char)", () => {
+      expect(decodeOnBoth("A", "base64url")).toStrictEqual(bothError);
+    });
   });
 
   describe("Node rejects what Web rejects for base64url", () => {
-    test("non-ASCII in base64url", () => bothError("SGVs\u00e9bG8", "base64url"));
+    test("non-ASCII in base64url", () => {
+      expect(decodeOnBoth("SGVs\u00e9bG8", "base64url")).toStrictEqual(bothError);
+    });
   });
 });

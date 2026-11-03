@@ -4,24 +4,21 @@ import { $parseToObj, $stringifyObj } from "~/object.js";
 describe("$stringifyObj", () => {
   test("stringifies plain object", () => {
     const result = $stringifyObj({ a: 1, b: "two" });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe('{"a":1,"b":"two"}');
+    expect(result).toStrictEqual({ success: true, result: '{"a":1,"b":"two"}' });
   });
 
   test("stringifies empty object", () => {
     const result = $stringifyObj({});
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe("{}");
+    expect(result).toStrictEqual({ success: true, result: "{}" });
   });
 
   test("stringifies nested object", () => {
     const result = $stringifyObj({ a: { b: { c: 3 } } });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe('{"a":{"b":{"c":3}}}');
+    expect(result).toStrictEqual({ success: true, result: '{"a":{"b":{"c":3}}}' });
   });
 
   test("fails for array", () => {
-    const result = $stringifyObj([1, 2] as unknown as object);
+    const result = $stringifyObj([1, 2]);
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Input must be a plain object");
   });
@@ -47,19 +44,72 @@ describe("$stringifyObj", () => {
     expect(result.success).toBe(false);
     expect(result.error?.message).toContain("Failed to stringify object");
   });
+
+  test("rejects what $parseToObj would reject, so stored data can be read back", () => {
+    const nested = JSON.parse('{"a":{"__proto__":{"admin":true}}}') as object;
+    const expected = {
+      success: false,
+      error: {
+        message: "stringifyObj: Object contains a prototype pollution vector",
+        description: "Objects with __proto__ or constructor.prototype keys are rejected",
+      },
+    };
+    expect($stringifyObj(nested)).toStrictEqual(expected);
+    expect($stringifyObj({ constructor: { prototype: {} } })).toStrictEqual(expected);
+  });
+
+  test.each([
+    ["a root toJSON that returns an array", { toJSON: () => [1, 2] }, "stringifyObj: Data is not a plain object"],
+    [
+      "a nested toJSON that returns a __proto__ key",
+      { a: { toJSON: () => JSON.parse('{"__proto__":{"x":1}}') as unknown } },
+      "stringifyObj: Object contains a prototype pollution vector",
+    ],
+  ])("rejects %s, because the output could not be read back", (_label, obj, message) => {
+    expect($stringifyObj(obj).error?.message).toBe(message);
+  });
+
+  test("checks the JSON output, not the object graph", () => {
+    // Dates are one JSON string each, and an undefined __proto__ value is dropped from the JSON.
+    const rows = Array.from({ length: 50_000 }, () => ({ created: new Date(0), updated: new Date(0) }));
+    expect($stringifyObj({ rows }).success).toBe(true);
+    const hidden = Object.defineProperty({}, "__proto__", { value: undefined, enumerable: true });
+    expect($stringifyObj({ a: hidden })).toStrictEqual({ success: true, result: '{"a":{}}' });
+  });
+
+  test("reads each getter once, so a getter that throws on a second read cannot escape", () => {
+    let reads = 0;
+    const obj = {
+      get value(): number {
+        reads++;
+        if (reads > 1) throw new Error("read twice");
+        return 1;
+      },
+    };
+    expect($stringifyObj(obj)).toStrictEqual({ success: true, result: '{"value":1}' });
+  });
+
+  test("returns an error, not a throw, when a root toJSON returns undefined", () => {
+    const result = $stringifyObj({ toJSON: () => undefined });
+    expect(result).toStrictEqual({
+      success: false,
+      error: {
+        message: "stringifyObj: Failed to stringify object",
+        description: "The object's toJSON method returned a value JSON cannot represent",
+      },
+    });
+  });
 });
 
 describe("$parseToObj", () => {
   test("parses valid JSON object", () => {
     const result = $parseToObj('{"a":1}');
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual({ a: 1 });
+    expect(result).toStrictEqual({ success: true, result: { a: 1 } });
   });
 
   test("parses empty object", () => {
     const result = $parseToObj("{}");
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual({});
+    expect(result).toStrictEqual({ success: true, result: {} });
   });
 
   test("fails for empty string", () => {
@@ -83,13 +133,13 @@ describe("$parseToObj", () => {
   test("fails for JSON array", () => {
     const result = $parseToObj("[1,2,3]");
     expect(result.success).toBe(false);
-    expect(result.error?.message).toContain("Parsed data is not a plain object");
+    expect(result.error?.message).toContain("Data is not a plain object");
   });
 
   test("fails for JSON primitive", () => {
     const result = $parseToObj('"hello"');
     expect(result.success).toBe(false);
-    expect(result.error?.message).toContain("Parsed data is not a plain object");
+    expect(result.error?.message).toContain("Data is not a plain object");
   });
 
   test("fails for malformed JSON", () => {
@@ -129,19 +179,22 @@ describe("$parseToObj", () => {
   test("allows constructor.prototype when prototype value is a string", () => {
     const result = $parseToObj('{"constructor":{"prototype":"safe"}}');
     expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual({ constructor: { prototype: "safe" } });
+    // An own `constructor` key defeats toStrictEqual's type check, so compare the entries instead.
+    expect(Object.entries(result.result ?? {})).toStrictEqual([["constructor", { prototype: "safe" }]]);
   });
 
   test("allows constructor.prototype when prototype value is a number", () => {
     const result = $parseToObj('{"constructor":{"prototype":42}}');
     expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual({ constructor: { prototype: 42 } });
+    // An own `constructor` key defeats toStrictEqual's type check, so compare the entries instead.
+    expect(Object.entries(result.result ?? {})).toStrictEqual([["constructor", { prototype: 42 }]]);
   });
 
   test("allows constructor.prototype when prototype value is null", () => {
     const result = $parseToObj('{"constructor":{"prototype":null}}');
     expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual({ constructor: { prototype: null } });
+    // An own `constructor` key defeats toStrictEqual's type check, so compare the entries instead.
+    expect(Object.entries(result.result ?? {})).toStrictEqual([["constructor", { prototype: null }]]);
   });
 
   test("fails safely when object graph is too deep to scan", () => {
@@ -152,7 +205,7 @@ describe("$parseToObj", () => {
 
     const result = $parseToObj(payload);
     expect(result.success).toBe(false);
-    expect(result.error?.message).toContain("too deeply nested");
+    expect(result.error?.message).toContain("too many nested objects or arrays");
   });
 });
 
@@ -164,7 +217,6 @@ describe("Roundtrip", () => {
     if (!stringified.success) return;
 
     const parsed = $parseToObj(stringified.result);
-    expect(parsed.success).toBe(true);
-    if (parsed.success) expect(parsed.result).toEqual(original);
+    expect(parsed).toStrictEqual({ success: true, result: original });
   });
 });

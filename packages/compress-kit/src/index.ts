@@ -1,15 +1,10 @@
-import { $fmtResultErr, type Result } from "@internal/helpers";
+import { $fmtResultErr } from "@internal/helpers";
+import type { Result } from "@internal/helpers";
 import { $compress, $compressObj, $decompress, $decompressObj } from "./compress.js";
 import type { CompressOptions, DecompressOptions } from "./types.js";
 
 export type { ErrorStruct, Result } from "@internal/helpers";
-export type {
-  CompressEncoding,
-  CompressOptions,
-  DecompressOptions,
-  EightToFifteen,
-  OneToNine,
-} from "./types.js";
+export type { CompressEncoding, CompressOptions, DecompressOptions, EightToFifteen, OneToNine } from "./types.js";
 
 /**
  * Compresses a UTF-8 string (non-throwing).
@@ -61,13 +56,12 @@ export function tryDecompress(compressed: string, options: DecompressOptions = {
  *
  * @remarks
  * Accepts inputs ending with `.0.` (stored — decoded as-is) or `.1.` (inflated via DEFLATE).
- * Set `maxOutputSize` in options to enforce output-size limits.
+ * Output is capped at `maxOutputSize` bytes (default 10 MiB) to block decompression bombs.
  * For `.1.` payloads this aborts streaming decompression before crossing the limit.
  * For `.0.` payloads it rejects based on encoded-size precheck and decoded-byte verification.
+ * Pass `maxOutputSize: Infinity` only for trusted input.
  *
- * **Security note:** Without `maxOutputSize`, there is no decompression bomb protection.
- * A crafted payload can expand to gigabytes and exhaust memory. Always set `maxOutputSize`
- * when decompressing untrusted input.
+ * Corrupt, truncated, or checksum-failing streams, and streams followed by trailing bytes, are rejected.
  *
  * @param compressed - The tagged string to decompress.
  * @param options - Decompression options.

@@ -4,15 +4,16 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --type-aware -c ../../.oxlintrc.json ."
   },
   "dependencies": {
-    "cipher-kit": "3.0.0",
-    "compress-kit": "3.0.0"
+    "cipher-kit": "workspace:*",
+    "compress-kit": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^25.3.0",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "@types/node": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

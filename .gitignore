@@ -1,6 +1,7 @@
 .DS_Store
 node_modules
 .turbo
+.vitest
 *.log
 dist
 dist-ssr
@@ -8,8 +9,5 @@ dist-ssr
 .env
 .cache
 certs
-.claude
-claude.md
-.opencode
-agents.md
-.agents
+.claude/worktrees/
+.worktrees/

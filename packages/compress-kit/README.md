@@ -19,13 +19,14 @@
 
 - **Lossless DEFLATE compression** via [`pako`](https://www.npmjs.com/package/pako)
 - **Automatic passthrough** when compression isn't beneficial (data gets larger)
-- **Decompression bomb protection** via `maxOutputSize` with streaming abort
+- **Decompression bomb protection** with a 10 MiB default output limit and streaming abort
+- **Strict stream checks** — corrupt, truncated, and trailing-data payloads are rejected
 - **Type-safe API** with throwing and `Result<T>` variants
 - **Cross-platform** — Node.js, Deno, Bun, Cloudflare Workers, and all modern browsers
 
 ## Installation 📦
 
-Requires Node.js >= 18.
+Requires Node.js >= 22.12.
 
 ```bash
 npm install compress-kit
@@ -44,8 +45,8 @@ const compressed = compress(input);
 const original = decompress(compressed);
 console.log(`${input.length} chars → ${compressed.length} chars`); // significant reduction
 
-// ⚠️ When decompressing untrusted input, always set maxOutputSize to prevent decompression bombs
-const safe = decompress(compressed, { maxOutputSize: 1_048_576 }); // 1 MB limit
+// Output is capped at 10 MiB by default. Lower the cap for untrusted input.
+const safe = decompress(compressed, { maxOutputSize: 1_048_576 }); // 1 MiB limit
 
 // Object compression
 const data = {
@@ -87,9 +88,11 @@ if (result.success) {
 | ---------------- | ---------------------------------------------------------------------- | ------------- | ----------------------- |
 | `outputEncoding` | `"base64url"` \| `"base64"` \| `"hex"`                                 | `"base64url"` | Output encoding         |
 | `level`          | `1` \| `2` \| ... \| `9`                                               | `6`           | Compression level       |
-| `windowBits`     | `8` \| `9` \| ... \| `15`                                              | `15`          | Window size (2^n)       |
+| `windowBits`     | `8` \| `9` \| ... \| `15`                                              | `15`          | Window size (2^n)¹      |
 | `memLevel`       | `1` \| `2` \| ... \| `9`                                               | `8`           | Memory for match finder |
 | `strategy`       | `"default"` \| `"filtered"` \| `"huffmanOnly"` \| `"rle"` \| `"fixed"` | `"default"`   | Compression strategy    |
+
+¹ zlib cannot write an 8-bit window, so `windowBits: 8` compresses with `9`.
 
 **Strategies:**
 
@@ -111,11 +114,18 @@ import { compress, decompress } from "compress-kit";
 const compressed = compress("Hello, World!".repeat(100));
 const original = decompress(compressed); // "Hello, World!Hello, World!..."
 
-// With max output size protection (1 MB limit)
+// Lower the output limit (default 10 MiB)
 const safe = decompress(compressed, { maxOutputSize: 1_048_576 });
 ```
 
-**Options:** `inputEncoding` (default `"base64url"`), `windowBits` (`8`-`15`, default `15`), `maxOutputSize` (`0` or `undefined` = no limit).
+**Options:**
+
+| Option          | Type                                   | Default               | Description                                                |
+| --------------- | -------------------------------------- | --------------------- | ---------------------------------------------------------- |
+| `inputEncoding` | `"base64url"` \| `"base64"` \| `"hex"` | `"base64url"`         | Input encoding                                             |
+| `maxOutputSize` | positive integer \| `Infinity`         | `10_485_760` (10 MiB) | Maximum decompressed bytes. `Infinity` disables the limit. |
+
+Decompression rejects corrupt data, truncated streams, Adler-32 checksum mismatches, and trailing bytes after the stream ends. `decompressObj` and `tryDecompressObj` take the same options.
 
 ### `compressObj` / `decompressObj` / `tryCompressObj` / `tryDecompressObj`
 
@@ -155,17 +165,40 @@ Decompression automatically detects the suffix and handles both cases. You never
 
 ## Decompression Safety 🛡️
 
-Set `maxOutputSize` to protect against decompression bombs. When set, decompression uses streaming mode and aborts early if the cumulative output exceeds the byte limit.
+Decompression streams its output and aborts as soon as it would exceed `maxOutputSize` bytes. The default is 10 MiB, so a small crafted payload cannot inflate to gigabytes.
 
 ```typescript
 import { decompress } from "compress-kit";
 
-// Limit decompressed output to 1 MB
+// Lower the limit to 1 MiB
 const safe = decompress(compressed, { maxOutputSize: 1_048_576 });
+
+// Disable the limit (trusted input only)
+const big = decompress(trustedCompressed, { maxOutputSize: Infinity });
 ```
 
-- `maxOutputSize: 0` or `undefined` — no limit (default)
-- `maxOutputSize: N` (positive integer) — abort if output exceeds N bytes
+- `undefined` — 10 MiB limit (default)
+- positive integer `N` — abort if output exceeds `N` bytes
+- `Infinity` — no limit
+- `0`, negative, or non-integer values — rejected with `Invalid maxOutputSize`
+
+## Upgrading to 4.0 ⬆️
+
+Breaking changes:
+
+- **Default output limit.** `decompress`, `tryDecompress`, `decompressObj`, and `tryDecompressObj` now cap output at 10 MiB. Pass `maxOutputSize: Infinity` to restore unlimited output.
+- **`maxOutputSize: 0` is rejected.** It used to mean "no limit". Use `Infinity` instead.
+- **Corrupt streams fail.** With `maxOutputSize` set, 3.x returned `""` or a partial string for garbage, truncated, bad-checksum, or trailing-data input. These now return `decompress: Failed to decompress data`.
+- **`windowBits` on decompress is removed.** The window size comes from the stream header, so data compressed with any `windowBits` (including `8`) decompresses. A stray `windowBits` passed at runtime is ignored.
+- **Lone UTF-16 surrogates are rejected.** 3.x replaced them with U+FFFD.
+- **A leading U+FEFF is kept.** 3.x dropped it on decompress.
+- **Decoding is strict.** Non-canonical base64 and whitespace now fail. Strings that compress-kit wrote are always canonical.
+- **`compressObj` rejects `__proto__` and `constructor.prototype` keys.** 3.x wrote them, then `decompressObj` refused to read them back.
+- **Error messages no longer echo the rejected option value.** Code that matches message text must change.
+- **Node.js >= 22.12** is required.
+- **pako 3.** Compressed bytes can differ from 3.x for the same input.
+
+Compatibility: 4.x decompresses every string produced by 2.x and 3.x, and 3.x decompresses strings produced by 4.x. The tagged format (`.0.` / `.1.` + zlib stream) is unchanged.
 
 ## The Result Pattern 🎯
 

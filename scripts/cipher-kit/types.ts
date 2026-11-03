@@ -54,11 +54,7 @@ import type {
   tryVerifyPassword,
   verifyPassword,
 } from "cipher-kit/node";
-import type {
-  createSecretKey as webCreateSecretKey,
-  isWebSecretKey,
-  tryHash as webTryHash,
-} from "cipher-kit/web-api";
+import type { createSecretKey as webCreateSecretKey, isWebSecretKey, tryHash as webTryHash } from "cipher-kit/web-api";
 
 // Root entry point — types
 const _encoding: CipherEncoding = "base64url";
@@ -69,8 +65,8 @@ const _encryptOpts: EncryptOptions = { outputEncoding: "base64url" };
 const _decryptOpts: DecryptOptions = { inputEncoding: "hex" };
 const _hashOpts: HashOptions = { digest: "sha256", outputEncoding: "base64" };
 const _createKeyOpts: CreateSecretKeyOptions = { algorithm: "aes256gcm", digest: "sha256" };
-const _hashPwOpts: HashPasswordOptions = { digest: "sha512", iterations: 320000 };
-const _verifyPwOpts: VerifyPasswordOptions = { digest: "sha512", iterations: 320000 };
+const _hashPwOpts: HashPasswordOptions = { digest: "sha512", iterations: 320_000 };
+const _verifyPwOpts: VerifyPasswordOptions = { digest: "sha512", iterations: 320_000 };
 const _result: Result<string> = { success: true, result: "" };
 const _errStruct: ErrorStruct = { message: "", description: "" };
 const _nodeKey: NodeSecretKey = {} as NodeSecretKey;

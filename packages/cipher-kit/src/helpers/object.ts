@@ -1,4 +1,5 @@
-import { $fmtResultErr, $parseToObj, $stringifyObj, type Result } from "@internal/helpers";
+import { $fmtResultErr, $parseToObj, $stringifyObj } from "@internal/helpers";
+import type { Result } from "@internal/helpers";
 
 /**
  * Serializes a plain object to JSON (non-throwing).

@@ -6,43 +6,38 @@ describe("$ok", () => {
   test("spreads plain object onto result", () => {
     const result = $ok({ result: new Uint8Array([1, 2]) });
     expect(result.success).toBe(true);
-    expect(result.result).toEqual(new Uint8Array([1, 2]));
+    expect(result.result).toStrictEqual(new Uint8Array([1, 2]));
   });
 
   test("wraps string primitive", () => {
     const result = $ok("hello");
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe("hello");
+    expect(result).toStrictEqual({ success: true, result: "hello" });
   });
 
   test("wraps number primitive", () => {
     const result = $ok(42);
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe(42);
+    expect(result).toStrictEqual({ success: true, result: 42 });
   });
 
   test("wraps boolean primitive", () => {
     const result = $ok(true);
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe(true);
+    expect(result).toStrictEqual({ success: true, result: true });
   });
 
   test("wraps undefined", () => {
     const result = $ok(undefined);
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBeUndefined();
+    expect(result).toStrictEqual({ success: true, result: undefined });
   });
 
   test("wraps null", () => {
     const result = $ok(null);
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBeNull();
+    expect(result).toStrictEqual({ success: true, result: null });
   });
 
   test("wraps array (not spread)", () => {
     const result = $ok([1, 2, 3]) as Result<number[]> & { result: number[] };
     expect(result.success).toBe(true);
-    expect(result.result).toEqual([1, 2, 3]);
+    expect(result.result).toStrictEqual([1, 2, 3]);
   });
 
   test("error is undefined on success", () => {
@@ -52,8 +47,7 @@ describe("$ok", () => {
 
   test("preserves nested objects", () => {
     const result = $ok({ nested: { deep: { value: 42 } } });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.nested).toEqual({ deep: { value: 42 } });
+    expect(result).toStrictEqual({ success: true, nested: { deep: { value: 42 } } });
   });
 
   test("wraps object with 'success' key instead of spreading", () => {
@@ -62,7 +56,7 @@ describe("$ok", () => {
       result: { success: false; data: 1 };
     };
     expect(result.success).toBe(true);
-    expect(result.result).toEqual({ success: false, data: 1 });
+    expect(result.result).toStrictEqual({ success: false, data: 1 });
   });
 
   test("wraps object with 'error' key instead of spreading", () => {
@@ -71,11 +65,11 @@ describe("$ok", () => {
       result: { error: string; value: number };
     };
     expect(result.success).toBe(true);
-    expect(result.result).toEqual({ error: "bad", value: 2 });
+    expect(result.result).toStrictEqual({ error: "bad", value: 2 });
   });
 
   test("throws when object spread throws (no silent error conversion)", () => {
-    const badObj = Object.create(null, {
+    const badObj: unknown = Object.create(null, {
       boom: {
         enumerable: true,
         get() {
@@ -84,7 +78,7 @@ describe("$ok", () => {
       },
     });
 
-    expect(() => $ok(badObj as { boom: string })).toThrow("kaboom");
+    expect(() => $ok(badObj)).toThrow("kaboom");
   });
 });
 
@@ -92,7 +86,7 @@ describe("$err", () => {
   test("accepts message/description", () => {
     const result = $err({ message: "Failed", description: "Something went wrong" }) as unknown as Result<string>;
     expect(result.success).toBe(false);
-    expect(result.error).toEqual({ message: "Failed", description: "Something went wrong" });
+    expect(result.error).toStrictEqual({ message: "Failed", description: "Something went wrong" });
   });
 
   test("success is false", () => {

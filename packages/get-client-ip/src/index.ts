@@ -1,236 +1,257 @@
 import type { IncomingHttpHeaders } from "node:http";
-import { isIP } from "node:net";
+import { $parseForwarded, $parseXForwardedFor, $pickFromRight } from "./chain.js";
+import { $isTrusted, $parseIp, $parseNode, $parseSubnet } from "./ip.js";
+import type { ParsedIp, Subnet } from "./ip.js";
 
 type NonEmptyArray<T> = [T, ...T[]];
 
-/** Minimal request interface — any object with headers and socket (Express v4, v5, etc.). */
+/** Minimal request interface — Express v4/v5, Fastify, NestJS, or a raw `node:http` `IncomingMessage`. */
 export interface IpRequest {
-  ip?: string;
+  /** Address resolved by the framework (Express `trust proxy`, Fastify `trustProxy`). Used when valid. */
+  ip?: string | undefined;
   headers: IncomingHttpHeaders;
-  socket?: { remoteAddress?: string };
-  clientIp?: string;
-  clientIps?: NonEmptyArray<string>;
+  socket?: { remoteAddress?: string | undefined } | undefined;
+  clientIp?: string | undefined;
+  clientIps?: NonEmptyArray<string> | undefined;
 }
 
-function $isIP(ip: unknown): ip is string {
-  return typeof ip === "string" && isIP(ip) !== 0;
+/** Options for {@link getClientIp} and {@link getClientIpMiddleware}. */
+export interface GetClientIpOptions {
+  /**
+   * Proxy addresses whose forwarding headers you trust, as IPs or CIDR ranges (`"10.0.0.0/8"`, `"2001:db8::/32"`).
+   * Defaults to {@link DEFAULT_TRUSTED_PROXIES} (loopback, private, link-local, unique-local).
+   * Pass `[]` to trust no proxy: forwarding headers are ignored, and the result is `req.ip` when set, else the socket address.
+   */
+  trustedProxies?: readonly string[];
+  /**
+   * The header your trusted proxies append to. Defaults to `"x-forwarded-for"`.
+   * Use `"forwarded"` only when your proxies write RFC 7239 `Forwarded`. The other header is ignored.
+   */
+  forwardedHeader?: "x-forwarded-for" | "forwarded";
+  /**
+   * Single-IP headers that your edge always overwrites, checked in order (e.g. `["cf-connecting-ip"]`).
+   * Read only when the socket peer is a trusted proxy. Defaults to `[]` (none).
+   */
+  trustedHeaders?: readonly string[];
 }
-
-/** Checks if an IP is a recognized private/proxy address. CGNAT (100.64.0.0/10, RFC 6598) is excluded — it's shared ISP address space, not a trusted local proxy. */
-function $isTrustedProxyAddress(ip: string): boolean {
-  const ipVersion = isIP(ip);
-
-  if (ipVersion === 4) {
-    const [a, b] = ip.split(".").map((part) => Number.parseInt(part, 10));
-    const secondOctet = b ?? -1;
-    if (a === 10) return true;
-    if (a === 127) return true;
-    if (a === 169 && secondOctet === 254) return true;
-    if (a === 192 && secondOctet === 168) return true;
-    if (a === 172 && secondOctet >= 16 && secondOctet <= 31) return true;
-    return false;
-  }
-
-  if (ipVersion === 6) {
-    const lower = ip.toLowerCase();
-    return (
-      lower === "::1" ||
-      lower.startsWith("fe80:") ||
-      lower.startsWith("fc") ||
-      lower.startsWith("fd") ||
-      lower.startsWith("::ffff:10.") ||
-      lower.startsWith("::ffff:127.") ||
-      lower.startsWith("::ffff:169.254.") ||
-      lower.startsWith("::ffff:192.168.") ||
-      /^::ffff:172\.(1[6-9]|2\d|3[0-1])\./.test(lower)
-    );
-  }
-
-  return false;
-}
-
-function $stripZoneId(ip: string): string {
-  const idx = ip.indexOf("%");
-  return idx === -1 ? ip : ip.slice(0, idx);
-}
-
-function $normalizeIpCandidate(candidate: string): string | null {
-  const trimmed = candidate.trim();
-  if (!trimmed) return null;
-
-  const unquoted = trimmed.replace(/^"(.*)"$/, "$1");
-
-  const bracketed = unquoted.match(/^\[([^\]]+)\](?::\d+)?$/);
-  if (bracketed?.[1]) {
-    const ip = $stripZoneId(bracketed[1]);
-    if (isIP(ip) !== 0) return ip;
-  }
-
-  const stripped = $stripZoneId(unquoted);
-  if (isIP(stripped) !== 0) return stripped;
-
-  const ipv4WithPort = unquoted.match(/^([^:]+):(\d+)$/);
-  if (ipv4WithPort?.[1] && isIP(ipv4WithPort[1]) === 4) return ipv4WithPort[1];
-
-  return null;
-}
-
-// e.g. Forwarded: for=192.0.2.43;proto=http, for="[2001:db8:cafe::17]"
-function $extractForwarded(value: string | string[]): NonEmptyArray<string> | null {
-  const lines = Array.isArray(value) ? value : [value];
-  const ips: string[] = [];
-
-  for (const line of lines) {
-    for (const segment of line.split(",")) {
-      for (const directive of segment.split(";")) {
-        const [rawKey, rawVal] = directive.split("=", 2);
-        if (!rawKey || !rawVal) continue;
-        if (rawKey.trim().toLowerCase() !== "for") continue;
-        const ip = $normalizeIpCandidate(rawVal);
-        if (ip) ips.push(ip);
-      }
-    }
-  }
-
-  return ips.length > 0 ? (ips as NonEmptyArray<string>) : null;
-}
-
-function $extractHeaderIps(headerValue: string | string[]): NonEmptyArray<string> | null {
-  const values = Array.isArray(headerValue) ? headerValue : [headerValue];
-  const ips: string[] = [];
-
-  for (const value of values) {
-    for (const token of value.split(",")) {
-      const ip = $normalizeIpCandidate(token);
-      if (ip) ips.push(ip);
-    }
-  }
-
-  return ips.length > 0 ? (ips as NonEmptyArray<string>) : null;
-}
-
-// CDN-injected headers first (high trust — overwritten by the CDN on every request),
-// then generic forwarding headers (lower trust — forwarded as-is from the client).
-const LOOKUP_HEADERS = [
-  "cf-connecting-ip",
-  "true-client-ip",
-  "fastly-client-ip",
-  "x-appengine-user-ip",
-  "cf-pseudo-ipv4",
-  "x-client-ip",
-  "x-forwarded-for",
-  "forwarded-for",
-  "x-forwarded",
-  "x-real-ip",
-  "x-cluster-client-ip",
-];
-
-function $extractIpFromHeaders(req: IpRequest): NonEmptyArray<string> | null {
-  if ($isIP(req.ip)) return [req.ip];
-
-  if (!req.headers) return null;
-
-  const remoteAddress = req.socket?.remoteAddress;
-  if (!$isIP(remoteAddress) || !$isTrustedProxyAddress(remoteAddress)) {
-    return null;
-  }
-
-  if (typeof req.headers.forwarded === "string" || Array.isArray(req.headers.forwarded)) {
-    const forwardedIps = $extractForwarded(req.headers.forwarded);
-    if (forwardedIps) return forwardedIps;
-  }
-
-  for (const header of LOOKUP_HEADERS) {
-    const ip = req.headers[header];
-    if (!ip || !(typeof ip === "string" || Array.isArray(ip))) continue;
-
-    const extractedIps = $extractHeaderIps(ip);
-    if (extractedIps) return extractedIps;
-  }
-
-  return null;
-}
-
-// biome-ignore-start lint/correctness/noUnusedFunctionParameters: Needed for Express middleware signature
-// biome-ignore-start lint/suspicious/noExplicitAny: Needed for Express next function
 
 /**
- * Extracts the client's IP address from an incoming Express request.
- *
- * This function works both as a standalone utility and as Express middleware.
- * It attempts to detect the IP by inspecting common proxy-related headers
- * such as `forwarded` (RFC 7239), `x-forwarded-for`, `x-real-ip`, and others. If no valid IP is found
- * in the headers, it falls back to `req.socket.remoteAddress`.
- * Header fallback is skipped when `req.socket.remoteAddress` is a public address,
- * reducing spoofing risk for direct internet-facing connections.
- *
- * When used as middleware, it populates:
- * - `req.clientIp`: The first valid IP address found.
- * - `req.clientIps`: A non-empty array of all valid IPs found.
- *
- * **Security note — trust boundary:** This function checks `req.ip` first (which
- * respects Express's `trust proxy` setting). When `req.ip` is falsy, it
- * reads forwarding headers **only** if the socket peer (`req.socket.remoteAddress`)
- * is a recognized private/proxy address. When the socket identity is absent or
- * public, headers are **not** trusted and the function falls back to
- * `req.socket.remoteAddress` directly. In production behind a reverse proxy,
- * configure Express's `trust proxy` so `req.ip` is populated correctly and
- * treated as the primary source of truth.
- *
- * @param req - The Express request object.
- * @param res - (Optional) The Express response object. Included to support middleware signature.
- * @param next - (Optional) The next function in the Express middleware chain.
- *
- * @returns The first detected client IP address as a string, or `undefined` if none is found.
- *
- * @throws Will throw an error if the `req` argument is not defined.
- *
- * @example
- * // Standalone usage:
- * app.get('/standalone-ip', (req, res) => {
- *   const ip = getClientIp(req);
- *   res.status(200).json({ ip });
- * });
- *
- * @example
- * // Middleware usage:
- * app.use(getClientIp);
- * app.get('/middleware-ip', (req, res) => {
- *   res.status(200).json({ ip: req.clientIp, ips: req.clientIps });
- * });
+ * Express-style middleware signature.
+ * `next` is called with no arguments, so it accepts any framework's `next` function.
  */
-export function getClientIp(req: IpRequest, res?: unknown, next?: (...args: any[]) => void): string | undefined {
-  if (!req) throw new Error("Request is undefined");
+export type ClientIpMiddleware = (req: IpRequest, res: unknown, next: (...args: never[]) => void) => void;
 
-  const ips = $extractIpFromHeaders(req);
-  if (ips) {
-    req.clientIp = ips[0];
-    req.clientIps = ips;
-    next?.();
-    return ips[0];
-  }
+/** Ranges trusted as proxies by default: loopback, RFC 1918 private, link-local, IPv6 loopback, ULA, and link-local. CGNAT (`100.64.0.0/10`) is not included. */
+export const DEFAULT_TRUSTED_PROXIES: readonly string[] = Object.freeze([
+  "127.0.0.0/8",
+  "10.0.0.0/8",
+  "172.16.0.0/12",
+  "192.168.0.0/16",
+  "169.254.0.0/16",
+  "::1/128",
+  "fc00::/7",
+  "fe80::/10",
+]);
 
-  const remoteAddress = req.socket?.remoteAddress;
-  if ($isIP(remoteAddress)) {
-    req.clientIp = remoteAddress;
-    req.clientIps = [remoteAddress];
-    next?.();
-    return remoteAddress;
-  }
-
-  next?.();
+interface ResolvedOptions {
+  subnets: readonly Subnet[];
+  forwardedHeader: "x-forwarded-for" | "forwarded";
+  trustedHeaders: readonly string[];
 }
 
-// biome-ignore-end lint/correctness/noUnusedFunctionParameters: Needed for Express middleware signature
-// biome-ignore-end lint/suspicious/noExplicitAny: Needed for Express next function
+const DEFAULT_SUBNETS: readonly Subnet[] = DEFAULT_TRUSTED_PROXIES.map($parseSubnet);
+const DEFAULT_OPTIONS: ResolvedOptions = {
+  subnets: DEFAULT_SUBNETS,
+  forwardedHeader: "x-forwarded-for",
+  trustedHeaders: [],
+};
+/** Options as received at runtime: JavaScript callers can pass values of any type. */
+interface UncheckedOptions {
+  trustedProxies?: unknown;
+  forwardedHeader?: unknown;
+  trustedHeaders?: unknown;
+}
+
+function $resolveSubnets(trustedProxies: unknown): readonly Subnet[] {
+  if (trustedProxies === undefined) return DEFAULT_SUBNETS;
+  if (!Array.isArray(trustedProxies)) throw new TypeError("trustedProxies must be an array");
+  return trustedProxies.map($parseSubnet);
+}
+
+function $isStringArray(value: unknown): value is readonly string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function $resolveOptions(input: unknown): ResolvedOptions {
+  if (input === undefined || input === null) return DEFAULT_OPTIONS;
+  if (typeof input !== "object") throw new TypeError("options must be an object");
+  const options: UncheckedOptions = input;
+
+  const forwardedHeader = options.forwardedHeader ?? "x-forwarded-for";
+  if (forwardedHeader !== "x-forwarded-for" && forwardedHeader !== "forwarded") {
+    throw new TypeError(`forwardedHeader must be "x-forwarded-for" or "forwarded"`);
+  }
+
+  const trustedHeaders = options.trustedHeaders ?? [];
+  if (!$isStringArray(trustedHeaders)) {
+    throw new TypeError("trustedHeaders must be an array of header names");
+  }
+
+  return {
+    subnets: $resolveSubnets(options.trustedProxies),
+    forwardedHeader,
+    trustedHeaders: trustedHeaders.map((h) => h.toLowerCase()),
+  };
+}
+
+function $headerValue(headers: IncomingHttpHeaders | undefined, name: string): string | undefined {
+  const value = headers?.[name];
+  if (Array.isArray(value)) return value.join(",");
+  return typeof value === "string" ? value : undefined;
+}
+
+function $fromTrustedHeaders(req: IpRequest, names: readonly string[]): ParsedIp | null {
+  for (const name of names) {
+    const value = $headerValue(req.headers, name);
+    const ip = value === undefined ? null : $parseNode(value);
+    if (ip) return ip;
+  }
+  return null;
+}
+
+function $walkChain(req: IpRequest, peer: ParsedIp, options: ResolvedOptions): NonEmptyArray<string> {
+  const header = $headerValue(req.headers, options.forwardedHeader) ?? "";
+  const nodes = options.forwardedHeader === "forwarded" ? $parseForwarded(header) : $parseXForwardedFor(header);
+  return $pickFromRight(nodes, peer, options.subnets);
+}
+
+/** Returns the walked chain when it reached an untrusted hop, else `[fallback]`. */
+function $preferUntrusted(
+  path: NonEmptyArray<string>,
+  fallback: ParsedIp,
+  subnets: readonly Subnet[],
+): NonEmptyArray<string> {
+  const client = $parseIp(path[0]);
+  return client && !$isTrusted(client, subnets) ? path : [fallback.text];
+}
+
+/**
+ * A `req.ip` inside trustedProxies (e.g. Express without `trust proxy`) is the proxy, not the client.
+ * Walk the chain from the trusted socket peer instead, and keep `req.ip` when no untrusted hop is found.
+ */
+function $fromFrameworkIp(
+  req: IpRequest,
+  ip: ParsedIp,
+  { options, trustedPeer }: { options: ResolvedOptions; trustedPeer: ParsedIp | null },
+): NonEmptyArray<string> {
+  if (!trustedPeer || !$isTrusted(ip, options.subnets)) return [ip.text];
+  return $preferUntrusted($walkChain(req, trustedPeer, options), ip, options.subnets);
+}
+
+/** Returns the client IP followed by the trusted hops toward the server, or `undefined`. */
+function $resolve(req: IpRequest, options: ResolvedOptions): NonEmptyArray<string> | undefined {
+  const peer = $parseIp(req.socket?.remoteAddress);
+  const trustedPeer = peer && $isTrusted(peer, options.subnets) ? peer : null;
+
+  const fromHeader = trustedPeer ? $fromTrustedHeaders(req, options.trustedHeaders) : null;
+  if (fromHeader && trustedPeer) return [fromHeader.text, trustedPeer.text];
+
+  const frameworkIp = $parseIp(req.ip);
+  if (frameworkIp) return $fromFrameworkIp(req, frameworkIp, { options, trustedPeer });
+
+  if (!peer) return undefined;
+  return trustedPeer ? $walkChain(req, trustedPeer, options) : [peer.text];
+}
+
+function $apply(req: IpRequest, options: ResolvedOptions): string | undefined {
+  const ips = $resolve(req, options);
+  req.clientIp = ips?.[0];
+  req.clientIps = ips;
+  return ips?.[0];
+}
+
+function $looksLikeOptions(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  return "trustedProxies" in value || "forwardedHeader" in value || "trustedHeaders" in value;
+}
+
+/**
+ * Returns the client IP of an incoming request, or `undefined` when no address is known.
+ *
+ * Resolution order:
+ * 1. A header from `options.trustedHeaders` (opt-in, e.g. `cf-connecting-ip`), only when the socket peer is a trusted proxy.
+ * 2. `req.ip` when it is a valid IP outside `trustedProxies` (Express `trust proxy`, Fastify `trustProxy`).
+ *    A `req.ip` inside `trustedProxies` (e.g. Express without `trust proxy` behind nginx) is the proxy, not the client:
+ *    the chain is walked as in step 4, and `req.ip` is kept only when no untrusted hop is found.
+ * 3. The socket address, when the peer is not a trusted proxy.
+ * 4. Otherwise, walk `X-Forwarded-For` (or `Forwarded`) from the right, skipping trusted proxies,
+ *    and return the first untrusted address. If every hop is trusted, return the leftmost one.
+ *    An `unknown`, obfuscated, or invalid hop stops the walk; the nearest trusted hop is returned.
+ *
+ * Client-supplied entries to the left of the first untrusted hop are never returned.
+ * Vendor headers (`cf-connecting-ip`, `true-client-ip`, …) are ignored unless listed in `trustedHeaders`.
+ * Results are normalized: IPv4-mapped IPv6 becomes IPv4, IPv6 is lowercase and compressed, zone IDs are removed.
+ *
+ * Also sets `req.clientIp` and `req.clientIps` (client first, then the trusted hops toward this server).
+ *
+ * Works as Express middleware with default options (`app.use(getClientIp)`).
+ * For custom options as middleware, use {@link getClientIpMiddleware}.
+ *
+ * @throws `Error` if `req` is missing. `TypeError` if `options` are invalid.
+ *
+ * @example
+ * // raw node:http behind nginx on the same host
+ * http.createServer((req, res) => res.end(getClientIp(req)));
+ *
+ * @example
+ * // Behind Cloudflare and a private load balancer
+ * const ip = getClientIp(req, { trustedHeaders: ["cf-connecting-ip"] });
+ */
+export function getClientIp(req: IpRequest, options?: GetClientIpOptions): string | undefined;
+/** Express middleware form: populates `req.clientIp` and `req.clientIps` with default options, then calls `next()`. */
+export function getClientIp(req: IpRequest, res: unknown, next: Parameters<ClientIpMiddleware>[2]): void;
+export function getClientIp(
+  req: IpRequest | null | undefined,
+  optionsOrRes?: unknown,
+  next?: Parameters<ClientIpMiddleware>[2],
+): string | undefined {
+  if (!req) throw new Error("Request is undefined");
+
+  if (typeof next === "function") {
+    if ($looksLikeOptions(optionsOrRes)) {
+      throw new TypeError("getClientIp(req, options, next) ignores options; use getClientIpMiddleware(options)");
+    }
+    $apply(req, DEFAULT_OPTIONS);
+    next();
+    return undefined;
+  }
+
+  return $apply(req, $resolveOptions(optionsOrRes));
+}
+
+/**
+ * Creates Express-style middleware that populates `req.clientIp` and `req.clientIps`, then calls `next()`.
+ * Options are validated once, at creation.
+ *
+ * @example
+ * app.use(getClientIpMiddleware({ trustedProxies: [...DEFAULT_TRUSTED_PROXIES, "203.0.113.0/24"] }));
+ */
+export function getClientIpMiddleware(options?: GetClientIpOptions): ClientIpMiddleware {
+  const resolved = $resolveOptions(options);
+  return (req: IpRequest | null | undefined, _res, next) => {
+    if (!req) throw new Error("Request is undefined");
+    $apply(req, resolved);
+    next();
+  };
+}
 
 declare global {
   namespace Express {
     export interface Request {
-      /** The first IP address extracted from the request. */
-      clientIp?: string;
-      /** All IP addresses extracted from the request. */
-      clientIps?: NonEmptyArray<string>;
+      /** The client IP resolved by `get-client-ip`. */
+      clientIp?: string | undefined;
+      /** The client IP followed by the trusted hops toward this server. */
+      clientIps?: NonEmptyArray<string> | undefined;
     }
   }
 }

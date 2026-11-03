@@ -1,0 +1,485 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // One config for the whole repo. Packages and examples run it with `oxlint --type-aware -c ../../.oxlintrc.json .`.
+  // Rule order: categories, then type-aware rules, then security, performance, complexity, readability, tests.
+  "plugins": ["typescript", "unicorn", "oxc", "import", "promise", "node", "vitest"],
+  // ESLint plugins through jsPlugins. The libraries parse untrusted strings with regular expressions.
+  // `local` holds this repo's own rules, in tools/lint-rules; the override below scopes them.
+  "jsPlugins": [
+    { "name": "regexp", "specifier": "eslint-plugin-regexp" },
+    { "name": "local", "specifier": "./tools/lint-rules/src/index.ts" }
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "env": {
+    "builtin": true,
+    "es2024": true,
+    "node": true
+  },
+  "ignorePatterns": ["**/node_modules/**", "**/dist/**", "**/.turbo/**", "**/coverage/**"],
+  "options": {
+    "typeAware": true,
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "error",
+    "respectEslintDisableDirectives": false
+  },
+  "rules": {
+    // ── Type-aware correctness ───────────────────────────────────────────────
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/require-await": "error",
+    "typescript/return-await": ["error", "in-try-catch"],
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-unsafe-argument": "error",
+    "typescript/no-unsafe-assignment": "error",
+    "typescript/no-unsafe-call": "error",
+    "typescript/no-unsafe-member-access": "error",
+    "typescript/no-unsafe-return": "error",
+    "typescript/no-unsafe-type-assertion": "error",
+    "typescript/no-unsafe-function-type": "error",
+    "typescript/no-deprecated": "error",
+    "typescript/switch-exhaustiveness-check": [
+      "error",
+      { "considerDefaultExhaustiveForUnions": false, "requireDefaultForNonUnion": true }
+    ],
+    "typescript/restrict-plus-operands": [
+      "error",
+      {
+        "allowAny": false,
+        "allowBoolean": false,
+        "allowNullish": false,
+        "allowNumberAndString": false,
+        "allowRegExp": false
+      }
+    ],
+    "typescript/restrict-template-expressions": [
+      "error",
+      {
+        "allowAny": false,
+        "allowArray": false,
+        "allowBoolean": false,
+        "allowNullish": false,
+        "allowNumber": true,
+        "allowRegExp": false,
+        "allowNever": false
+      }
+    ],
+    "typescript/strict-boolean-expressions": ["error", { "allowNumber": false }],
+    // Nursery in oxlint 1.90: recheck its hits on each oxlint upgrade.
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/prefer-nullish-coalescing": "error",
+    "typescript/prefer-optional-chain": "error",
+    "typescript/prefer-promise-reject-errors": "error",
+    "typescript/prefer-readonly": "error",
+    "typescript/use-unknown-in-catch-callback-variable": "error",
+    "typescript/consistent-type-assertions": [
+      "error",
+      { "assertionStyle": "as", "objectLiteralTypeAssertions": "never" }
+    ],
+    "typescript/no-dynamic-delete": "error",
+    "typescript/no-empty-object-type": "error",
+    "typescript/no-invalid-void-type": "error",
+    "typescript/method-signature-style": ["error", "property"],
+    "typescript/ban-ts-comment": [
+      "error",
+      {
+        "ts-expect-error": "allow-with-description",
+        "ts-ignore": true,
+        "ts-nocheck": true,
+        "minimumDescriptionLength": 10
+      }
+    ],
+    "typescript/explicit-module-boundary-types": "error",
+    // Off: isolatedDeclarations requires explicit types on exports, which this rule would reject.
+    "typescript/no-inferrable-types": "off",
+    "typescript/prefer-as-const": "error",
+    "typescript/prefer-enum-initializers": "error",
+    "import/no-cycle": "error",
+    "import/no-duplicates": "error",
+    "import/no-mutable-exports": "error",
+    "import/no-self-import": "error",
+    "import/no-commonjs": "error",
+    "unicorn/no-abusive-eslint-disable": "error",
+    "unicorn/prefer-node-protocol": "error",
+    "oxc/no-barrel-file": "error",
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrors": "all" }],
+    "no-self-compare": "error",
+    "no-template-curly-in-string": "error",
+    "no-unreachable-loop": "error",
+    "array-callback-return": "error",
+    "no-promise-executor-return": "error",
+    "no-empty": "error",
+    "no-case-declarations": "error",
+    "no-prototype-builtins": "error",
+    "prefer-object-has-own": "error",
+    "no-new-wrappers": "error",
+    // Nursery in oxlint 1.90: recheck its hits on each oxlint upgrade.
+    "no-useless-assignment": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-sequences": "error",
+    "no-return-assign": "error",
+    "no-regex-spaces": "error",
+    "no-useless-return": "error",
+    "no-implicit-coercion": "error",
+    "no-void": "error",
+    "no-param-reassign": "error",
+    "default-param-last": "error",
+    "one-var": ["error", "never"],
+    "yoda": "error",
+    "promise/no-return-wrap": "error",
+    "promise/prefer-await-to-then": "error",
+    "promise/param-names": "error",
+    "node/no-path-concat": "error",
+
+    // ── Security ─────────────────────────────────────────────────────────────
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-script-url": "error",
+    "no-caller": "error",
+    "no-extend-native": "error",
+    "no-with": "error",
+    "no-proto": "error",
+    "no-iterator": "error",
+    "guard-for-in": "error",
+    "radix": "error",
+    "no-throw-literal": "error",
+    "typescript/only-throw-error": "error",
+    "preserve-caught-error": "error",
+    "unicorn/prefer-type-error": "error",
+    "unicorn/throw-new-error": "error",
+    "unicorn/error-message": "error",
+    "unicorn/no-new-buffer": "error",
+    "unicorn/no-thenable": "error",
+    "unicorn/no-document-cookie": "error",
+    "no-bitwise": "error",
+    "regexp/no-super-linear-backtracking": "error",
+    "regexp/no-super-linear-move": "error",
+    "regexp/no-missing-g-flag": "error",
+    "regexp/strict": "error",
+    "regexp/no-unused-capturing-group": "error",
+
+    // ── Performance ──────────────────────────────────────────────────────────
+    "no-await-in-loop": "error",
+    "oxc/no-accumulating-spread": "error",
+    "oxc/no-map-spread": "error",
+    "unicorn/prefer-set-has": "error",
+    "unicorn/prefer-array-find": "error",
+    "unicorn/prefer-array-flat-map": "error",
+    "unicorn/prefer-array-index-of": "error",
+    "unicorn/prefer-array-some": "error",
+    "unicorn/no-useless-spread": "error",
+    "unicorn/no-useless-iterator-to-array": "error",
+    "unicorn/no-useless-fallback-in-spread": "error",
+    "unicorn/prefer-regexp-test": "error",
+    "typescript/prefer-regexp-exec": "error",
+    "typescript/prefer-includes": "error",
+    "typescript/prefer-find": "error",
+    "unicorn/prefer-string-slice": "error",
+    "unicorn/prefer-string-replace-all": "error",
+    "unicorn/prefer-structured-clone": "error",
+    "unicorn/prefer-math-min-max": "error",
+    "unicorn/prefer-modern-math-apis": "error",
+    "unicorn/no-unnecessary-await": "error",
+    "unicorn/no-await-in-promise-methods": "error",
+    "unicorn/no-single-promise-in-promise-methods": "error",
+    "unicorn/no-useless-promise-resolve-reject": "error",
+    "unicorn/no-array-for-each": "error",
+
+    // ── Complexity (library-sized limits) ────────────────────────────────────
+    "complexity": ["error", { "max": 10 }],
+    "max-depth": ["error", { "max": 3 }],
+    "max-params": ["error", { "max": 4 }],
+    "max-nested-callbacks": ["error", { "max": 3 }],
+    "max-lines-per-function": ["error", { "max": 60, "skipBlankLines": true, "skipComments": true }],
+    "max-lines": ["error", { "max": 400, "skipBlankLines": true, "skipComments": true }],
+    "unicorn/max-nested-calls": "error",
+
+    // ── Readability and consistency ──────────────────────────────────────────
+    "no-nested-ternary": "error",
+    "unicorn/no-nested-ternary": "error",
+    "no-negated-condition": "error",
+    "unicorn/no-negated-condition": "error",
+    "no-unneeded-ternary": "error",
+    "no-lonely-if": "error",
+    "no-else-return": "error",
+    "no-lone-blocks": "error",
+    "no-multi-assign": "error",
+    "no-unused-expressions": "error",
+    "no-useless-rename": "error",
+    "no-useless-computed-key": "error",
+    "no-useless-constructor": "error",
+    "no-useless-concat": "error",
+    "no-shadow": "error",
+    "prefer-template": "error",
+    "typescript/consistent-return": "error",
+    "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/no-unnecessary-template-expression": "error",
+    "typescript/no-unnecessary-type-arguments": "error",
+    // Public APIs take a caller-chosen result type (`decryptObj<T>`, `decompressObj<T>`); dropping it breaks callers.
+    "typescript/no-unnecessary-type-parameters": "off",
+    "typescript/no-unnecessary-boolean-literal-compare": "error",
+    "typescript/consistent-type-imports": "error",
+    "typescript/consistent-type-exports": "error",
+    "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+    "typescript/consistent-type-definitions": ["error", "interface"],
+    "import/first": "error",
+    "unicorn/switch-case-braces": "error",
+    "unicorn/catch-error-name": ["error", { "name": "error" }],
+    "unicorn/no-unreadable-array-destructuring": "error",
+    "unicorn/no-unreadable-iife": "error",
+    "unicorn/explicit-length-check": "error",
+    "unicorn/no-typeof-undefined": "error",
+    "unicorn/no-useless-undefined": "error",
+    "unicorn/numeric-separators-style": "error",
+    "unicorn/text-encoding-identifier-case": "error",
+    "unicorn/prefer-at": "error",
+    "unicorn/prefer-code-point": "error",
+    "unicorn/prefer-global-this": "error",
+    "unicorn/prefer-number-properties": "error",
+    "unicorn/prefer-string-trim-start-end": "error",
+    "unicorn/no-instanceof-array": "error",
+    "unicorn/no-useless-switch-case": "error",
+    "unicorn/no-negation-in-equality-check": "error",
+    "unicorn/no-static-only-class": "error",
+    "unicorn/filename-case": "error",
+    // Catch bindings stay: an error is named, even when unused.
+    "unicorn/prefer-optional-catch-binding": "off",
+    // Branded types use `__brand`, and test doubles mirror framework internals such as `_cookies`.
+    "no-underscore-dangle": "off",
+    "typescript/no-extraneous-class": ["error", { "allowWithDecorator": true }],
+    "import/no-unassigned-import": ["error", { "allow": ["reflect-metadata"] }],
+    "no-warning-comments": "error",
+    "oxc/branches-sharing-code": "error",
+    "oxc/bad-bitwise-operator": "error",
+
+    // ── Tests ────────────────────────────────────────────────────────────────
+    "vitest/valid-expect": ["error", { "maxArgs": 2 }],
+    "vitest/consistent-test-filename": [
+      "error",
+      {
+        "pattern": "(?:^|.*[\\\\/])__tests__[\\\\/][^\\\\/]+\\.test\\.ts$",
+        "allTestPattern": "\\.(test|spec)\\.[cm]?[jt]sx?$"
+      }
+    ],
+    "vitest/no-disabled-tests": "error",
+    "vitest/no-identical-title": "error",
+    "vitest/no-duplicate-hooks": "error",
+    "vitest/prefer-hooks-on-top": "error",
+    "vitest/no-import-node-test": "error",
+    "vitest/no-test-return-statement": "error",
+    // toEqual ignores undefined keys, which matter under exactOptionalPropertyTypes.
+    "vitest/prefer-strict-equal": "error"
+  },
+  "overrides": [
+    {
+      // Library source: no logging, no environment reads, named exports only, and no weak randomness.
+      "files": ["packages/*/src/**/*.ts"],
+      "rules": {
+        "no-console": "error",
+        "node/no-process-env": "error",
+        "import/no-default-export": "error",
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "Use crypto.getRandomValues / crypto.randomBytes; Math.random is not cryptographically secure."
+          }
+        ]
+      }
+    },
+    {
+      // Each package's public entry re-exports its modules by design.
+      "files": [
+        "packages/*/src/index.ts",
+        "packages/*/src/export.ts",
+        "packages/*/src/node/export.ts",
+        "packages/*/src/web/export.ts"
+      ],
+      "rules": {
+        "oxc/no-barrel-file": "off"
+      }
+    },
+    {
+      // Bitwise operators are the point here: constant-time XOR compare (cipher-kit), file permission bits
+      // (generate-certs), byte and hex decoding (internal-helpers), and IP address and CIDR math (get-client-ip).
+      "files": [
+        "packages/cipher-kit/src/**/*.ts",
+        "packages/generate-certs/src/**/*.ts",
+        "packages/get-client-ip/src/**/*.ts",
+        "packages/internal-helpers/src/**/*.ts"
+      ],
+      "rules": {
+        "no-bitwise": "off"
+      }
+    },
+    {
+      // Tests read better as long, flat scenarios.
+      "files": ["**/__tests__/**/*.ts"],
+      // They feed deliberately malformed input through casts to test runtime validation, run cases in order,
+      // and nest describe blocks.
+      "rules": {
+        "max-lines-per-function": "off",
+        "max-lines": ["error", { "max": 800, "skipBlankLines": true, "skipComments": true }],
+        "max-nested-callbacks": "off",
+        "no-await-in-loop": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/consistent-type-assertions": "off",
+        // Tests pass undefined on purpose to check runtime validation; this rule's autofix deletes those arguments.
+        "unicorn/no-useless-undefined": "off"
+      }
+    },
+    {
+      // A test fails when the code breaks: assert the exact result, not just that one exists.
+      // The rule matches the whole modifier chain, so `resolves.`, `rejects.` and `toThrowError` forms are listed too.
+      "files": ["**/__tests__/**/*.ts"],
+      "rules": {
+        "vitest/no-restricted-matchers": [
+          "error",
+          {
+            "toBeDefined": "Passes for any value but undefined; assert the exact value with toBe or toStrictEqual, or its exact shape with toMatch.",
+            "toBeTruthy": "Passes for any truthy value; assert the exact value with toBe(true) or toStrictEqual(...).",
+            "toBeFalsy": "Passes for any falsy value; assert the exact value with toBe(false), toBe(0), toBe(\"\") or toBeNull().",
+            "not.toBeUndefined": "Passes for any value but undefined; assert the exact value with toBe or toStrictEqual.",
+            "not.toBeNull": "Passes for any value but null; assert the exact value with toBe or toStrictEqual.",
+            "not.toThrow": "Passes for any result that does not throw; assert what the call returns or changes instead.",
+            "not.toThrowError": "Passes for any result that does not throw; assert what the call returns or changes instead.",
+            "resolves.toBeDefined": "Passes for any value but undefined; assert the exact resolved value with resolves.toBe or resolves.toStrictEqual.",
+            "resolves.toBeTruthy": "Passes for any truthy value; assert the exact resolved value with resolves.toBe or resolves.toStrictEqual.",
+            "resolves.toBeFalsy": "Passes for any falsy value; assert the exact resolved value with resolves.toBe or resolves.toStrictEqual.",
+            "resolves.not.toBeUndefined": "Passes for any value but undefined; assert the exact resolved value with resolves.toBe or resolves.toStrictEqual.",
+            "resolves.not.toBeNull": "Passes for any value but null; assert the exact resolved value with resolves.toBe or resolves.toStrictEqual.",
+            "resolves.not.toThrow": "Passes for any promise that resolves; assert the resolved value with resolves.toBe or resolves.toStrictEqual.",
+            "rejects.toBeDefined": "Passes for any rejection; assert the exact error with rejects.toThrow(message).",
+            "rejects.toBeTruthy": "Passes for any truthy rejection; assert the exact error with rejects.toThrow(message)."
+          }
+        ]
+      }
+    },
+    {
+      // Text and base64 codecs live in @internal/helpers, so every package encodes and decodes the same strict way.
+      "files": ["packages/*/src/**/*.ts"],
+      "excludeFiles": ["packages/internal-helpers/src/**", "**/__tests__/**"],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "TextDecoder",
+            "message": "Use $newStrictUtf8Decoder or the codecs in @internal/helpers: a default TextDecoder drops a leading U+FEFF and replaces invalid bytes."
+          },
+          {
+            "name": "TextEncoder",
+            "message": "Use textEncoder or $fromUtf8 from @internal/helpers: TextEncoder silently replaces lone surrogates."
+          },
+          {
+            "name": "atob",
+            "message": "Use $fromBase64 or $fromBase64Url from @internal/helpers: atob is lenient and overflows on large input."
+          },
+          { "name": "btoa", "message": "Use $toBase64 or $toBase64Url from @internal/helpers." }
+        ],
+        // The same names through globalThis or node:util. This list replaces the library-wide one here,
+        // so it repeats Math.random.
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "Use crypto.getRandomValues / crypto.randomBytes; Math.random is not cryptographically secure."
+          },
+          {
+            "object": "globalThis",
+            "property": "TextDecoder",
+            "message": "Use $newStrictUtf8Decoder or the codecs in @internal/helpers."
+          },
+          {
+            "object": "globalThis",
+            "property": "TextEncoder",
+            "message": "Use textEncoder or $fromUtf8 from @internal/helpers."
+          },
+          {
+            "object": "globalThis",
+            "property": "atob",
+            "message": "Use $fromBase64 or $fromBase64Url from @internal/helpers."
+          },
+          {
+            "object": "globalThis",
+            "property": "btoa",
+            "message": "Use $toBase64 or $toBase64Url from @internal/helpers."
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "node:util",
+                "importNames": ["TextDecoder", "TextEncoder"],
+                "message": "Use the codecs in @internal/helpers."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // Library code compares secrets, tokens, digests and signatures in constant time.
+      "files": ["packages/*/src/**/*.ts"],
+      "excludeFiles": ["**/__tests__/**"],
+      "rules": {
+        "local/no-plain-secret-compare": "error"
+      }
+    },
+    {
+      // Tool configs must default-export their config.
+      "files": ["**/*.config.ts"],
+      "rules": {
+        "import/no-default-export": "off"
+      }
+    },
+    {
+      // The smoke test checks the published CommonJS entry with require().
+      "files": ["scripts/**/*.cjs"],
+      "rules": {
+        "import/no-commonjs": "off",
+        "typescript/no-require-imports": "off"
+      }
+    },
+    {
+      // Scripts and example apps talk to a person through the console.
+      "files": ["scripts/**", "examples/**"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      // Example apps emit no declarations, so inferred return types are fine.
+      "files": ["examples/**"],
+      "rules": {
+        "typescript/explicit-module-boundary-types": "off"
+      }
+    },
+    {
+      // Smoke fixtures import the packed packages and run in a temporary directory, where those packages resolve.
+      // In this repo they do not, so every type-aware rule would see `any`. `pnpm smoke` type-checks them instead.
+      "files": ["scripts/*/**"],
+      "rules": {
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/consistent-type-assertions": "off",
+        "typescript/restrict-template-expressions": "off",
+        "typescript/no-unnecessary-condition": "off",
+        "typescript/strict-boolean-expressions": "off",
+        "typescript/no-floating-promises": "off"
+      }
+    }
+  ]
+}

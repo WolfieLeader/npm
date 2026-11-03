@@ -18,8 +18,8 @@ describe("Compression strategy roundtrips", () => {
 
 describe("windowBits variations", () => {
   test("roundtrips with windowBits=8 (minimum)", () => {
-    // pako silently upgrades windowBits=8 to 9 during deflate,
-    // so decompression with the default windowBits=15 handles it correctly
+    // zlib cannot write an 8-bit window, so compress uses 9.
+    // Decompression reads the window size from the stream header.
     const testData = "abcdef".repeat(200);
     const compressed = tryCompress(testData, { windowBits: 8 });
     expect(compressed.success).toBe(true);
@@ -46,11 +46,10 @@ describe("maxOutputSize boundary on deflated path", () => {
     const exactString = "x".repeat(500);
     const compressed = tryCompress(exactString);
     expect(compressed.success).toBe(true);
-    if ((compressed.result as string).endsWith(".1.")) {
-      const result = tryDecompress(compressed.result as string, { maxOutputSize: 500 });
-      expect(result.success).toBe(true);
-      expect(result.result).toBe(exactString);
-    }
+    expect((compressed.result as string).endsWith(".1.")).toBe(true);
+    const result = tryDecompress(compressed.result as string, { maxOutputSize: 500 });
+    expect(result.success).toBe(true);
+    expect(result.result).toBe(exactString);
   });
 });
 
@@ -78,7 +77,12 @@ describe("Stored .0. path edge cases", () => {
     const b64url = Buffer.from(invalidUtf8).toString("base64url");
     const payload = `${b64url}.0.`;
     const result = tryDecompress(payload);
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result).toStrictEqual({
+      success: false,
+      error: {
+        message: "bytesToStr: Failed to convert data",
+        description: "The encoded data was not valid for encoding utf-8",
+      },
+    });
   });
 });

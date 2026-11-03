@@ -1,6 +1,7 @@
-import { $err, $fmtError, $ok, type Result } from "@internal/helpers";
+import { $err, $fmtError, $ok } from "@internal/helpers";
+import type { Result } from "@internal/helpers";
 import type { DIGEST_ALGORITHMS, ENCRYPTION_ALGORITHMS } from "~/helpers/consts.js";
-import type { CreateSecretKeyOptions } from "~/helpers/types.js";
+import type { CreateSecretKeyOptions, EncryptionAlgorithm } from "~/helpers/types.js";
 import { $isObj, $validateCreateSecretKeyOptions, $validateSecretKeyBase } from "~/helpers/validate.js";
 import { textEncoder } from "./web-encode.js";
 
@@ -14,23 +15,33 @@ export type WebSecretKey = {
   readonly injected: (typeof ENCRYPTION_ALGORITHMS)[keyof typeof ENCRYPTION_ALGORITHMS];
 } & { readonly [__brand]: "secretKey-web" };
 
-export function $isWebSecretKey(x: unknown): WebSecretKey | null {
+/** `CryptoKey` is missing on some runtimes, although the DOM types always declare it. */
+function $isCryptoKey(x: unknown): x is CryptoKey {
+  const cryptoKeyClass: unknown = globalThis.CryptoKey;
+  return cryptoKeyClass !== undefined && x instanceof CryptoKey;
+}
+
+/** Checks that the key's algorithm, length and usages match the declared encryption algorithm. */
+function $matchesKeyAlgorithm(key: CryptoKey, algorithm: (typeof ENCRYPTION_ALGORITHMS)[EncryptionAlgorithm]): boolean {
+  return (
+    $isObj(key.algorithm) &&
+    key.algorithm.name === algorithm.web &&
+    (typeof key.algorithm["length"] !== "number" || key.algorithm["length"] === algorithm.keyBytes * 8) &&
+    Array.isArray(key.usages) &&
+    key.usages.includes("encrypt") &&
+    key.usages.includes("decrypt")
+  );
+}
+
+/** Runtime shape check for a key made by {@link $createSecretKey}. The brand exists only in types. */
+function $hasWebSecretKeyShape(x: unknown): x is WebSecretKey {
   const base = $validateSecretKeyBase(x, "web");
-  if (!base) return null;
+  if (!base) return false;
+  return $isCryptoKey(base.obj["key"]) && $matchesKeyAlgorithm(base.obj["key"], base.algorithm);
+}
 
-  if (typeof globalThis.CryptoKey === "undefined" || !(base.obj.key instanceof CryptoKey)) return null;
-
-  if (
-    !$isObj(base.obj.key.algorithm) ||
-    base.obj.key.algorithm.name !== base.algorithm.web ||
-    (typeof base.obj.key.algorithm.length === "number" &&
-      base.obj.key.algorithm.length !== base.algorithm.keyBytes * 8) ||
-    !Array.isArray(base.obj.key.usages) ||
-    !(base.obj.key.usages.includes("encrypt") && base.obj.key.usages.includes("decrypt"))
-  ) {
-    return null;
-  }
-  return x as WebSecretKey;
+export function $isWebSecretKey(x: unknown): WebSecretKey | null {
+  return $hasWebSecretKeyShape(x) ? x : null;
 }
 
 export async function $createSecretKey(
@@ -63,6 +74,7 @@ export async function $createSecretKey(
       extractable,
       ["encrypt", "decrypt"],
     );
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mints the brand, which has no runtime value to check
     const secretKey = Object.freeze({ platform: "web", digest, algorithm, key, injected: encryptAlgo }) as WebSecretKey;
 
     return $ok({ result: secretKey });

@@ -3,19 +3,14 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    watch: false,
-    typecheck: {
-      include: ["**/*.test.ts"],
-      enabled: true,
-      ignoreSourceErrors: false,
-      checker: "tsc",
-      tsconfig: "./tsconfig.json",
-    },
-    silent: false,
+    include: ["src/**/__tests__/**/*.test.ts"],
+    // Each test generates RSA keys, whose time varies run to run. On a shared CI runner, with every package
+    // testing at once, one test took 2.4 s against vitest's 5 s default.
+    testTimeout: 30_000,
   },
   resolve: {
     alias: {
-      "~": path.resolve(__dirname, "src"),
+      "~": path.resolve(import.meta.dirname, "src"),
     },
   },
 });

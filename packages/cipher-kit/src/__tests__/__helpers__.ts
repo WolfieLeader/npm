@@ -1,14 +1,63 @@
+import { expect } from "vitest";
+import type { CipherEncoding } from "~/helpers/types.js";
+
 export const secret = "Secret0123456789Secret0123456789";
 export const data = "🦊 secret stuff ~ !@#$%^&*()_+";
-export const repeated = "Hēl!0, ".repeat(1000).trim();
+export const repeated: string = "Hēl!0, ".repeat(1000).trim();
 
-export const smallObj = {
+export interface SmallObj {
+  name: string;
+  age: number;
+  isAdmin: boolean;
+}
+
+export interface LargeObj {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    isActive: boolean;
+    preferences: {
+      theme: string;
+      language: string;
+      notifications: { email: boolean; sms: boolean; push: boolean };
+    };
+    roles: string[];
+    stats: { posts: number; comments: number; likes: number; lastLogin: string };
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      zip: string;
+      geo: { lat: number; lng: number };
+    };
+  };
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+    tags: string[];
+    notes: { id: string; title: string; content: string; pinned: boolean }[];
+  };
+  config: {
+    features: {
+      featureA: boolean;
+      featureB: boolean;
+      featureC: boolean;
+      experimental: { newUI: boolean; searchV2: boolean };
+    };
+    limits: { maxItems: number; timeout: number; retries: number };
+  };
+  session: { token: string; expiresIn: number; refreshToken: string };
+  logs: { timestamp: string; message: string; level: string | undefined }[];
+}
+
+export const smallObj: SmallObj = {
   name: "Alice",
   age: 30,
   isAdmin: false,
 };
 
-export const largeObj = {
+export const largeObj: LargeObj = {
   user: {
     id: "user_1234567890",
     name: "John Doe",
@@ -69,3 +118,47 @@ export const largeObj = {
     level: ["info", "warn", "error"][i % 3],
   })),
 };
+
+/** The failed result a `try*` function returns. */
+export function failure(
+  message: string,
+  description: string,
+): { success: false; error: { message: string; description: string } } {
+  return { success: false, error: { message, description } };
+}
+
+/** `expect.stringMatching(pattern)`, typed as the string it stands in for. */
+export function stringMatching(pattern: RegExp): string {
+  return expect.stringMatching(pattern) as string;
+}
+
+/** `expect.any(type)`, typed as the instance it stands in for. */
+export function anyInstance<T>(type: { prototype: T }): T {
+  return expect.any(type) as T;
+}
+
+/** A pattern for `bytes` random or derived bytes written in `encoding`, such as a salt or a password hash. */
+function encodedSegment(bytes: number, encoding: CipherEncoding = "base64url"): string {
+  if (encoding === "hex") return `[0-9a-f]{${bytes * 2}}`;
+
+  const chars = Math.ceil((bytes * 4) / 3);
+  if (encoding === "base64url") return `[A-Za-z0-9_-]{${chars}}`;
+
+  return `[A-Za-z0-9+/]{${chars}}${"=".repeat((3 - (bytes % 3)) % 3)}`;
+}
+
+/** Matches a whole encoded value of exactly `bytes` bytes. */
+export function encodedPattern(bytes: number, encoding: CipherEncoding = "base64url"): RegExp {
+  return new RegExp(`^${encodedSegment(bytes, encoding)}$`);
+}
+
+/**
+ * Matches `"iv.cipher.tag."` for `plaintext` encrypted with AES-GCM in `encoding`:
+ * a 12-byte IV, a ciphertext as long as the UTF-8 plaintext, and a 16-byte auth tag.
+ */
+export function cipherPattern(plaintext: string, encoding: CipherEncoding = "base64url"): RegExp {
+  const length = new TextEncoder().encode(plaintext).byteLength;
+  const segments = [12, length, 16].map((bytes) => encodedSegment(bytes, encoding));
+
+  return new RegExp(`^${segments.join("\\.")}\\.$`);
+}

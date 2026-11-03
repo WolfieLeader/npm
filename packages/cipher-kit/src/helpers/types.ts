@@ -26,7 +26,7 @@ export interface CreateSecretKeyOptions {
    * For per-user or per-deployment uniqueness, provide your own unique random salt.
    */
   salt?: string;
-  /** Optional context info for HKDF (default: `'cipher-kit'`). */
+  /** Optional context info for HKDF (default: `'cipher-kit'`; max 1024 UTF-8 bytes after NFKC normalization). */
   info?: string;
   /**
    * Whether the derived Web CryptoKey is extractable (default: `false`).

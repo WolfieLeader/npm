@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
-import { type CookieRequest, type CookieResponse, deleteCookie, getCookie, setCookie } from "~/index.js";
+import { deleteCookie, getCookie, setCookie } from "~/index.js";
+import type { CookieLogger, CookieOptions, CookieRequest, CookieResponse } from "~/index.js";
 
 function mockReq(cookieHeader?: string): CookieRequest {
   return {
@@ -11,9 +12,17 @@ function mockRes(): CookieResponse & { _cookies: string[] } {
   const cookies: string[] = [];
   return {
     _cookies: cookies,
-    append: vi.fn((name: string, value: string) => {
-      if (name === "Set-Cookie") cookies.push(value);
+    append: vi.fn<CookieResponse["append"]>((name, value) => {
+      if (name === "Set-Cookie") cookies.push(...[value].flat());
     }),
+  };
+}
+
+function failingRes(message: string): CookieResponse {
+  return {
+    append: () => {
+      throw new Error(message);
+    },
   };
 }
 
@@ -39,7 +48,19 @@ describe("getCookie", () => {
     expect(getCookie(req, "token")).toBe("a b=c");
   });
 
-  test("logs error with logError: true when parsing fails", () => {
+  test("passes parse errors to options.logger", () => {
+    const logger = vi.fn<CookieLogger>();
+    const req: CookieRequest = {
+      get: () => {
+        throw new Error("Header read failure");
+      },
+    };
+
+    expect(getCookie(req, "session", { logger })).toBeUndefined();
+    expect(logger).toHaveBeenCalledWith('Error getting cookie "session": Header read failure');
+  });
+
+  test("never writes to the console", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const req: CookieRequest = {
       get: () => {
@@ -47,9 +68,9 @@ describe("getCookie", () => {
       },
     };
 
-    const result = getCookie(req, "session", true);
-    expect(result).toBeUndefined();
-    expect(consoleSpy).toHaveBeenCalled();
+    expect(getCookie(req, "session")).toBeUndefined();
+    expect(setCookie(mockRes(), "", "v", {})).toBe(false);
+    expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
 });
@@ -75,6 +96,28 @@ describe("setCookie", () => {
     const res = mockRes();
     setCookie(res, "test", "val", { path: "/admin" });
     expect(res._cookies[0]).toContain("Path=/admin");
+  });
+
+  test.each([undefined, null])("returns false, not a throw, when a JS caller passes %s as options", (options) => {
+    const res = mockRes();
+    expect(setCookie(res, "test", "val", options as unknown as CookieOptions)).toBe(false);
+    expect(res._cookies).toHaveLength(0);
+  });
+
+  test("returns false and undefined, not a throw, when an options getter throws", () => {
+    const options = {
+      get logger(): CookieLogger {
+        throw new Error("getter");
+      },
+    } as CookieOptions;
+    expect(setCookie(mockRes(), "test", "val", options)).toBe(false);
+    expect(deleteCookie(mockRes(), "test", options)).toBe(false);
+    const throwingReq: CookieRequest = {
+      get: () => {
+        throw new Error("header");
+      },
+    };
+    expect(getCookie(throwingReq, "test", options)).toBeUndefined();
   });
 
   test("returns false on invalid sameSite value", () => {
@@ -128,10 +171,10 @@ describe("setCookie", () => {
       expect(res._cookies[0]).toContain("Path=/admin");
     });
 
-    test("does not enforce secure for non-standard case __secure- prefix", () => {
+    test("enforces secure for lowercase __secure- prefix (browsers match case-insensitively)", () => {
       const res = mockRes();
       setCookie(res, "__secure-session", "abc", {});
-      expect(res._cookies[0]).not.toContain("Secure");
+      expect(res._cookies[0]).toContain("Secure");
     });
   });
 
@@ -202,17 +245,30 @@ describe("edge cases", () => {
     expect(res._cookies).toHaveLength(0);
   });
 
-  test("does not enforce __HOST- (non-standard case) prefix security", () => {
+  test.each(["__HOST-session", "__host-sid", "__HoSt-x"])("enforces __Host- rules for %s", (name) => {
     const res = mockRes();
-    setCookie(res, "__HOST-session", "abc", { path: "/admin" });
-    expect(res._cookies[0]).not.toContain("Secure");
-    expect(res._cookies[0]).toContain("Path=/admin");
+    setCookie(res, name, "abc", { path: "/admin", domain: "example.com" });
+    expect(res._cookies[0]).toBe(`${name}=abc; Path=/; Secure`);
   });
 
-  test("does not enforce __SECURE- (non-standard case) prefix security", () => {
+  test.each(["__SECURE-token", "__SeCuRe-token"])("enforces __Secure- rules for %s", (name) => {
     const res = mockRes();
-    setCookie(res, "__SECURE-token", "abc", {});
-    expect(res._cookies[0]).not.toContain("Secure");
+    setCookie(res, name, "abc", { path: "/admin" });
+    expect(res._cookies[0]).toBe(`${name}=abc; Path=/admin; Secure`);
+  });
+
+  test("does not treat a name that only contains the prefix as prefixed", () => {
+    const res = mockRes();
+    setCookie(res, "x__Host-session", "abc", { path: "/admin" });
+    expect(res._cookies[0]).toBe("x__Host-session=abc; Path=/admin");
+  });
+
+  test("deleteCookie enforces __Host- rules for a lowercase prefix", () => {
+    const res = mockRes();
+    deleteCookie(res, "__host-sid", { domain: "example.com", path: "/admin" });
+    expect(res._cookies[0]).toContain("Secure");
+    expect(res._cookies[0]).not.toContain("Domain");
+    expect(res._cookies[0]).not.toContain("Path=/admin");
   });
 });
 
@@ -260,11 +316,12 @@ describe("cookie edge cases - extended", () => {
   });
 
   test("setCookie where res.append throws non-Error object", () => {
-    const res = {
+    const thrown: unknown = "string error";
+    const res: CookieResponse = {
       append: () => {
-        throw "string error";
+        throw thrown;
       },
-    } as unknown as CookieResponse;
+    };
     const result = setCookie(res, "test", "val", {});
     expect(result).toBe(false);
   });
@@ -295,47 +352,53 @@ describe("sameSite=none enforcement", () => {
 
 describe("error logging", () => {
   test("does not log cookie value in error (WARN-10)", () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const res = {
-      append: () => {
-        throw new Error("Serialize failed");
-      },
-    } as CookieResponse;
-
-    setCookie(res, "token", "secret-session-value", {}, true);
-    expect(consoleSpy).toHaveBeenCalled();
-    const logMessage = consoleSpy.mock.calls[0]?.[0] as string;
-    expect(logMessage).not.toContain("secret-session-value");
-    consoleSpy.mockRestore();
+    const logger = vi.fn<CookieLogger>();
+    setCookie(failingRes("Serialize failed"), "token", "secret-session-value", { logger });
+    expect(logger).toHaveBeenCalledOnce();
+    expect(logger.mock.calls[0]?.[0]).not.toContain("secret-session-value");
   });
 
-  test("sanitizes cookie name in logs", () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const res = {
-      append: () => {
-        throw new Error("Serialize\nfailed");
-      },
-    } as CookieResponse;
-
-    setCookie(res, "token\nname", "value", {}, true);
-    expect(consoleSpy).toHaveBeenCalled();
-    const metadata = consoleSpy.mock.calls[0]?.[1] as { name: string; reason: string };
-    expect(metadata.name).not.toContain("\n");
-    expect(metadata.reason).not.toContain("\n");
-    consoleSpy.mockRestore();
+  test("sanitizes cookie name and reason in logs", () => {
+    const logger = vi.fn<CookieLogger>();
+    setCookie(failingRes("Serialize\nfailed"), "token", "value", { logger });
+    expect(logger).toHaveBeenLastCalledWith('Error setting cookie "token": Serialize failed');
+    setCookie(mockRes(), "token\nname", "value", { logger });
+    expect(logger).toHaveBeenLastCalledWith('Error setting cookie "token name": argument name is invalid: token name');
   });
 
-  test("does not throw if console.error throws", () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {
+  test("replaces every ASCII control character and keeps other characters", () => {
+    const logger = vi.fn<CookieLogger>();
+    setCookie(failingRes("a\u0000b\u001Fc\u007Fd\u0080é😀"), "token", "value", { logger });
+    expect(logger).toHaveBeenLastCalledWith('Error setting cookie "token": a b c d\u0080é😀');
+  });
+
+  test("deleteCookie passes errors to options.logger", () => {
+    const logger = vi.fn<CookieLogger>();
+    expect(deleteCookie(failingRes("boom"), "session", { logger })).toBe(false);
+    expect(logger).toHaveBeenCalledWith('Error setting cookie "session": boom');
+  });
+
+  test("does not throw if the logger throws", () => {
+    const logger = vi.fn<CookieLogger>(() => {
       throw new Error("logger failure");
     });
-    const res = {
-      append: () => {
-        throw new Error("Serialize failed");
-      },
-    } as CookieResponse;
+    expect(setCookie(failingRes("Serialize failed"), "token", "value", { logger })).toBe(false);
+    expect(
+      getCookie(
+        {
+          get: () => {
+            throw new Error("x");
+          },
+        },
+        "a",
+        { logger },
+      ),
+    ).toBeUndefined();
+  });
 
-    expect(setCookie(res, "token", "value", {}, true)).toBe(false);
-    consoleSpy.mockRestore();
+  test("does not put the logger into the Set-Cookie header", () => {
+    const res = mockRes();
+    setCookie(res, "a", "1", { logger: vi.fn<CookieLogger>(), httpOnly: true });
+    expect(res._cookies[0]).toBe("a=1; Path=/; HttpOnly");
   });
 });

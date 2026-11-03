@@ -1,44 +1,37 @@
-/** biome-ignore-all lint/suspicious/noTsIgnore: Required for tests */
 import { describe, expect, test } from "vitest";
 import { matchEncryptedPattern, nodeKit, webKit } from "~/export.js";
-import { data, largeObj, secret, smallObj } from "./__helpers__.js";
+import { cipherPattern, data, failure, largeObj, secret, smallObj, stringMatching } from "./__helpers__.js";
 
+/** Replaces the second character of an ASCII (base64, base64url or hex) segment with a different one. */
 function $flipByte(segment: string): string {
-  const chars = [...segment];
-  const idx = Math.min(1, chars.length - 1);
-  const c = chars[idx] as string;
-  chars[idx] = c === "A" ? "B" : "A";
-  return chars.join("");
+  const idx = Math.min(1, segment.length - 1);
+  const replacement = segment.charAt(idx) === "A" ? "B" : "A";
+  return `${segment.slice(0, idx)}${replacement}${segment.slice(idx + 1)}`;
 }
+
+const smallJson = JSON.stringify(smallObj);
+const largeJson = JSON.stringify(largeObj);
 
 describe("Encryption Tests", () => {
   test("Node: Encrypt", () => {
     const key = nodeKit.createSecretKey(secret);
     const enc = nodeKit.tryEncrypt(data, key);
-    expect(enc.success).toBeTruthy();
-    expect(enc.error).toBeUndefined();
-    expect(enc.result).toBeDefined();
-    expect(matchEncryptedPattern(enc.result as string)).toBeTruthy();
+    expect(enc).toStrictEqual({ success: true, result: stringMatching(cipherPattern(data)) });
+    expect(matchEncryptedPattern(enc.result as string)).toBe(true);
 
     const dec = nodeKit.tryDecrypt(enc.result as string, key);
-    expect(dec.success).toBeTruthy();
-    expect(dec.error).toBeUndefined();
-    expect(dec.result).toBeDefined();
+    expect(dec).toStrictEqual({ success: true, result: data });
     expect(dec.result).toBe(data);
   });
 
   test("Web: Encrypt", async () => {
     const key = await webKit.createSecretKey(secret);
     const enc = await webKit.tryEncrypt(data, key);
-    expect(enc.success).toBeTruthy();
-    expect(enc.error).toBeUndefined();
-    expect(enc.result).toBeDefined();
-    expect(matchEncryptedPattern(enc.result as string)).toBeTruthy();
+    expect(enc).toStrictEqual({ success: true, result: stringMatching(cipherPattern(data)) });
+    expect(matchEncryptedPattern(enc.result as string)).toBe(true);
 
     const dec = await webKit.tryDecrypt(enc.result as string, key);
-    expect(dec.success).toBeTruthy();
-    expect(dec.error).toBeUndefined();
-    expect(dec.result).toBeDefined();
+    expect(dec).toStrictEqual({ success: true, result: data });
     expect(dec.result).toBe(data);
   });
 
@@ -49,7 +42,9 @@ describe("Encryption Tests", () => {
     const nodeEnc = nodeKit.encrypt(data, nodeKey, { outputEncoding: "base64" });
     const webEnc = await webKit.encrypt(data, webKey, { outputEncoding: "base64" });
 
-    expect(matchEncryptedPattern(nodeEnc) && matchEncryptedPattern(webEnc)).toBeTruthy();
+    expect(nodeEnc).toMatch(cipherPattern(data, "base64"));
+    expect(webEnc).toMatch(cipherPattern(data, "base64"));
+    expect(matchEncryptedPattern(nodeEnc) && matchEncryptedPattern(webEnc)).toBe(true);
 
     const nodeDec = nodeKit.decrypt(nodeEnc, nodeKey, { inputEncoding: "base64" });
     const webDec = await webKit.decrypt(webEnc, webKey, { inputEncoding: "base64" });
@@ -64,7 +59,9 @@ describe("Encryption Tests", () => {
     const nodeEnc = nodeKit.encrypt(data, nodeKey, { outputEncoding: "hex" });
     const webEnc = await webKit.encrypt(data, webKey, { outputEncoding: "hex" });
 
-    expect(matchEncryptedPattern(nodeEnc) && matchEncryptedPattern(webEnc)).toBeTruthy();
+    expect(nodeEnc).toMatch(cipherPattern(data, "hex"));
+    expect(webEnc).toMatch(cipherPattern(data, "hex"));
+    expect(matchEncryptedPattern(nodeEnc) && matchEncryptedPattern(webEnc)).toBe(true);
 
     const nodeDec = nodeKit.decrypt(nodeEnc, nodeKey, { inputEncoding: "hex" });
     const webDec = await webKit.decrypt(webEnc, webKey, { inputEncoding: "hex" });
@@ -105,17 +102,25 @@ describe("Encryption Tests", () => {
     const nodeEnc = nodeKit.encrypt(data, nodeKey, { outputEncoding: "base64" });
     const webEnc = await webKit.encrypt(data, webKey, { outputEncoding: "base64" });
 
-    expect(matchEncryptedPattern(nodeEnc) && matchEncryptedPattern(webEnc)).toBeTruthy();
+    expect(nodeEnc).toMatch(cipherPattern(data, "base64"));
+    expect(webEnc).toMatch(cipherPattern(data, "base64"));
+    expect(matchEncryptedPattern(nodeEnc) && matchEncryptedPattern(webEnc)).toBe(true);
 
     const nodeDec = nodeKit.tryDecrypt(nodeEnc, nodeKey, { inputEncoding: "hex" });
-    expect(nodeDec.success).toBeFalsy();
-    expect(nodeDec.error).toBeDefined();
-    expect(nodeDec.result).toBeUndefined();
+    expect(nodeDec).toStrictEqual(
+      failure(
+        "node decrypt: Failed to decode input",
+        "Conversion error: node strToBytes: Failed to convert data - Invalid hex string",
+      ),
+    );
 
     const webDec = await webKit.tryDecrypt(webEnc, webKey, { inputEncoding: "hex" });
-    expect(webDec.success).toBeFalsy();
-    expect(webDec.error).toBeDefined();
-    expect(webDec.result).toBeUndefined();
+    expect(webDec).toStrictEqual(
+      failure(
+        "web decrypt: Failed to decode input",
+        "Conversion error: web strToBytes: Failed to convert data - Invalid hex string",
+      ),
+    );
   });
 
   test("Node: Encrypt Shouldn't Create Same Ciphertext", () => {
@@ -135,72 +140,56 @@ describe("Encryption Tests", () => {
   test("Node: Encrypt Object", () => {
     const key = nodeKit.createSecretKey(secret);
     const encObj = nodeKit.tryEncryptObj(smallObj, key);
-    expect(encObj.success).toBeTruthy();
-    expect(encObj.error).toBeUndefined();
-    expect(encObj.result).toBeDefined();
-    expect(matchEncryptedPattern(encObj.result as string)).toBeTruthy();
+    expect(encObj).toStrictEqual({ success: true, result: stringMatching(cipherPattern(smallJson)) });
+    expect(matchEncryptedPattern(encObj.result as string)).toBe(true);
 
     const decObj = nodeKit.tryDecryptObj(encObj.result as string, key);
-    expect(decObj.success).toBeTruthy();
-    expect(decObj.error).toBeUndefined();
-    expect(decObj.result).toBeDefined();
-    expect(decObj.result, "Decrypted data does not match original").toEqual(smallObj);
+    expect(decObj).toStrictEqual({ success: true, result: smallObj });
+    expect(decObj.result, "Decrypted data does not match original").toStrictEqual(smallObj);
 
     const encLargeObj = nodeKit.tryEncryptObj(largeObj, key);
-    expect(encLargeObj.success).toBeTruthy();
-    expect(encLargeObj.error).toBeUndefined();
-    expect(encLargeObj.result).toBeDefined();
-    expect(matchEncryptedPattern(encLargeObj.result as string)).toBeTruthy();
+    expect(encLargeObj).toStrictEqual({ success: true, result: stringMatching(cipherPattern(largeJson)) });
+    expect(matchEncryptedPattern(encLargeObj.result as string)).toBe(true);
 
     const decLargeObj = nodeKit.tryDecryptObj(encLargeObj.result as string, key);
-    expect(decLargeObj.success).toBeTruthy();
-    expect(decLargeObj.error).toBeUndefined();
-    expect(decLargeObj.result).toBeDefined();
-    expect(decLargeObj.result).toEqual(largeObj);
+    expect(decLargeObj).toStrictEqual({ success: true, result: largeObj });
+    expect(decLargeObj.result).toStrictEqual(largeObj);
   });
 
   test("Web: Encrypt Object", async () => {
     const key = await webKit.createSecretKey(secret);
     const encObj = await webKit.tryEncryptObj(smallObj, key);
-    expect(encObj.success).toBeTruthy();
-    expect(encObj.error).toBeUndefined();
-    expect(encObj.result).toBeDefined();
-    expect(matchEncryptedPattern(encObj.result as string)).toBeTruthy();
+    expect(encObj).toStrictEqual({ success: true, result: stringMatching(cipherPattern(smallJson)) });
+    expect(matchEncryptedPattern(encObj.result as string)).toBe(true);
 
     const decObj = await webKit.tryDecryptObj(encObj.result as string, key);
-    expect(decObj.success).toBeTruthy();
-    expect(decObj.error).toBeUndefined();
-    expect(decObj.result).toBeDefined();
-    expect(decObj.result).toEqual(smallObj);
+    expect(decObj).toStrictEqual({ success: true, result: smallObj });
+    expect(decObj.result).toStrictEqual(smallObj);
 
     const encLargeObj = await webKit.tryEncryptObj(largeObj, key);
-    expect(encLargeObj.success).toBeTruthy();
-    expect(encLargeObj.error).toBeUndefined();
-    expect(encLargeObj.result).toBeDefined();
-    expect(matchEncryptedPattern(encLargeObj.result as string)).toBeTruthy();
+    expect(encLargeObj).toStrictEqual({ success: true, result: stringMatching(cipherPattern(largeJson)) });
+    expect(matchEncryptedPattern(encLargeObj.result as string)).toBe(true);
 
     const decLargeObj = await webKit.tryDecryptObj(encLargeObj.result as string, key);
-    expect(decLargeObj.success).toBeTruthy();
-    expect(decLargeObj.error).toBeUndefined();
-    expect(decLargeObj.result).toBeDefined();
-    expect(decLargeObj.result).toEqual(largeObj);
+    expect(decLargeObj).toStrictEqual({ success: true, result: largeObj });
+    expect(decLargeObj.result).toStrictEqual(largeObj);
   });
 
   test("Fail: Encrypt with Wrong Options type", async () => {
     const nodeKey = nodeKit.createSecretKey(secret);
     const webKey = await webKit.createSecretKey(secret);
 
-    // @ts-ignore
+    // @ts-expect-error -- options must be an object; checks runtime validation
     const nodeEnc = nodeKit.tryEncrypt(data, nodeKey, 3.14);
-    expect(nodeEnc.success).toBeFalsy();
-    expect(nodeEnc.error).toBeDefined();
-    expect(nodeEnc.result).toBeUndefined();
+    expect(nodeEnc).toStrictEqual(
+      failure("node encrypt: Options must be a plain object", 'Pass an object like { outputEncoding: "base64url" }'),
+    );
 
-    // @ts-ignore
+    // @ts-expect-error -- options must be an object; checks runtime validation
     const webEnc = await webKit.tryEncrypt(data, webKey, 3.14);
-    expect(webEnc.success).toBeFalsy();
-    expect(webEnc.error).toBeDefined();
-    expect(webEnc.result).toBeUndefined();
+    expect(webEnc).toStrictEqual(
+      failure("web encrypt: Options must be a plain object", 'Pass an object like { outputEncoding: "base64url" }'),
+    );
   });
 
   test("Fail: Decrypt with Wrong Options type", async () => {
@@ -210,34 +199,32 @@ describe("Encryption Tests", () => {
     const nodeEnc = nodeKit.encrypt(data, nodeKey);
     const webEnc = await webKit.encrypt(data, webKey);
 
-    // @ts-ignore
+    // @ts-expect-error -- options must be an object; checks runtime validation
     const nodeDec = nodeKit.tryDecrypt(nodeEnc, nodeKey, 3.14);
-    expect(nodeDec.success).toBeFalsy();
-    expect(nodeDec.error).toBeDefined();
-    expect(nodeDec.result).toBeUndefined();
+    expect(nodeDec).toStrictEqual(
+      failure("node decrypt: Options must be a plain object", 'Pass an object like { inputEncoding: "base64url" }'),
+    );
 
-    // @ts-ignore
+    // @ts-expect-error -- options must be an object; checks runtime validation
     const webDec = await webKit.tryDecrypt(webEnc, webKey, 3.14);
-    expect(webDec.success).toBeFalsy();
-    expect(webDec.error).toBeDefined();
-    expect(webDec.result).toBeUndefined();
+    expect(webDec).toStrictEqual(
+      failure("web decrypt: Options must be a plain object", 'Pass an object like { inputEncoding: "base64url" }'),
+    );
   });
 
   test("Fail: Encrypt with Invalid Options", async () => {
     const nodeKey = nodeKit.createSecretKey(secret);
     const webKey = await webKit.createSecretKey(secret);
 
-    // @ts-ignore
+    // @ts-expect-error -- unsupported encoding on purpose; checks runtime validation
     const nodeEnc = nodeKit.tryEncrypt(data, nodeKey, { outputEncoding: "invalid-encoding" });
-    expect(nodeEnc.success).toBeFalsy();
-    expect(nodeEnc.error).toBeDefined();
-    expect(nodeEnc.result).toBeUndefined();
+    expect(nodeEnc).toStrictEqual(
+      failure("node encrypt: Unsupported output encoding", "Use base64, base64url, or hex"),
+    );
 
-    // @ts-ignore
+    // @ts-expect-error -- unsupported encoding on purpose; checks runtime validation
     const webEnc = await webKit.tryEncrypt(data, webKey, { outputEncoding: "invalid-encoding" });
-    expect(webEnc.success).toBeFalsy();
-    expect(webEnc.error).toBeDefined();
-    expect(webEnc.result).toBeUndefined();
+    expect(webEnc).toStrictEqual(failure("web encrypt: Unsupported output encoding", "Use base64, base64url, or hex"));
   });
 
   test("Fail: Decrypt with Invalid Options", async () => {
@@ -247,17 +234,13 @@ describe("Encryption Tests", () => {
     const nodeEnc = nodeKit.encrypt(data, nodeKey);
     const webEnc = await webKit.encrypt(data, webKey);
 
-    // @ts-ignore
+    // @ts-expect-error -- unsupported encoding on purpose; checks runtime validation
     const nodeDec = nodeKit.tryDecrypt(nodeEnc, nodeKey, { inputEncoding: "invalid-encoding" });
-    expect(nodeDec.success).toBeFalsy();
-    expect(nodeDec.error).toBeDefined();
-    expect(nodeDec.result).toBeUndefined();
+    expect(nodeDec).toStrictEqual(failure("node decrypt: Unsupported input encoding", "Use base64, base64url, or hex"));
 
-    // @ts-ignore
+    // @ts-expect-error -- unsupported encoding on purpose; checks runtime validation
     const webDec = await webKit.tryDecrypt(webEnc, webKey, { inputEncoding: "invalid-encoding" });
-    expect(webDec.success).toBeFalsy();
-    expect(webDec.error).toBeDefined();
-    expect(webDec.result).toBeUndefined();
+    expect(webDec).toStrictEqual(failure("web decrypt: Unsupported input encoding", "Use base64, base64url, or hex"));
   });
 
   test("Fail: Decrypt with Wrong Key", async () => {
@@ -270,14 +253,14 @@ describe("Encryption Tests", () => {
     const webEnc = await webKit.encrypt(data, webKey1);
 
     const nodeDec = nodeKit.tryDecrypt(nodeEnc, nodeKey2);
-    expect(nodeDec.success).toBeFalsy();
-    expect(nodeDec.error).toBeDefined();
-    expect(nodeDec.result).toBeUndefined();
+    expect(nodeDec).toStrictEqual(
+      failure("node decrypt: Failed to decrypt data", "Unsupported state or unable to authenticate data"),
+    );
 
     const webDec = await webKit.tryDecrypt(webEnc, webKey2);
-    expect(webDec.success).toBeFalsy();
-    expect(webDec.error).toBeDefined();
-    expect(webDec.result).toBeUndefined();
+    expect(webDec).toStrictEqual(
+      failure("web decrypt: Failed to decrypt data", "The operation failed for an operation-specific reason"),
+    );
   });
 
   test("Fail: Decrypt with Wrong Key Algorithm", async () => {
@@ -290,14 +273,14 @@ describe("Encryption Tests", () => {
     const webEnc = await webKit.encrypt(data, webKey1);
 
     const nodeDec = nodeKit.tryDecrypt(nodeEnc, nodeKey2);
-    expect(nodeDec.success).toBeFalsy();
-    expect(nodeDec.error).toBeDefined();
-    expect(nodeDec.result).toBeUndefined();
+    expect(nodeDec).toStrictEqual(
+      failure("node decrypt: Failed to decrypt data", "Unsupported state or unable to authenticate data"),
+    );
 
     const webDec = await webKit.tryDecrypt(webEnc, webKey2);
-    expect(webDec.success).toBeFalsy();
-    expect(webDec.error).toBeDefined();
-    expect(webDec.result).toBeUndefined();
+    expect(webDec).toStrictEqual(
+      failure("web decrypt: Failed to decrypt data", "The operation failed for an operation-specific reason"),
+    );
   });
 
   test("Fail: Decrypt with Wrong Derived Key", async () => {
@@ -310,14 +293,14 @@ describe("Encryption Tests", () => {
     const webEnc = await webKit.encrypt(data, webKey1);
 
     const nodeDec = nodeKit.tryDecrypt(nodeEnc, nodeKey2);
-    expect(nodeDec.success).toBeFalsy();
-    expect(nodeDec.error).toBeDefined();
-    expect(nodeDec.result).toBeUndefined();
+    expect(nodeDec).toStrictEqual(
+      failure("node decrypt: Failed to decrypt data", "Unsupported state or unable to authenticate data"),
+    );
 
     const webDec = await webKit.tryDecrypt(webEnc, webKey2);
-    expect(webDec.success).toBeFalsy();
-    expect(webDec.error).toBeDefined();
-    expect(webDec.result).toBeUndefined();
+    expect(webDec).toStrictEqual(
+      failure("web decrypt: Failed to decrypt data", "The operation failed for an operation-specific reason"),
+    );
   });
 
   test("Cross-platform: Node encrypt → Web decrypt", async () => {
@@ -325,7 +308,8 @@ describe("Encryption Tests", () => {
     const webKey = await webKit.createSecretKey(secret);
 
     const encrypted = nodeKit.encrypt(data, nodeKey);
-    expect(matchEncryptedPattern(encrypted)).toBeTruthy();
+    expect(encrypted).toMatch(cipherPattern(data));
+    expect(matchEncryptedPattern(encrypted)).toBe(true);
 
     const decrypted = await webKit.decrypt(encrypted, webKey);
     expect(decrypted).toBe(data);
@@ -336,7 +320,8 @@ describe("Encryption Tests", () => {
     const webKey = await webKit.createSecretKey(secret);
 
     const encrypted = await webKit.encrypt(data, webKey);
-    expect(matchEncryptedPattern(encrypted)).toBeTruthy();
+    expect(encrypted).toMatch(cipherPattern(data));
+    expect(matchEncryptedPattern(encrypted)).toBe(true);
 
     const decrypted = nodeKit.decrypt(encrypted, nodeKey);
     expect(decrypted).toBe(data);
@@ -450,31 +435,31 @@ describe("Encryption Tests", () => {
     const key1 = nodeKit.createSecretKey(secret);
     const key2 = nodeKit.createSecretKey(`${secret}!`);
     const enc = nodeKit.encrypt(data, key1);
-    expect(() => nodeKit.decrypt(enc, key2)).toThrow();
+    expect(() => nodeKit.decrypt(enc, key2)).toThrow("node decrypt: Failed to decrypt data");
   });
 
   test("Web: decrypt() throwing variant with wrong key", async () => {
     const key1 = await webKit.createSecretKey(secret);
     const key2 = await webKit.createSecretKey(`${secret}!`);
     const enc = await webKit.encrypt(data, key1);
-    await expect(webKit.decrypt(enc, key2)).rejects.toThrow();
+    await expect(webKit.decrypt(enc, key2)).rejects.toThrow("web decrypt: Failed to decrypt data");
   });
 
-  test("Node: encrypt/decrypt rejects empty string", () => {
+  test("Node: encrypt rejects empty string but accepts whitespace", () => {
     const key = nodeKit.createSecretKey(secret);
     const encResult = nodeKit.tryEncrypt("", key);
     expect(encResult.success).toBe(false);
 
     const encWsResult = nodeKit.tryEncrypt("   ", key);
-    expect(encWsResult.success).toBe(false);
+    expect(encWsResult.success).toBe(true);
   });
 
-  test("Web: encrypt/decrypt rejects empty string", async () => {
+  test("Web: encrypt rejects empty string but accepts whitespace", async () => {
     const key = await webKit.createSecretKey(secret);
     const encResult = await webKit.tryEncrypt("", key);
     expect(encResult.success).toBe(false);
 
     const encWsResult = await webKit.tryEncrypt("   ", key);
-    expect(encWsResult.success).toBe(false);
+    expect(encWsResult.success).toBe(true);
   });
 });

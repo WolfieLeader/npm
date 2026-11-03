@@ -1,0 +1,25 @@
+name: Tool pins
+
+# Dependabot cannot update the tools that workflows download with curl and a checksum.
+# This job fails when one of them is behind its latest release, and GitHub emails the owner about a failed scheduled run.
+on:
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check tool pins
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compare each pin with its latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/tool-pins.sh

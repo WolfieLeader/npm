@@ -75,6 +75,41 @@ for pkg in "${SELECTED_PKGS[@]}"; do
   echo "    $pkg"
 done
 
+# Versions come from the pnpm catalog, so the smoke test uses the same TypeScript and Node types as the repo.
+# Usage: catalog_version <catalog> <package>; <catalog> is "default" or a name under `catalogs:`.
+catalog_version() {
+  local version
+  version=$(awk -v cat="$1" -v pkg="$2" '
+    /^catalog:/ { section = "default"; next }
+    /^catalogs:/ { section = "named"; next }
+    /^[^ ]/ { section = ""; next }
+    section == "named" && /^  [^ ]/ { name = $1; sub(/:$/, "", name); next }
+    section != "" {
+      line = $0; sub(/^ +/, "", line); split(line, kv, ": ")
+      key = kv[1]; gsub(/["\047]/, "", key)
+      if (key == pkg && ((section == "default" && cat == "default") || (section == "named" && name == cat))) { print kv[2]; exit }
+    }' "$ROOT_DIR/pnpm-workspace.yaml")
+  if [[ -z "$version" ]]; then
+    echo "No version for $2 in catalog $1 of pnpm-workspace.yaml" >&2
+    exit 1
+  fi
+  printf "%s" "$version"
+}
+
+TS_VERSION=$(catalog_version default typescript)
+TYPES_NODE_VERSION=$(catalog_version default @types/node)
+EXPRESS_VERSION=$(catalog_version express5 express)
+TYPES_EXPRESS_VERSION=$(catalog_version express5 @types/express)
+echo "==> typescript@$TS_VERSION @types/node@$TYPES_NODE_VERSION express@$EXPRESS_VERSION @types/express@$TYPES_EXPRESS_VERSION"
+
+echo ""
+echo "==> Building selected packages (turbo replays cached builds)"
+FILTERS=()
+for pkg in "${SELECTED_PKGS[@]}"; do
+  FILTERS+=("--filter=$pkg")
+done
+(cd "$ROOT_DIR" && pnpm exec turbo run build "${FILTERS[@]}" --output-logs=errors-only)
+
 echo ""
 echo "==> Packing tarballs into $TMP_DIR"
 
@@ -92,11 +127,11 @@ EOF
 
 npm install --prefix "$TMP_DIR" \
   "${TARBALLS[@]}" \
-  express@5.2.1 \
-  typescript@5.9.3 \
-  @types/node@25.3.1 \
-  @types/express@5.0.6 \
-  --save-exact --silent
+  "express@$EXPRESS_VERSION" \
+  "typescript@$TS_VERSION" \
+  "@types/node@$TYPES_NODE_VERSION" \
+  "@types/express@$TYPES_EXPRESS_VERSION" \
+  --save-exact --silent --ignore-scripts --no-audit --no-fund
 
 for pkg in "${SELECTED_PKGS[@]}"; do
   dir="$(get_pkg_dir "$pkg")"
@@ -112,14 +147,16 @@ for pkg in "${SELECTED_PKGS[@]}"; do
   rm "$TMP_DIR/cjs.cjs"
 done
 
-echo "==> Running TypeScript type resolution"
+echo "==> Running TypeScript type resolution (ESM and CJS consumers)"
 
+# Each types.ts is checked twice: as .mts (import condition) and as .cts (require condition).
 TYPE_FILES=()
 for pkg in "${SELECTED_PKGS[@]}"; do
   dir="$(get_pkg_dir "$pkg")"
   if [[ -f "${dir}types.ts" ]]; then
-    cp "${dir}types.ts" "$TMP_DIR/${pkg}-types.ts"
-    TYPE_FILES+=("${pkg}-types.ts")
+    cp "${dir}types.ts" "$TMP_DIR/${pkg}-types.mts"
+    cp "${dir}types.ts" "$TMP_DIR/${pkg}-types.cts"
+    TYPE_FILES+=("${pkg}-types.mts" "${pkg}-types.cts")
   fi
 done
 
@@ -130,12 +167,13 @@ if [[ ${#TYPE_FILES[@]} -gt 0 ]]; then
   cat > "$TMP_DIR/tsconfig.json" << EOF
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2023",
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "strict": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "types": ["node"],
+    "skipLibCheck": false
   },
   "include": ${INCLUDES}
 }

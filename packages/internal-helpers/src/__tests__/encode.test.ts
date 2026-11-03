@@ -6,15 +6,16 @@ import {
   $fromBase64Url,
   $fromHex,
   $fromLatin1,
+  $newStrictUtf8Decoder,
   $toBase64,
   $toBase64Url,
   $toHex,
   $toLatin1,
   bytesToStr,
-  type Encoding,
   strToBytes,
   textEncoder,
 } from "~/encode.js";
+import type { Encoding } from "~/encode.js";
 
 const ascii = "Hello, World!";
 const unicode = "Héllo, Wörld! 🌍🚀 日本語テスト";
@@ -31,12 +32,12 @@ describe("Latin1", () => {
   test("roundtrips full 0–255 range", () => {
     const str = $toLatin1(latin1Bytes);
     const back = $fromLatin1(str);
-    expect(back).toEqual(latin1Bytes);
+    expect(back).toStrictEqual(latin1Bytes);
   });
 
   test("handles empty input", () => {
     expect($toLatin1(new Uint8Array())).toBe("");
-    expect($fromLatin1("")).toEqual(new Uint8Array());
+    expect($fromLatin1("")).toStrictEqual(new Uint8Array());
   });
 
   test("$fromLatin1 throws on char > 255", () => {
@@ -47,14 +48,14 @@ describe("Latin1", () => {
     const str = $toLatin1(largeBinary);
     expect(str.length).toBe(40_000);
     const back = $fromLatin1(str);
-    expect(back).toEqual(largeBinary);
+    expect(back).toStrictEqual(largeBinary);
   });
 });
 
 describe("Base64", () => {
   test("roundtrips bytes", () => {
     const bytes = textEncoder.encode(ascii);
-    expect($fromBase64($toBase64(bytes))).toEqual(bytes);
+    expect($fromBase64($toBase64(bytes))).toStrictEqual(bytes);
   });
 
   test("known vector: Hello, World!", () => {
@@ -64,12 +65,12 @@ describe("Base64", () => {
 
   test("handles empty input", () => {
     expect($toBase64(new Uint8Array())).toBe("");
-    expect($fromBase64("")).toEqual(new Uint8Array());
+    expect($fromBase64("")).toStrictEqual(new Uint8Array());
   });
 
   test("roundtrips full byte range", () => {
     const encoded = $toBase64(latin1Bytes);
-    expect($fromBase64(encoded)).toEqual(latin1Bytes);
+    expect($fromBase64(encoded)).toStrictEqual(latin1Bytes);
   });
 
   test("rejects whitespace in base64", () => {
@@ -82,9 +83,16 @@ describe("Base64", () => {
 });
 
 describe("Base64URL", () => {
+  test("matches Node's unpadded base64url for every padding length", () => {
+    for (let length = 0; length <= 6; length++) {
+      const bytes = Uint8Array.from({ length }, (_, i) => 250 + i);
+      expect($toBase64Url(bytes)).toBe(Buffer.from(bytes).toString("base64url"));
+    }
+  });
+
   test("roundtrips bytes", () => {
     const bytes = textEncoder.encode(ascii);
-    expect($fromBase64Url($toBase64Url(bytes))).toEqual(bytes);
+    expect($fromBase64Url($toBase64Url(bytes))).toStrictEqual(bytes);
   });
 
   test("output contains no +, /, or =", () => {
@@ -103,7 +111,7 @@ describe("Base64URL", () => {
     const urlSafe = $toBase64Url(bytes);
     expect(urlSafe).not.toContain("+");
     expect(urlSafe).not.toContain("/");
-    expect($fromBase64Url(urlSafe)).toEqual(bytes);
+    expect($fromBase64Url(urlSafe)).toStrictEqual(bytes);
   });
 
   test("rejects + character (not valid in base64url)", () => {
@@ -118,7 +126,7 @@ describe("Base64URL", () => {
 describe("Hex", () => {
   test("roundtrips bytes", () => {
     const bytes = textEncoder.encode(ascii);
-    expect($fromHex($toHex(bytes))).toEqual(bytes);
+    expect($fromHex($toHex(bytes))).toStrictEqual(bytes);
   });
 
   test("output is lowercase", () => {
@@ -132,12 +140,12 @@ describe("Hex", () => {
 
   test("strips 0x prefix", () => {
     const bytes = $fromHex("0x00ff10");
-    expect(bytes).toEqual(new Uint8Array([0, 255, 16]));
+    expect(bytes).toStrictEqual(new Uint8Array([0, 255, 16]));
   });
 
   test("strips 0X prefix", () => {
     const bytes = $fromHex("0X00ff10");
-    expect(bytes).toEqual(new Uint8Array([0, 255, 16]));
+    expect(bytes).toStrictEqual(new Uint8Array([0, 255, 16]));
   });
 
   test("throws on odd-length string", () => {
@@ -150,33 +158,30 @@ describe("Hex", () => {
 
   test("throws on partial-invalid hex pairs", () => {
     expect(() => $fromHex("0g1a")).toThrow("Invalid hex string");
-    expect(() => $fromHex("fa")).not.toThrow();
+    expect($fromHex("fa")).toStrictEqual(new Uint8Array([0xfa]));
   });
 
   test("handles empty input", () => {
     expect($toHex(new Uint8Array())).toBe("");
-    expect($fromHex("")).toEqual(new Uint8Array());
+    expect($fromHex("")).toStrictEqual(new Uint8Array());
   });
 });
 
 describe("$convertStrToBytes", () => {
   test("defaults to utf8", () => {
     const result = $convertStrToBytes(ascii);
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual(textEncoder.encode(ascii));
+    expect(result).toStrictEqual({ success: true, result: textEncoder.encode(ascii) });
   });
 
   test("converts each encoding", () => {
     const hex = $toHex(textEncoder.encode(ascii));
     const result = $convertStrToBytes(hex, "hex");
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual(textEncoder.encode(ascii));
+    expect(result).toStrictEqual({ success: true, result: textEncoder.encode(ascii) });
   });
 
   test("succeeds for empty string", () => {
     const result = $convertStrToBytes("");
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual(new Uint8Array());
+    expect(result).toStrictEqual({ success: true, result: new Uint8Array() });
   });
 
   test("fails for non-string input", () => {
@@ -187,8 +192,7 @@ describe("$convertStrToBytes", () => {
 
   test("succeeds for whitespace-only string", () => {
     const result = $convertStrToBytes("   ", "utf8");
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toEqual(textEncoder.encode("   "));
+    expect(result).toStrictEqual({ success: true, result: textEncoder.encode("   ") });
   });
 
   test("fails for invalid encoding", () => {
@@ -202,22 +206,19 @@ describe("$convertBytesToStr", () => {
   test("defaults to utf8", () => {
     const bytes = textEncoder.encode(ascii);
     const result = $convertBytesToStr(bytes);
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe(ascii);
+    expect(result).toStrictEqual({ success: true, result: ascii });
   });
 
   test("converts each encoding", () => {
     const bytes = textEncoder.encode(ascii);
     const result = $convertBytesToStr(bytes, "hex");
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe($toHex(bytes));
+    expect(result).toStrictEqual({ success: true, result: $toHex(bytes) });
   });
 
   test("accepts ArrayBuffer", () => {
     const bytes = textEncoder.encode(ascii);
-    const result = $convertBytesToStr(bytes.buffer as ArrayBuffer, "utf8");
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.result).toBe(ascii);
+    const result = $convertBytesToStr(bytes.buffer, "utf8");
+    expect(result).toStrictEqual({ success: true, result: ascii });
   });
 
   test("fails for non-buffer input", () => {
@@ -259,8 +260,7 @@ describe("Encoding roundtrips", () => {
       if (!decoded.success) return;
 
       const back = $convertBytesToStr(decoded.result, "utf8");
-      expect(back.success).toBe(true);
-      if (back.success) expect(back.result).toBe(original);
+      expect(back).toStrictEqual({ success: true, result: original });
     });
   }
 
@@ -270,8 +270,7 @@ describe("Encoding roundtrips", () => {
     if (!toBytes.success) return;
 
     const back = $convertBytesToStr(toBytes.result, "utf8");
-    expect(back.success).toBe(true);
-    if (back.success) expect(back.result).toBe(unicode);
+    expect(back).toStrictEqual({ success: true, result: unicode });
   });
 });
 
@@ -282,7 +281,20 @@ describe("Full byte range encoding roundtrips", () => {
     test(`roundtrips 0-255 via ${encoding}`, () => {
       const encoded = bytesToStr[encoding](allBytes);
       const decoded = strToBytes[encoding](encoded);
-      expect(decoded).toEqual(allBytes);
+      expect(decoded).toStrictEqual(allBytes);
     });
   }
+});
+
+describe("$newStrictUtf8Decoder", () => {
+  test("keeps a leading U+FEFF and rejects invalid UTF-8", () => {
+    expect($newStrictUtf8Decoder().decode(textEncoder.encode("\uFEFFab"))).toBe("\uFEFFab");
+    expect(() => $newStrictUtf8Decoder().decode(Uint8Array.of(0xff))).toThrow(TypeError);
+  });
+
+  test("returns a fresh instance, so an aborted stream cannot leak bytes into the next decode", () => {
+    const aborted = $newStrictUtf8Decoder();
+    aborted.decode(Uint8Array.of(0xe2, 0x82), { stream: true });
+    expect($newStrictUtf8Decoder().decode(textEncoder.encode("ok"))).toBe("ok");
+  });
 });

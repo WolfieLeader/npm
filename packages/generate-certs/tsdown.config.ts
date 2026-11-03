@@ -8,8 +8,8 @@ export default defineConfig({
   dts: { generator: "oxc" },
   sourcemap: true,
   fixedExtension: false,
-  // Bundle nothing. The output may import node-forge and Node built-ins.
-  deps: { neverBundle: true, onlyImport: ["node-forge"] },
+  // Bundle nothing. The output may import Node built-ins and nothing else.
+  deps: { neverBundle: true, onlyImport: [] },
   publint: { level: "suggestion", strict: true },
   attw: { profile: "node16", level: "error" },
   failOnWarn: true,

@@ -75,6 +75,7 @@
     "cipher",
     "security",
     "hash",
+    "hmac",
     "password",
     "uuid",
     "web",

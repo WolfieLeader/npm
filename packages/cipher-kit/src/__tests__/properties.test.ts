@@ -1,11 +1,8 @@
 import * as fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { nodeKit, tryParseToObj, tryStringifyObj, webKit } from "~/export.js";
-import { failure, runtimeFailure, secret } from "./__helpers__.js";
+import { anyText, failure, runtimeFailure, secret } from "./__helpers__.js";
 
-// Any code point, without lone surrogates, with half the characters drawn from known edge cases.
-const edgeChar = fc.constantFrom("\uFEFF", "\u0000", "\uFFFD", "\u{10FFFF}", " ", ".", "\r\n");
-const anyText = fc.string({ unit: fc.oneof(fc.string({ unit: "binary", minLength: 1, maxLength: 1 }), edgeChar) });
 const anyValue = fc.anything({
   withNullPrototype: true,
   withBigInt: true,
@@ -32,6 +29,8 @@ const optionKeys = fc.constantFrom(
   "iterations",
   "keyLength",
   "saltLength",
+  "length",
+  "version",
 );
 
 // Additional data as a caller passes it: omitted, a string or bytes, half of them known edge cases.
@@ -146,6 +145,14 @@ describe("cipher-kit properties", () => {
           call(nodeKit.tryHash, a, options),
           call(nodeKit.tryHashPassword, a, options),
           call(nodeKit.tryVerifyPassword, a, b, SENTINEL, options),
+          call(nodeKit.tryHmac, a, SENTINEL, options),
+          call(nodeKit.tryHmac, SENTINEL, b, options),
+          call(nodeKit.tryVerifyHmac, a, b, SENTINEL, options),
+          call(nodeKit.tryVerifyHmac, SENTINEL, a, b, options),
+          call(nodeKit.tryRandomToken, a, value),
+          call(nodeKit.tryRandomCode, a),
+          call(nodeKit.tryGenerateUuid, a),
+          call(nodeKit.tryGenerateUuid, options),
           call(nodeKit.tryConvertStrToBytes, a, value),
           call(nodeKit.tryConvertBytesToStr, a, value),
           call(nodeKit.tryConvertEncoding, a, value, b),
@@ -174,6 +181,14 @@ describe("cipher-kit properties", () => {
           call(webKit.tryEncryptObj, a, web, options),
           call(webKit.tryDecryptObj, a, web, options),
           call(webKit.tryHash, a, options),
+          call(webKit.tryHmac, a, SENTINEL, options),
+          call(webKit.tryHmac, SENTINEL, b, options),
+          call(webKit.tryVerifyHmac, a, b, SENTINEL, options),
+          call(webKit.tryVerifyHmac, SENTINEL, a, b, options),
+          call(webKit.tryRandomToken, a, value),
+          call(webKit.tryRandomCode, a),
+          call(webKit.tryGenerateUuid, a),
+          call(webKit.tryGenerateUuid, options),
           call(webKit.tryConvertStrToBytes, a, value),
           call(webKit.tryConvertBytesToStr, a, value),
           call(webKit.tryConvertEncoding, a, value, b),

@@ -12,6 +12,19 @@ export default {
         const { result, salt } = nodeKit.hashPassword("correct horse", { iterations: 100_000 });
         return nodeKit.verifyPassword("correct horse", result, salt, { iterations: 100_000 });
       },
+      "nodeKit hmac matches webKit, and each verifies the other": async () => {
+        const fromNode = nodeKit.hmac("héllo", SECRET, { digest: "sha512", length: 16 });
+        const fromWeb = await webKit.hmac("héllo", SECRET, { digest: "sha512", length: 16 });
+        return (
+          fromNode === fromWeb &&
+          nodeKit.verifyHmac("héllo", fromWeb, SECRET, { digest: "sha512", length: 16 }) &&
+          (await webKit.verifyHmac("héllo", fromNode, SECRET, { digest: "sha512", length: 16 }))
+        );
+      },
+      "nodeKit randomToken, randomCode and UUIDv7": () =>
+        /^[\w-]{43}$/.test(nodeKit.randomToken()) &&
+        /^\d{6}$/.test(nodeKit.randomCode()) &&
+        /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/.test(nodeKit.generateUuid({ version: 7 })),
       "nodeKit decrypts a Node ciphertext made with additional data": () =>
         nodeKit.decrypt(NODE_AAD_CIPHERTEXT, nodeKit.createSecretKey(SECRET), { additionalData: AAD }) ===
         "héllo 🌍 from Node",

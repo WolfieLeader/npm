@@ -9,8 +9,11 @@ export type {
   EncryptionAlgorithm,
   EncryptOptions,
   ErrorStruct,
+  GenerateUuidOptions,
   HashOptions,
   HashPasswordOptions,
+  HmacOptions,
+  VerifyHmacOptions,
   VerifyPasswordOptions,
 } from "~/helpers/types.js";
 export { ENCRYPTED_REGEX, matchEncryptedPattern } from "~/helpers/validate.js";

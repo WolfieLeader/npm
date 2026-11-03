@@ -1,5 +1,4 @@
-import nodeCrypto from "node:crypto";
-import { $err, $fmtError, $fmtResultErr, $ok } from "@internal/helpers";
+import { $fmtResultErr } from "@internal/helpers";
 import type { Result } from "@internal/helpers";
 import { $guard } from "~/helpers/guard.js";
 import type { CreateSecretKeyOptions, DecryptOptions, EncryptOptions } from "~/helpers/types.js";
@@ -21,37 +20,6 @@ import type { NodeSecretKey } from "./node-secret-key.js";
  */
 export function isNodeSecretKey(x: unknown): x is NodeSecretKey {
   return $isNodeSecretKey(x) !== null;
-}
-
-/**
- * Generates a UUID (v4) (non-throwing).
- *
- * @returns `Result<string>` with the UUID or error.
- * @see {@link generateUuid} For full parameter/behavior docs.
- */
-export function tryGenerateUuid(): Result<string> {
-  try {
-    return $ok(nodeCrypto.randomUUID());
-  } catch (error) {
-    return $err({ message: "node generateUuid: Failed to generate UUID", description: $fmtError(error) });
-  }
-}
-
-/**
- * Generates a cryptographically random UUID (v4).
- *
- * @returns A UUID string.
- * @throws {Error} If UUID generation fails.
- *
- * @example
- * ```ts
- * const uuid = generateUuid();
- * ```
- *
- * @see {@link tryGenerateUuid} Non-throwing variant returning `Result<string>`.
- */
-export function generateUuid(): string {
-  return nodeCrypto.randomUUID();
 }
 
 /**
@@ -260,3 +228,5 @@ export function decryptObj<T extends object = Record<string, unknown>>(
 
 export * from "./kit-encode.js";
 export * from "./kit-hash.js";
+export * from "./kit-hmac.js";
+export * from "./kit-random.js";

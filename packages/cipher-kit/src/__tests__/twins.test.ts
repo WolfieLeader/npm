@@ -39,6 +39,10 @@ const surfaces = [
       "generateUuid",
       "hash",
       "hashPassword",
+      "hmac",
+      "randomCode",
+      "randomToken",
+      "verifyHmac",
       "verifyPassword",
     ],
   },
@@ -57,6 +61,10 @@ const surfaces = [
       "generateUuid",
       "hash",
       "hashPassword",
+      "hmac",
+      "randomCode",
+      "randomToken",
+      "verifyHmac",
       "verifyPassword",
     ],
   },
@@ -70,8 +78,7 @@ for (const { label, surface, names } of surfaces) {
       expect(pairs.map(({ name }) => name).toSorted()).toStrictEqual(names);
     });
 
-    // generateUuid takes no input, so a caller cannot make it fail.
-    for (const { name, tryFn, throwingFn } of pairs.filter((pair) => pair.name !== "generateUuid")) {
+    for (const { name, tryFn, throwingFn } of pairs) {
       test(`${name} throws what try* returns`, async () => {
         expect(typeof throwingFn).toBe("function");
         const result = (await tryFn(BAD)) as Result<unknown>;

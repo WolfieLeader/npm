@@ -13,8 +13,11 @@ export type {
   EncryptionAlgorithm,
   EncryptOptions,
   ErrorStruct,
+  GenerateUuidOptions,
   HashOptions,
   HashPasswordOptions,
+  HmacOptions,
+  VerifyHmacOptions,
   VerifyPasswordOptions,
 } from "./helpers/types.js";
 

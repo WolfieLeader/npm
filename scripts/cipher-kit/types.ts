@@ -7,10 +7,13 @@ import type {
   EncryptionAlgorithm,
   EncryptOptions,
   ErrorStruct,
+  GenerateUuidOptions,
   HashOptions,
   HashPasswordOptions,
+  HmacOptions,
   NodeSecretKey,
   Result,
+  VerifyHmacOptions,
   VerifyPasswordOptions,
   WebSecretKey,
   matchEncryptedPattern,
@@ -34,9 +37,12 @@ import type {
   generateUuid,
   hash,
   hashPassword,
+  hmac,
   isNodeSecretKey,
   matchEncryptedPattern as nodeMatchEncrypted,
   parseToObj as nodeParseToObj,
+  randomCode,
+  randomToken,
   stringifyObj as nodeStringifyObj,
   tryConvertBytesToStr,
   tryConvertEncoding,
@@ -49,12 +55,22 @@ import type {
   tryGenerateUuid,
   tryHash,
   tryHashPassword,
+  tryHmac,
   tryParseToObj as nodeTryParseToObj,
+  tryRandomCode,
+  tryRandomToken,
   tryStringifyObj as nodeTryStringifyObj,
+  tryVerifyHmac,
   tryVerifyPassword,
+  verifyHmac,
   verifyPassword,
 } from "cipher-kit/node";
-import type { createSecretKey as webCreateSecretKey, isWebSecretKey, tryHash as webTryHash } from "cipher-kit/web-api";
+import type {
+  createSecretKey as webCreateSecretKey,
+  hmac as webHmac,
+  isWebSecretKey,
+  tryHash as webTryHash,
+} from "cipher-kit/web-api";
 
 // Root entry point — types
 const _encoding: CipherEncoding = "base64url";
@@ -67,6 +83,9 @@ const _hashOpts: HashOptions = { digest: "sha256", outputEncoding: "base64" };
 const _createKeyOpts: CreateSecretKeyOptions = { algorithm: "aes256gcm", digest: "sha256" };
 const _hashPwOpts: HashPasswordOptions = { digest: "sha512", iterations: 320_000 };
 const _verifyPwOpts: VerifyPasswordOptions = { digest: "sha512", iterations: 320_000 };
+const _hmacOpts: HmacOptions = { digest: "sha256", outputEncoding: "hex", length: 16 };
+const _verifyHmacOpts: VerifyHmacOptions = { digest: "sha256", inputEncoding: "hex", length: 16 };
+const _uuidOpts: GenerateUuidOptions = { version: 7 };
 const _result: Result<string> = { success: true, result: "" };
 const _errStruct: ErrorStruct = { message: "", description: "" };
 const _nodeKey: NodeSecretKey = {} as NodeSecretKey;
@@ -101,6 +120,14 @@ const _hashPassword: typeof hashPassword = {} as typeof hashPassword;
 const _tryHashPassword: typeof tryHashPassword = {} as typeof tryHashPassword;
 const _verifyPassword: typeof verifyPassword = {} as typeof verifyPassword;
 const _tryVerifyPassword: typeof tryVerifyPassword = {} as typeof tryVerifyPassword;
+const _hmac: typeof hmac = {} as typeof hmac;
+const _tryHmac: typeof tryHmac = {} as typeof tryHmac;
+const _verifyHmac: typeof verifyHmac = {} as typeof verifyHmac;
+const _tryVerifyHmac: typeof tryVerifyHmac = {} as typeof tryVerifyHmac;
+const _randomToken: typeof randomToken = {} as typeof randomToken;
+const _tryRandomToken: typeof tryRandomToken = {} as typeof tryRandomToken;
+const _randomCode: typeof randomCode = {} as typeof randomCode;
+const _tryRandomCode: typeof tryRandomCode = {} as typeof tryRandomCode;
 const _convertStrToBytes: typeof convertStrToBytes = {} as typeof convertStrToBytes;
 const _tryConvertStrToBytes: typeof tryConvertStrToBytes = {} as typeof tryConvertStrToBytes;
 const _convertBytesToStr: typeof convertBytesToStr = {} as typeof convertBytesToStr;
@@ -118,3 +145,4 @@ const _nodeEncryptedRegex: typeof NodeEncryptedRegex = {} as typeof NodeEncrypte
 const _webCreateKey: typeof webCreateSecretKey = {} as typeof webCreateSecretKey;
 const _isWebSecretKey: typeof isWebSecretKey = {} as typeof isWebSecretKey;
 const _webTryHash: typeof webTryHash = {} as typeof webTryHash;
+const _webHmac: typeof webHmac = {} as typeof webHmac;

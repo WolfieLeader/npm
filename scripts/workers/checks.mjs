@@ -10,6 +10,7 @@ export const NODE_CIPHERTEXT = "LfauPBFy-U14u66O.dIrFjLnSPvrcVyC2ermqVr1JlWom.BM
 export const AAD = "record:42";
 export const NODE_AAD_CIPHERTEXT = "bwFDMDrmXpcBI2WI.at7iOXFB2oE2Uc0f1RrYWHZXc-IV.sVlIpXfACZNedZIUviGrpA.";
 const NODE_SHA256_OF_ABC = "ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0";
+const RFC_4231_CASE_2_SHA256 = "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843";
 
 /** @type {Record<string, () => boolean | Promise<boolean>>} */
 const checks = {
@@ -51,6 +52,22 @@ const checks = {
     return await web.verifyPassword("correct horse", result, salt, { iterations: 100_000 });
   },
   generateUuid: () => /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/.test(web.generateUuid()),
+  "generateUuid version 7": () => {
+    const uuid = web.generateUuid({ version: 7 });
+    const ms = Number.parseInt(uuid.replaceAll("-", "").slice(0, 12), 16);
+    return /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/.test(uuid) && ms <= Date.now() && ms > 0;
+  },
+  "hmac matches RFC 4231 test case 2 and verifies": async () => {
+    const mac = await web.hmac("what do ya want for nothing?", "Jefe", { outputEncoding: "hex" });
+    const verified = await web.verifyHmac("what do ya want for nothing?", mac, "Jefe", { inputEncoding: "hex" });
+    return mac === RFC_4231_CASE_2_SHA256 && verified;
+  },
+  "verifyHmac rejects a truncated MAC": async () =>
+    !(await web.verifyHmac("data", (await web.hmac("data", "key", { outputEncoding: "hex" })).slice(0, 2), "key", {
+      inputEncoding: "hex",
+    })),
+  randomToken: () => /^[\w-]{43}$/.test(web.randomToken()) && /^[\da-f]{16}$/.test(web.randomToken(8, "hex")),
+  randomCode: () => /^\d{6}$/.test(web.randomCode()) && /^\d{9}$/.test(web.randomCode(9)),
   "compress round trip": () => decompress(compress(TEXT.repeat(50))) === TEXT.repeat(50),
   "compressObj round trip": () => JSON.stringify(decompressObj(compressObj({ n: 1 }))) === '{"n":1}',
 };

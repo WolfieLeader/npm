@@ -1,5 +1,6 @@
 import { $err, $fmtError, $ok } from "@internal/helpers";
 import type { Result } from "@internal/helpers";
+import { $timingSafeEqual } from "~/helpers/compare.js";
 import type { HashOptions, HashPasswordOptions, VerifyPasswordOptions } from "~/helpers/types.js";
 import {
   $validateHashOptions,
@@ -105,22 +106,9 @@ export async function $verifyPassword(
       ),
     );
 
-    const expected = hashedPasswordBytes.result;
-    const left = new Uint8Array(keyLength);
-    const right = new Uint8Array(keyLength);
-    left.set(bits);
-    right.set(expected);
-
-    // Best-effort constant-time comparison; JS JIT may introduce timing variation
-    let diff = 0;
-    for (let i = 0; i < keyLength; i++) {
-      diff |= (left[i] ?? 0) ^ (right[i] ?? 0);
-    }
     try {
-      return $ok(diff === 0);
+      return $ok($timingSafeEqual(bits, hashedPasswordBytes.result));
     } finally {
-      left.fill(0);
-      right.fill(0);
       bits.fill(0);
     }
   } catch (error) {

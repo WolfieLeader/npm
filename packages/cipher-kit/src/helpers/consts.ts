@@ -6,13 +6,19 @@ export const GCM_IV_LENGTH = 12;
 export const MAX_PBKDF2_ITERATIONS = 10_000_000;
 export const MAX_PBKDF2_KEY_LENGTH = 1024;
 export const MAX_PBKDF2_SALT_LENGTH = 1024;
+export const MIN_HMAC_LENGTH = 8;
+export const MIN_RANDOM_TOKEN_BYTES = 8;
+export const MAX_RANDOM_TOKEN_BYTES = 1024;
+export const MIN_RANDOM_CODE_DIGITS = 4;
+export const MAX_RANDOM_CODE_DIGITS = 9;
+
 /** HKDF `info` limit in UTF-8 bytes (Node enforces it; enforced upfront on both platforms). */
 export const MAX_HKDF_INFO_BYTES = 1024;
 
 export const DIGEST_ALGORITHMS = {
-  sha256: { node: "sha256", web: "SHA-256" },
-  sha384: { node: "sha384", web: "SHA-384" },
-  sha512: { node: "sha512", web: "SHA-512" },
+  sha256: { node: "sha256", web: "SHA-256", bytes: 32 },
+  sha384: { node: "sha384", web: "SHA-384", bytes: 48 },
+  sha512: { node: "sha512", web: "SHA-512", bytes: 64 },
 } as const;
 Object.freeze(DIGEST_ALGORITHMS);
 

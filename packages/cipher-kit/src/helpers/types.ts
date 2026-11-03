@@ -56,6 +56,38 @@ export interface HashOptions {
   outputEncoding?: CipherEncoding;
 }
 
+/** Options for computing an HMAC. */
+export interface HmacOptions {
+  /** Digest algorithm to use (default: `'sha256'`). */
+  digest?: DigestAlgorithm;
+  /** Encoding format for the output MAC (default: `'base64url'`). */
+  outputEncoding?: CipherEncoding;
+  /**
+   * MAC length in bytes. A shorter length truncates the MAC to its first bytes
+   * (default: the full digest length, 32 / 48 / 64 bytes; min: `8`).
+   */
+  length?: number;
+}
+
+/** Options for verifying an HMAC (must match the options used to compute it). */
+export interface VerifyHmacOptions {
+  /** Digest algorithm to use (default: `'sha256'`). */
+  digest?: DigestAlgorithm;
+  /** Encoding format of the presented MAC (default: `'base64url'`). */
+  inputEncoding?: CipherEncoding;
+  /**
+   * Expected MAC length in bytes (default: the full digest length, 32 / 48 / 64 bytes; min: `8`).
+   * A presented MAC of any other length fails verification.
+   */
+  length?: number;
+}
+
+/** Options for generating a UUID. */
+export interface GenerateUuidOptions {
+  /** UUID version: `4` (random) or `7` (Unix-millisecond timestamp, then random) (default: `4`). */
+  version?: 4 | 7;
+}
+
 /** Options for password hashing (PBKDF2). */
 export interface HashPasswordOptions {
   /** Digest algorithm to use (default: `'sha512'`). */

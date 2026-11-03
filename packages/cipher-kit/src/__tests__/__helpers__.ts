@@ -1,5 +1,12 @@
+import * as fc from "fast-check";
 import { expect } from "vitest";
 import type { CipherEncoding } from "~/helpers/types.js";
+
+// Any code point, without lone surrogates, with half the characters drawn from known edge cases.
+const edgeChar = fc.constantFrom("\uFEFF", "\u0000", "\uFFFD", "\u{10FFFF}", " ", ".", "\r\n");
+export const anyText: fc.Arbitrary<string> = fc.string({
+  unit: fc.oneof(fc.string({ unit: "binary", minLength: 1, maxLength: 1 }), edgeChar),
+});
 
 export const secret = "Secret0123456789Secret0123456789";
 export const data = "🦊 secret stuff ~ !@#$%^&*()_+";

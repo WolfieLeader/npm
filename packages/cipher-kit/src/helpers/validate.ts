@@ -29,7 +29,7 @@ export function $isObj(x: unknown): x is Record<string, unknown> {
 }
 
 /** Own-property check, so inherited names such as `"constructor"` or `"__proto__"` are rejected. */
-function $isDigestAlgorithm(x: unknown): x is DigestAlgorithm {
+export function $isDigestAlgorithm(x: unknown): x is DigestAlgorithm {
   return typeof x === "string" && Object.hasOwn(DIGEST_ALGORITHMS, x);
 }
 
@@ -50,7 +50,7 @@ const DIGEST_HINT = `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).joi
 const ALGORITHM_HINT = `Supported algorithms are: ${Object.keys(ENCRYPTION_ALGORITHMS).join(", ")}`;
 
 // Error helpers never echo the rejected value: it may be a misplaced secret, and a Symbol would throw.
-function $digestErr(ctx: string): ErrResult {
+export function $digestErr(ctx: string): ErrResult {
   return $err({ message: `${ctx}: Unsupported digest`, description: DIGEST_HINT });
 }
 
@@ -267,7 +267,7 @@ export function $validateHashPasswordOptions(
   return $ok({ digest, digestAlgo: DIGEST_ALGORITHMS[digest], outputEncoding, saltLength, iterations, keyLength });
 }
 
-function $maxEncodedLength(byteLength: number, encoding: CipherEncoding): number {
+export function $maxEncodedLength(byteLength: number, encoding: CipherEncoding): number {
   if (encoding === "hex") return byteLength * 2;
   return Math.ceil(byteLength / 3) * 4;
 }

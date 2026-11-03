@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.2.0
+
+- Adds `hmac` and `verifyHmac` to both kits. `hmac` computes HMAC-SHA-256, -384 or -512 with the key bytes as given, so its output matches webhook signatures and other HMAC implementations. The `length` option truncates the MAC, to no fewer than 8 bytes.
+- `verifyHmac` takes the expected MAC length from `length` (default: the full digest), never from the presented MAC, and compares in constant time. A presented MAC of any other length returns `false`.
+- Adds `randomToken(bytes, encoding)`: 8 to 1024 random bytes (default 32), encoded as base64url, base64 or hex.
+- Adds `randomCode(digits)`: a uniformly random code of 4 to 9 digits (default 6), leading zeros kept.
+- `generateUuid({ version: 7 })` returns an RFC 9562 UUIDv7, which sorts by creation time across milliseconds. `generateUuid()` still returns a v4 UUID.
+
 ## 4.1.0
 
 - Supports Node.js 20.19 and later, and is tested on Bun, Deno 2 and Cloudflare Workers.

@@ -41,6 +41,14 @@ const {
   tryHashPassword,
   tryVerifyPassword,
   verifyPassword,
+  hmac,
+  tryHmac,
+  verifyHmac,
+  tryVerifyHmac,
+  randomToken,
+  tryRandomToken,
+  randomCode,
+  tryRandomCode,
 } = require("cipher-kit/node");
 const webApi = require("cipher-kit/web-api");
 
@@ -73,6 +81,14 @@ assert.equal(typeof verifyPassword, "function");
 assert.equal(typeof tryVerifyPassword, "function");
 assert.equal(typeof generateUuid, "function");
 assert.equal(typeof tryGenerateUuid, "function");
+assert.equal(typeof hmac, "function");
+assert.equal(typeof tryHmac, "function");
+assert.equal(typeof verifyHmac, "function");
+assert.equal(typeof tryVerifyHmac, "function");
+assert.equal(typeof randomToken, "function");
+assert.equal(typeof tryRandomToken, "function");
+assert.equal(typeof randomCode, "function");
+assert.equal(typeof tryRandomCode, "function");
 assert.equal(typeof isNodeSecretKey, "function");
 assert.equal(typeof convertStrToBytes, "function");
 assert.equal(typeof tryConvertStrToBytes, "function");
@@ -107,6 +123,14 @@ assert.equal(typeof webApi.verifyPassword, "function");
 assert.equal(typeof webApi.tryVerifyPassword, "function");
 assert.equal(typeof webApi.generateUuid, "function");
 assert.equal(typeof webApi.tryGenerateUuid, "function");
+assert.equal(typeof webApi.hmac, "function");
+assert.equal(typeof webApi.tryHmac, "function");
+assert.equal(typeof webApi.verifyHmac, "function");
+assert.equal(typeof webApi.tryVerifyHmac, "function");
+assert.equal(typeof webApi.randomToken, "function");
+assert.equal(typeof webApi.tryRandomToken, "function");
+assert.equal(typeof webApi.randomCode, "function");
+assert.equal(typeof webApi.tryRandomCode, "function");
 assert.equal(typeof webApi.convertStrToBytes, "function");
 assert.equal(typeof webApi.tryConvertStrToBytes, "function");
 assert.equal(typeof webApi.convertBytesToStr, "function");
@@ -125,6 +149,14 @@ const key = createSecretKey("smoke-test-secret");
 const plaintext = "Hello from CJS smoke test!";
 const encrypted = encrypt(plaintext, key);
 assert.equal(decrypt(encrypted, key), plaintext);
+
+// RFC 4231 test case 2
+const mac = hmac("what do ya want for nothing?", "Jefe", { outputEncoding: "hex" });
+assert.equal(mac, "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843");
+assert.equal(verifyHmac("what do ya want for nothing?", mac, "Jefe", { inputEncoding: "hex" }), true);
+assert.match(randomToken(), /^[\w-]{43}$/);
+assert.match(randomCode(), /^\d{6}$/);
+assert.match(generateUuid({ version: 7 }), /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/);
 
 const hashResult = tryHash("smoke-test-data");
 assert.equal(hashResult.success, true);

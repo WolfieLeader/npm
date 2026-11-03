@@ -20,6 +20,8 @@
 - **Zero runtime dependencies** — fully self-contained
 - **AES-256-GCM encryption** with HKDF key derivation
 - **PBKDF2 password hashing** with 320K iterations and constant-time verification
+- **HMAC signing and verification** that matches webhook signatures, with the MAC length set by your options
+- **Random tokens, numeric codes, and UUIDs** (v4 and sortable v7)
 - **Type-safe API** with throwing and `Result<T>` variants for every operation
 - **Tree-shakable** — import from `cipher-kit/node` or `cipher-kit/web-api`
 - **Cross-platform** — Node.js, Deno, Bun, Cloudflare Workers, and all modern browsers
@@ -204,15 +206,60 @@ const custom = hashPassword("user-password", {
 >
 > **Unicode normalization:** All secret and password inputs are NFKC-normalized before processing. This means that equivalent Unicode representations (e.g., `"café"` composed vs. decomposed) produce identical keys and hashes. This is the recommended approach per NIST SP 800-63B.
 
+### `hmac` / `verifyHmac` / `tryHmac` / `tryVerifyHmac`
+
+Computes and verifies an HMAC (RFC 2104) with SHA-256, SHA-384 or SHA-512. `data` and `key` are strings (used as UTF-8) or `Uint8Array` bytes. The key is used as given, with no normalization or key derivation, so the MAC matches webhook signatures and any other HMAC implementation given the same key. An empty key is rejected.
+
+```typescript
+import { hmac, verifyHmac } from "cipher-kit/node";
+
+const mac = hmac("message", "my-signing-key"); // HMAC-SHA-256, base64url
+verifyHmac("message", mac, "my-signing-key"); // true
+verifyHmac("tampered", mac, "my-signing-key"); // false
+
+// Check a webhook signature sent as hex
+const valid = verifyHmac(rawBody, signatureHex, signingSecret, { inputEncoding: "hex" });
+
+// A truncated MAC: verify with the same length
+const short = hmac("message", "my-signing-key", { length: 16 });
+verifyHmac("message", short, "my-signing-key", { length: 16 }); // true
+```
+
+**`hmac` options:** `digest` (default `"sha256"`), `outputEncoding` (default `"base64url"`), `length` in bytes (default: the full digest, 32 / 48 / 64; min `8`).
+
+**`verifyHmac` options:** `digest` (default `"sha256"`), `inputEncoding` (default `"base64url"`), `length` (default: the full digest). Must match the values used to compute the MAC.
+
+> **Security:** `verifyHmac` expects exactly `length` bytes, taken from your options. A presented MAC that does not decode, or decodes to any other length, returns `false`, so a forger cannot pass a 1-byte tag. Node compares with `crypto.timingSafeEqual`; Web uses a best-effort full-loop XOR compare. HMAC adds no brute-force resistance, so use a high-entropy key.
+
+### `randomToken` / `randomCode` / `tryRandomToken` / `tryRandomCode`
+
+Generates random strings from the platform's cryptographically secure generator. Synchronous on both platforms.
+
+```typescript
+import { randomCode, randomToken } from "cipher-kit/node";
+
+randomToken(); // 32 random bytes as 43 base64url characters
+randomToken(16, "hex"); // 32 hex characters
+randomCode(); // "042917": 6 digits, leading zeros kept
+randomCode(8); // "90314276"
+```
+
+- `randomToken(bytes = 32, encoding = "base64url")`: `bytes` is an integer from 8 to 1024; `encoding` is `"base64url"`, `"base64"` or `"hex"`.
+- `randomCode(digits = 6)`: `digits` is an integer from 4 to 9. Every code is equally likely: a random value that would bias the result is redrawn, not reduced with modulo. Pair one-time codes with expiry and attempt limits.
+
 ### `generateUuid` / `tryGenerateUuid`
 
-Generates a cryptographically random UUID (v4). Synchronous on both platforms.
+Generates a UUID. Synchronous on both platforms.
 
 ```typescript
 import { generateUuid } from "cipher-kit/node";
 
-const id = generateUuid(); // "550e8400-e29b-41d4-a716-446655440000"
+const id = generateUuid(); // v4: "550e8400-e29b-41d4-a716-446655440000"
+const sortable = generateUuid({ version: 7 }); // v7: "019a4b0e-3f2c-7d1a-9b3e-5c2f8a6d4e10"
 ```
+
+- **Version 4** (default) is fully random.
+- **Version 7** (RFC 9562) starts with the Unix time in milliseconds, then 74 random bits. UUIDs from different milliseconds sort by creation time as strings. UUIDs from the same millisecond are not guaranteed to sort in creation order. A v7 UUID reveals when it was made.
 
 ### Encoding Utilities
 
@@ -313,6 +360,9 @@ import type {
   HashOptions,
   HashPasswordOptions,
   VerifyPasswordOptions,
+  HmacOptions,
+  VerifyHmacOptions,
+  GenerateUuidOptions,
   CipherEncoding,
   Encoding,
   EncryptionAlgorithm,

@@ -11,14 +11,17 @@
     "typecheck": "turbo run typecheck && tsc --noEmit -p tsconfig.json",
     "test": "turbo run test",
     "smoke": "bash scripts/run.sh",
+    "workers": "node scripts/workers.ts",
     "knip": "knip",
     "verify": "node scripts/verify.ts",
     "tool-pins": "bash scripts/tool-pins.sh"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "esbuild": "catalog:",
     "eslint-plugin-regexp": "catalog:",
     "knip": "catalog:",
+    "miniflare": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

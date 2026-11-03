@@ -26,7 +26,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 22.12.
+Requires Node.js 20 or later. Also tested on Bun and Deno 2.
 
 ```bash
 npm install get-client-ip
@@ -151,7 +151,7 @@ export class AppController {
 
 ## Breaking Changes in v5 ⚠️
 
-- **Requires Node.js >= 22.12.**
+- **Requires Node.js >= 22.12.** 5.1 lowers this to Node.js 20.
 - **`X-Forwarded-For` is read from the right.** v4 returned the leftmost entry, which any client can set. Now the first untrusted hop from the right is returned.
 - **Vendor headers need opt-in.** `cf-connecting-ip`, `true-client-ip`, `fastly-client-ip`, `x-appengine-user-ip`, `cf-pseudo-ipv4`, `x-client-ip`, `x-real-ip`, `x-cluster-client-ip`, `forwarded-for`, and `x-forwarded` are ignored unless listed in `trustedHeaders`.
 - **A trusted `req.ip` no longer wins.** When `req.ip` is inside `trustedProxies` (Express without `trust proxy` behind a private or loopback proxy), the forwarding chain is walked. v4 returned the proxy's address. Pass `trustedProxies: []` to keep the v4 result.

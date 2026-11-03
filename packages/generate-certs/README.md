@@ -28,7 +28,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 22.12. Recommended as a dev dependency.
+Requires Node.js 20 or later. Also tested on Bun and Deno 2. Recommended as a dev dependency.
 
 ```bash
 npm install -D generate-certs
@@ -179,7 +179,7 @@ bootstrap();
 
 ## Breaking Changes in v4 ⚠️
 
-- **Requires Node.js >= 22.12.**
+- **Requires Node.js >= 22.12.** 4.1 lowers this to Node.js 20.
 - **`activateLogs` is replaced by `logger`.** Logging is off by default. Pass `logger: console.log` to restore the v3 output.
 - **The Common Name is no longer checked.** Valid certificates with other CNs, or none, are kept instead of replaced.
 - **CA-issued certificates are kept.** v3 required a self-signature and replaced mkcert-style certificates.

@@ -29,7 +29,7 @@
     "lint": "oxlint --type-aware -c ../../.oxlintrc.json ."
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",

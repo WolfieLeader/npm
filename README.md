@@ -115,15 +115,18 @@ npm install modern-cookies
 
 ## Tooling ⚒️
 
-| Tool                                          | Purpose                                                            |
-| --------------------------------------------- | ------------------------------------------------------------------ |
-| [TypeScript](https://www.typescriptlang.org/) | Strict types with `verbatimModuleSyntax` and `nodenext` resolution |
-| [pnpm](https://pnpm.io/)                      | Workspace management and dependency resolution                     |
-| [Turborepo](https://turbo.build/)             | Cached, dependency-aware builds across packages                    |
-| [Just](https://just.systems/)                 | Handy way to save and run project-specific commands                |
-| [tsdown](https://tsdown.dev/)                 | Dual ESM/CJS output for every package                              |
-| [Biome](https://biomejs.dev/)                 | Linting and formatting (replaces ESLint + Prettier)                |
-| [Vitest](https://vitest.dev/)                 | Testing with TypeScript type checking                              |
+| Tool                                                    | Purpose                                                            |
+| ------------------------------------------------------- | ------------------------------------------------------------------ |
+| [TypeScript 7](https://www.typescriptlang.org/)         | Strict types with `isolatedDeclarations` and `nodenext` resolution |
+| [pnpm](https://pnpm.io/)                                | Workspace, catalog of shared versions, and supply-chain checks     |
+| [Turborepo](https://turbo.build/)                       | Cached, dependency-aware tasks across packages                     |
+| [tsdown](https://tsdown.dev/)                           | Dual ESM/CJS output, checked with publint and Are the Types Wrong  |
+| [Oxlint](https://oxc.rs/docs/guide/usage/linter.html)   | Type-aware linting                                                 |
+| [Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html) | Formatting for code, JSON, YAML and Markdown                       |
+| [Vitest](https://vitest.dev/)                           | Tests with TypeScript type checking                                |
+| [Knip](https://knip.dev/)                               | Finds unused files, exports and dependencies                       |
+
+Run `pnpm verify` before you push. It runs format check, lint, typecheck, tests, build, attw and knip.
 
 ## Contributing 🤝
 

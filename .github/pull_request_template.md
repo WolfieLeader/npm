@@ -11,7 +11,7 @@
 <!--
 - Bug fix: the test that fails before the fix and passes after, with the command.
 - New check: it fails on a bad fixture and passes on a good one.
-- Behavior change: the README and JSDoc updates.
+- Behavior change: the CHANGELOG.md and JSDoc updates.
 -->
 
 - [ ] `pnpm verify` passes

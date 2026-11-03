@@ -62,7 +62,7 @@ People and agents copy what they see. The codebase and its checks carry the rule
 
 - Bug fix: a test that fails before the fix and passes after, from the same command.
 - New check: it fails on a bad fixture and passes on a good one.
-- Behavior change: the README breaking-changes section and the JSDoc say so.
+- Behavior change: the package's `CHANGELOG.md` and the JSDoc say so. READMEs describe only the current version.
 - Say what you did not verify.
 
 ## Library invariants
@@ -83,7 +83,7 @@ People and agents copy what they see. The codebase and its checks carry the rule
 
 ## Release
 
-- Bump the package version and its README breaking-changes section in a PR.
+- Bump the package version and add its `CHANGELOG.md` entry in a PR.
 - After the merge, the owner runs Actions → Release and picks the package. It publishes from `main` through npm
   trusted publishing, so no npm token exists.
 

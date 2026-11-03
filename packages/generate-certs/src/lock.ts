@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { threadId } from "node:worker_threads";
 import { $errorCode } from "./error-code.js";
 
 const LOCK_FILE = ".generate-certs.lock";
@@ -26,15 +27,22 @@ export function $isProcessAlive(pid: number): boolean {
 
 interface LockIdentity {
   ino: number;
-  content: string;
+  /** `null` when the lock exists but this user cannot read it. */
+  content: string | null;
 }
 
-/** Reads the lock's inode and content, or `null` when it vanished or cannot be read. */
+/** Reads the lock's inode and content, or `null` when it vanished. */
 function $identify(lockPath: string): LockIdentity | null {
+  let ino: number;
   try {
-    return { ino: fs.statSync(lockPath).ino, content: fs.readFileSync(lockPath, "utf8") };
+    ino = fs.statSync(lockPath).ino;
   } catch {
     return null;
+  }
+  try {
+    return { ino, content: fs.readFileSync(lockPath, "utf8") };
+  } catch (error) {
+    return $errorCode(error) === "ENOENT" ? null : { ino, content: null };
   }
 }
 
@@ -44,8 +52,14 @@ function $isStale(lockPath: string, lock: LockIdentity): boolean {
   } catch {
     return false;
   }
-  const pid = Number.parseInt(lock.content, 10);
-  return Number.isInteger(pid) && pid > 0 && !$isProcessAlive(pid);
+  if (lock.content === null) return false;
+  const [pidText = "", threadText = ""] = lock.content.split(":");
+  const pid = Number.parseInt(pidText, 10);
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  // This thread holds no lock while it waits for one, so a lock naming this PID and thread was left by an
+  // earlier process that had the same PID, such as a restarted container's PID 1.
+  if (pid === process.pid && threadText === String(threadId)) return true;
+  return !$isProcessAlive(pid);
 }
 
 function $unlinkQuietly(filePath: string): void {
@@ -109,8 +123,8 @@ function $release(lockPath: string, owner: string): void {
 /** Runs `fn` while holding an exclusive lock file in `dir`. Throws when the lock cannot be acquired. */
 export function $withLock<T>(dir: string, fn: () => T): T {
   const lockPath = path.join(dir, LOCK_FILE);
-  // The PID comes first so other processes can check whether the owner is alive.
-  const owner = `${process.pid}:${randomUUID()}`;
+  // The PID and thread come first so other callers can check whether the owner is alive.
+  const owner = `${process.pid}:${threadId}:${randomUUID()}`;
 
   for (let attempt = 0; attempt < LOCK_MAX_RETRIES; attempt++) {
     if ($tryAcquire(lockPath, owner)) {

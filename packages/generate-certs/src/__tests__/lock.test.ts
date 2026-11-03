@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { threadId } from "node:worker_threads";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { $evictStaleLock, $isProcessAlive, $withLock } from "../lock.js";
 
@@ -54,6 +55,28 @@ describe("lock", () => {
     expect($evictStaleLock(lockPath)).toBe(false);
     expect(fs.existsSync(lockPath)).toBe(true);
   });
+
+  it("evicts a fresh lock naming this PID and thread, left by an earlier process with the same PID", () => {
+    const lockPath = lockWith(`${process.pid}:${threadId}:old-token`);
+    expect($evictStaleLock(lockPath)).toBe(true);
+    expect(fs.existsSync(lockPath)).toBe(false);
+  });
+
+  it("keeps a fresh lock held by another thread of this process", () => {
+    const lockPath = lockWith(`${process.pid}:${threadId + 1}:token`);
+    expect($evictStaleLock(lockPath)).toBe(false);
+    expect(fs.existsSync(lockPath)).toBe(true);
+  });
+
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+    "waits on a fresh lock it cannot read instead of retrying at once",
+    () => {
+      const lockPath = lockWith("12345:0:token");
+      fs.chmodSync(lockPath, 0o000);
+      expect($evictStaleLock(lockPath)).toBe(false);
+      expect(fs.existsSync(lockPath)).toBe(true);
+    },
+  );
 
   it("evicts a lock whose owner is gone (ESRCH)", () => {
     const lockPath = lockWith("999999999:token");

@@ -25,7 +25,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 18.
+Requires Node.js >= 22.12.
 
 ```bash
 npm install modern-cookies
@@ -61,34 +61,33 @@ app.listen(3000);
 
 ## API Reference 📖
 
-### `getCookie(req, name, logError?): string | undefined`
+### `getCookie(req, name, options?): string | undefined`
 
 Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if not found.
 
-| Parameter  | Type      | Default | Description                                   |
-| ---------- | --------- | ------- | --------------------------------------------- |
-| `req`      | `Request` | —       | The Express request object                    |
-| `name`     | `string`  | —       | The name of the cookie to retrieve            |
-| `logError` | `boolean` | `false` | If `true`, logs parsing errors to the console |
+| Parameter | Type               | Default | Description                        |
+| --------- | ------------------ | ------- | ---------------------------------- |
+| `req`     | `Request`          | —       | The Express request object         |
+| `name`    | `string`           | —       | The name of the cookie to retrieve |
+| `options` | `GetCookieOptions` | `{}`    | `logger` receives parsing errors   |
 
 ```typescript
 const session = getCookie(req, "session");
 
-// Enable error logging for debugging
-const theme = getCookie(req, "theme", true);
+// Log parsing errors
+const theme = getCookie(req, "theme", { logger: console.warn });
 ```
 
-### `setCookie(res, name, value, options, logError?): boolean`
+### `setCookie(res, name, value, options): boolean`
 
 Sets a cookie on the response. The `options` parameter is **required**. Returns `true` on success, `false` on failure.
 
-| Parameter  | Type            | Default | Description                                         |
-| ---------- | --------------- | ------- | --------------------------------------------------- |
-| `res`      | `Response`      | —       | The Express response object                         |
-| `name`     | `string`        | —       | The name of the cookie to set                       |
-| `value`    | `string`        | —       | The value of the cookie                             |
-| `options`  | `CookieOptions` | —       | Configuration for the cookie's attributes           |
-| `logError` | `boolean`       | `false` | If `true`, logs serialization errors to the console |
+| Parameter | Type            | Default | Description                               |
+| --------- | --------------- | ------- | ----------------------------------------- |
+| `res`     | `Response`      | —       | The Express response object               |
+| `name`    | `string`        | —       | The name of the cookie to set             |
+| `value`   | `string`        | —       | The value of the cookie                   |
+| `options` | `CookieOptions` | —       | Configuration for the cookie's attributes |
 
 ```typescript
 setCookie(res, "theme", "dark", { maxAge: 60 * 60 * 24 * 365, sameSite: "strict" });
@@ -99,16 +98,15 @@ const ok = setCookie(res, "lang", "en", { maxAge: 60 * 60 * 24 * 365 });
 
 > **Tip:** For session or auth cookies, always set `{ httpOnly: true, secure: true, sameSite: "lax" }` to mitigate XSS and CSRF risks.
 
-### `deleteCookie(res, name, options?, logError?): boolean`
+### `deleteCookie(res, name, options?): boolean`
 
 Deletes a cookie by setting `maxAge: 0` **and** `expires` to the Unix epoch for maximum browser compatibility. If the cookie was set with a specific `path` or `domain`, pass the same values to ensure the correct cookie is removed. Similarly, if the cookie was set with `sameSite: "none"`, pass `sameSite: "none"` in the delete options so the browser matches and removes the correct cookie.
 
-| Parameter  | Type            | Default | Description                                 |
-| ---------- | --------------- | ------- | ------------------------------------------- |
-| `res`      | `Response`      | —       | The Express response object                 |
-| `name`     | `string`        | —       | The name of the cookie to delete            |
-| `options`  | `CookieOptions` | `{}`    | Additional options (e.g., `path`, `domain`) |
-| `logError` | `boolean`       | `false` | If `true`, logs errors to the console       |
+| Parameter | Type            | Default | Description                                 |
+| --------- | --------------- | ------- | ------------------------------------------- |
+| `res`     | `Response`      | —       | The Express response object                 |
+| `name`    | `string`        | —       | The name of the cookie to delete            |
+| `options` | `CookieOptions` | `{}`    | Additional options (e.g., `path`, `domain`) |
 
 ```typescript
 deleteCookie(res, "session");
@@ -132,6 +130,7 @@ interface CookieOptions {
   path?: string; // URL path scope (default: "/")
   domain?: string; // Domain scope; omit to restrict to current host
   priority?: "low" | "medium" | "high";
+  logger?: (message: string) => void; // Receives errors; silent when omitted
 }
 ```
 
@@ -141,7 +140,7 @@ interface CookieOptions {
 
 ### Cookie Prefix Enforcement
 
-When you use special cookie name prefixes, `setCookie` automatically enforces the required attributes:
+When you use special cookie name prefixes, `setCookie` automatically enforces the required attributes. Prefixes match case-insensitively, as browsers require ([RFC 6265bis §5.4](https://datatracker.ietf.org/doc/draft-ietf-httpbis-rfc6265bis/)), so `__host-sid` gets the `__Host-` rules too.
 
 | Prefix      | Enforced Attributes                           |
 | ----------- | --------------------------------------------- |
@@ -167,7 +166,14 @@ setCookie(res, "cross-origin", value, { sameSite: "none" });
 
 ### Safe Error Logging
 
-When `logError` is enabled, error messages include only the cookie **name** and the error reason — never the cookie **value**. All logged strings are sanitized (newlines and control characters are stripped, length is capped) to prevent log injection.
+Errors go only to the `logger` you pass in `options`; nothing is written to the console. Messages include only the cookie **name** and the error reason — never the cookie **value**. All logged strings are sanitized (newlines and control characters are stripped, length is capped) to prevent log injection.
+
+## Breaking Changes in v3 ⚠️
+
+- **Requires Node.js >= 22.12.** The `cookie` dependency is now v2, which is ESM-only. The CommonJS build loads it through `require(esm)`.
+- **`logError` is replaced by a `logger` option.** The positional boolean is gone from `getCookie`, `setCookie`, and `deleteCookie`. Pass `{ logger: console.error }` in the options object instead: `getCookie(req, name, { logger })`, `setCookie(res, name, value, { ...attributes, logger })`. Without a `logger`, nothing is logged. The logger gets one string: `Error setting cookie "<name>": <reason>`.
+- **Values are percent-encoded only where needed.** cookie v2 leaves characters that are legal in a cookie value as-is, so `setCookie(res, "t", "ab+/c==")` writes `t=ab+/c==` where v2 wrote `t=ab%2B%2Fc%3D%3D`. `getCookie` reads both. A reader that form-decodes cookies turns `+` into a space, so give it encoded values yourself.
+- **Cookie prefixes match case-insensitively.** `__host-`, `__HOST-`, `__secure-`, and other spellings now get the `__Host-` and `__Secure-` rules. Browsers reject such cookies without those attributes, so v2 produced cookies browsers dropped.
 
 ## NestJS 🧩
 

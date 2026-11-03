@@ -1,6 +1,6 @@
 {
   "name": "modern-cookies",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "🍪 A Lightweight and Modern Cookie Utility for Express and Nest.js",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/modern-cookies#readme",
   "repository": {
@@ -29,21 +29,25 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsdown",
-    "prepare": "npm run build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest run",
+    "lint": "oxlint --type-aware -c ../../.oxlintrc.json .",
+    "prepublishOnly": "turbo run build --filter=modern-cookies"
   },
   "dependencies": {
-    "cookie": "^1.1.1"
+    "cookie": "^2.0.1"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
-    "tsdown": "latest",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.0"
+    "@arethetypeswrong/core": "catalog:",
+    "@types/node": "catalog:",
+    "fast-check": "catalog:",
+    "publint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   },
   "author": "WolfieLeader",
   "license": "MIT",

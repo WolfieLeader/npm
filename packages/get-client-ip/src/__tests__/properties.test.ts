@@ -29,12 +29,14 @@ describe("get-client-ip properties", () => {
 
   test("any header values, socket address or req.ip return a string or undefined, never a throw", () => {
     const headerValue = fc.oneof(clientText, fc.array(clientText), fc.constant(undefined));
+    // Mostly trusted peers, so the header parsers and the chain walk actually run.
+    const address = fc.oneof(fc.constantFrom("10.0.0.5", "::1", "127.0.0.1", "::ffff:10.0.0.9"), clientText);
     fc.assert(
       fc.property(
         headerValue,
         headerValue,
-        fc.option(clientText, { nil: undefined }),
-        fc.option(clientText, { nil: undefined }),
+        fc.option(address, { nil: undefined }),
+        fc.option(address, { nil: undefined }),
         (xff, forwarded, remoteAddress, ip) => {
           const req = { headers: { "x-forwarded-for": xff, forwarded }, socket: { remoteAddress }, ip } as IpRequest;
           for (const forwardedHeader of ["x-forwarded-for", "forwarded"] as const) {

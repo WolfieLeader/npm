@@ -84,7 +84,7 @@ describe("cipher-kit properties", () => {
           expect(error).not.toContain(SENTINEL);
         }
       }),
-      { numRuns: 50 },
+      { numRuns: 300 },
     );
   });
 
@@ -110,7 +110,7 @@ describe("cipher-kit properties", () => {
           expect(error).not.toContain(SENTINEL);
         }
       }),
-      { numRuns: 50 },
+      { numRuns: 300 },
     );
   });
 });

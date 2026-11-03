@@ -27,7 +27,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 18. Recommended as a dev dependency.
+Requires Node.js >= 22.12. Recommended as a dev dependency.
 
 ```bash
 npm install -D generate-certs
@@ -64,42 +64,48 @@ const certs = generateCerts({ certsPath: path.resolve(import.meta.dirname, "../c
 console.log(certs.key); // "-----BEGIN RSA PRIVATE KEY-----\n..."
 console.log(certs.cert); // "-----BEGIN CERTIFICATE-----\n..."
 
-// Suppress console logs in CI/test environments
-const silent = generateCerts({
+// Print what happened (reuse, permission fix, backup, generation)
+const logged = generateCerts({
   certsPath: path.resolve(import.meta.dirname, "../certs"),
-  activateLogs: false,
+  logger: console.log,
 });
 ```
 
-**Options:** `certsPath` (required, absolute path to certificates directory), `activateLogs` (default `true`).
+**Options:** `certsPath` (required, absolute path to the certificates directory), `logger` (optional `(message: string) => void`; silent when omitted).
 
 **Throws** if the path is invalid, inaccessible, or certificate generation fails.
 
 ## Certificate Details 📜
 
-| Property                | Value                           |
-| ----------------------- | ------------------------------- |
-| Key algorithm           | RSA 2048-bit                    |
-| Signature               | SHA-256                         |
-| Validity                | 1 year from generation          |
-| Common Name             | `localhost`                     |
-| Subject Alt Names       | `localhost`, `127.0.0.1`, `::1` |
-| Private key permissions | `600` (Unix only)               |
+| Property                | Value                                          |
+| ----------------------- | ---------------------------------------------- |
+| Key algorithm           | RSA 2048-bit                                   |
+| Signature               | SHA-256                                        |
+| Validity                | 1 year from generation                         |
+| Common Name             | `localhost`                                    |
+| Subject Alt Names       | `localhost`, `127.0.0.1`, `::1`                |
+| Basic Constraints       | `CA:FALSE` (critical)                          |
+| Key Usage               | Digital Signature, Key Encipherment (critical) |
+| Extended Key Usage      | TLS Web Server Authentication                  |
+| Private key permissions | `600` (Unix only)                              |
 
 ## Smart Reuse ♻️
 
-When certificates already exist at the specified path, the following checks are performed before reusing them:
+Existing `key.pem` and `cert.pem` files are reused when all of these hold:
 
-1. **File existence** — both `key.pem` and `cert.pem` must be present
-2. **Permissions** — private key must have `600` permissions (Unix only, skipped on Windows)
-3. **Expiry** — certificate must not be expired or expiring within 5 minutes
-4. **Not-before** — certificate must already be valid (not issued for the future)
-5. **Common Name** — must be `localhost`
-6. **SANs** — must include `localhost`, `127.0.0.1`, and `::1`
-7. **Key size** — RSA key must be at least 2048-bit
-8. **Key/cert pairing** — the private key must match the certificate's public key
+1. **File existence** — both files are present
+2. **Expiry** — the certificate is not expired or expiring within 5 minutes
+3. **Not-before** — the certificate is already valid
+4. **SANs** — they include `localhost`, `127.0.0.1`, and `::1`
+5. **Key size** — RSA keys are at least 2048-bit
+6. **Key/cert pairing** — the private key matches the certificate
+7. **Self-signature** — a self-issued certificate verifies against its own key
 
-If any check fails, certificates are automatically regenerated.
+Certificates from your own CA (for example, mkcert) pass these checks and are kept. The Common Name is not checked.
+
+If `key.pem` is readable by group or others, its mode is changed to `600` (Unix only). The files are kept.
+
+If any check fails, the existing files are copied to `key.pem.bak` and `cert.pem.bak` (mode `600`), then a new pair is generated. Older backups are never overwritten; later ones are named `key.pem.1.bak`, `key.pem.2.bak`, and so on. If the backup fails, nothing is regenerated.
 
 ## Framework Examples 🧩
 
@@ -164,9 +170,23 @@ bootstrap();
 - **Add `certs/` to `.gitignore`** — never commit generated certificates to version control
 - **Install as a dev dependency** (`-D`) — this package is not needed in production
 - **Browser warnings are expected** — self-signed certificates will show "Not Secure"; click Advanced → Proceed to localhost
-- **Suppress logs** with `activateLogs: false` when running in CI or test environments
+- **Logs are off by default** — pass `logger: console.log` to see what happened
 
-> **Windows:** File permission checks are skipped on Windows. Lock file stale detection uses a 60-second timeout as a cross-platform fallback.
+> **Windows:** File permission checks are skipped on Windows.
+
+> **Concurrency:** A lock file (`.generate-certs.lock`) serializes concurrent calls. A lock is taken over only when its owner process is gone or it is older than 60 seconds.
+
+## Breaking Changes in v4 ⚠️
+
+- **Requires Node.js >= 22.12.**
+- **`activateLogs` is replaced by `logger`.** Logging is off by default. Pass `logger: console.log` to restore the v3 output.
+- **The Common Name is no longer checked.** Valid certificates with other CNs, or none, are kept instead of replaced.
+- **CA-issued certificates are kept.** v3 required a self-signature and replaced mkcert-style certificates.
+- **An insecure `key.pem` mode is fixed, not replaced.** The key keeps its content and gets mode `600`. If the mode cannot be changed, `generateCerts` throws.
+- **Invalid files are backed up before regeneration** as `*.bak`.
+- **Existing certificates are validated with `node:crypto`** (`X509Certificate`), so EC and Ed25519 key pairs are accepted.
+- **Generated certificates carry `basicConstraints`, `keyUsage`, and `extKeyUsage`.**
+- **`node-forge` is `^1.4.2`**, which fixes the October 2026 advisories (including PEM ReDoS and signature forgery).
 
 ## Type Exports 🏷️
 

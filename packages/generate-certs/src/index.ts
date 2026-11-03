@@ -1,12 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import forge from "node-forge";
-import { $generateCerts } from "./generate.js";
-
-const LOCK_FILE = ".generate-certs.lock";
-const LOCK_STALE_MS = 60_000;
-const LOCK_MAX_RETRIES = 50;
-const LOCK_RETRY_DELAY_MS = 200;
+import { $checkCerts, $secureKeyMode } from "./check.js";
+import { $backupFile, $generateCerts } from "./generate.js";
+import { $withLock } from "./lock.js";
 
 /** Options for generating self-signed HTTPS certificates. */
 export interface GenerateCertsOptions {
@@ -16,81 +12,60 @@ export interface GenerateCertsOptions {
    */
   certsPath: string;
   /**
-   * Whether to log the generation process to the console.
-   * Defaults to true, which logs success messages.
+   * Receives one line per notable event (reuse, permission fix, backup, generation).
+   * Silent when omitted. Pass `console.log` to print them.
    */
-  activateLogs?: boolean;
+  logger?: (message: string) => void;
 }
 
-function $syncSleep(ms: number) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+/** PEM-encoded key and certificate, ready for `https.createServer()`. */
+export interface GeneratedCerts {
+  key: string;
+  cert: string;
 }
 
-function $evictStaleLock(lockPath: string): boolean {
-  try {
-    const stat = fs.statSync(lockPath);
-    if (Date.now() - stat.mtimeMs > LOCK_STALE_MS) {
-      fs.unlinkSync(lockPath);
-      return true;
-    }
-    const lockPid = Number.parseInt(fs.readFileSync(lockPath, "utf8"), 10);
-    if (!Number.isNaN(lockPid)) {
-      try {
-        // On Windows, process.kill(pid, 0) may throw even for alive processes; the stale timeout above serves as fallback
-        process.kill(lockPid, 0);
-      } catch {
-        fs.unlinkSync(lockPath);
-        return true;
-      }
-    }
-  } catch {}
-  return false;
-}
+function $reuseOrRegenerate(dir: string, log: (message: string) => void): GeneratedCerts {
+  const keyPath = path.join(dir, "key.pem");
+  const certPath = path.join(dir, "cert.pem");
+  const check = $checkCerts(dir);
 
-function $withLock<T>(certsPath: string, fn: () => T): T {
-  const lockPath = path.join(certsPath, LOCK_FILE);
-
-  for (let attempt = 0; attempt < LOCK_MAX_RETRIES; attempt++) {
-    try {
-      fs.writeFileSync(lockPath, `${process.pid}`, { flag: "wx" });
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === "EEXIST") {
-        if ($evictStaleLock(lockPath)) continue;
-        if (attempt < LOCK_MAX_RETRIES - 1) {
-          $syncSleep(LOCK_RETRY_DELAY_MS);
-          continue;
-        }
-        throw new Error("Error generating certificates: could not acquire lock");
-      }
-      throw err;
-    }
-
-    try {
-      return fn();
-    } finally {
-      try {
-        fs.unlinkSync(lockPath);
-      } catch {}
-    }
+  if (check.status === "valid") {
+    if ($secureKeyMode(keyPath)) log("Changed key.pem permissions to 600.");
+    log("Found existing certificates for HTTPS.");
+    return { key: check.key, cert: check.cert };
   }
 
-  throw new Error("Error generating certificates: could not acquire lock after retries");
+  if (check.status === "invalid") {
+    // Never overwrite files without a copy: they may be the user's own certificates.
+    const backups = [$backupFile(keyPath), $backupFile(certPath)].filter((file) => file !== undefined);
+    log(`${check.reason}. Regenerating. Backups: ${backups.join(", ")}`);
+  }
+
+  try {
+    $generateCerts(dir);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Error generating certificates: ${reason}`, { cause: error });
+  }
+  log("Generated HTTPS certificates. In the browser, choose 'Advanced' -> 'Proceed to localhost (unsafe)'.");
+  return { key: fs.readFileSync(keyPath, "utf8"), cert: fs.readFileSync(certPath, "utf8") };
 }
 
 /**
  * Generates or retrieves self-signed HTTPS certificates from the specified directory.
  *
- * If valid `key.pem` and `cert.pem` files already exist in the target path,
- * they will be reused. Otherwise, new certificates will be generated.
+ * Valid existing `key.pem` and `cert.pem` files are reused, including CA-issued ones (e.g. from mkcert).
+ * A readable-by-others `key.pem` is changed to mode 600 instead of being replaced.
+ * Before replacing invalid files, the function copies them to `*.bak`; it never overwrites an older backup.
  *
  * @param options - Options to control the certificate generation behavior.
- * @returns An object containing the PEM-formatted `key` and `cert` strings.
+ * @returns The PEM-formatted `key` and `cert` strings.
  *
  * @throws Will throw an error if the path is invalid, inaccessible, or certificate generation fails.
  *
  * @example
  * ```ts
- * const certs = generateCerts({ certsPath: path.resolve(import.meta.dirname, "certs") });
+ * const certs = generateCerts({ certsPath: path.resolve(import.meta.dirname, "certs"), logger: console.log });
  *
  * // Express example:
  * https.createServer(certs, app);
@@ -105,115 +80,12 @@ function $withLock<T>(certsPath: string, fn: () => T): T {
  * const app = Fastify({ https: certs });
  * ```
  */
-export function generateCerts({ certsPath, activateLogs = true }: GenerateCertsOptions) {
+export function generateCerts({ certsPath, logger }: GenerateCertsOptions): GeneratedCerts {
   if (!path.isAbsolute(certsPath)) {
     throw new Error("Error generating certificates: certsPath must be an absolute path");
   }
 
   fs.mkdirSync(certsPath, { recursive: true });
-
-  return $withLock(certsPath, () => {
-    const certs = $checkForCerts({ certsPath, activateLogs });
-    if (certs) return certs;
-
-    try {
-      $generateCerts(certsPath);
-      if (activateLogs) {
-        console.log("🔐 Certificates for HTTPS have been generated successfully!");
-        console.log(`🛑 Please visit the URL, click on 'Advanced' -> 'Proceed to localhost(unsafe)' to continue.`);
-      }
-      return { key: $readFile(certsPath, "key.pem"), cert: $readFile(certsPath, "cert.pem") };
-    } catch (err) {
-      throw new Error(`Error generating certificates: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
-  });
-}
-
-function $checkForCerts({ certsPath, activateLogs: log = true }: GenerateCertsOptions) {
-  try {
-    const keyPem = $readFile(certsPath, "key.pem");
-    const certPem = $readFile(certsPath, "cert.pem");
-
-    if (process.platform !== "win32") {
-      const keyStats = fs.statSync(path.join(certsPath, "key.pem"));
-      if ((keyStats.mode & 0o077) !== 0) {
-        if (log) console.log("⚠️ Private key has insecure permissions. Regenerating...");
-        return;
-      }
-    }
-
-    const cert = forge.pki.certificateFromPem(certPem);
-    const now = Date.now();
-    const clockSkewMs = 5 * 60 * 1000;
-
-    if (cert.validity.notAfter.getTime() <= now + clockSkewMs) {
-      if (log) console.log("⏰ Existing certificate has expired. Regenerating...");
-      return;
-    }
-
-    if (cert.validity.notBefore.getTime() > now + clockSkewMs) {
-      if (log) console.log("⏳ Existing certificate is not valid yet. Regenerating...");
-      return;
-    }
-
-    const commonName = cert.subject.getField("CN")?.value;
-    if (commonName !== "localhost") {
-      if (log) console.log("🏷️ Certificate common name is invalid. Regenerating...");
-      return;
-    }
-
-    const san = cert.getExtension("subjectAltName") as
-      | { altNames?: Array<{ type: number; value?: string; ip?: string }> }
-      | undefined;
-    const hasLocalhostDns = san?.altNames?.some((entry) => entry.type === 2 && entry.value === "localhost") ?? false;
-    const hasLoopbackV4 = san?.altNames?.some((entry) => entry.type === 7 && entry.ip === "127.0.0.1") ?? false;
-    const hasLoopbackV6 = san?.altNames?.some((entry) => entry.type === 7 && entry.ip === "::1") ?? false;
-
-    if (!(hasLocalhostDns && hasLoopbackV4 && hasLoopbackV6)) {
-      if (log) console.log("🌐 Certificate SAN entries are invalid. Regenerating...");
-      return;
-    }
-
-    const certRsaPublic = cert.publicKey as { n?: { bitLength?: () => number } };
-    const bitLength = certRsaPublic.n?.bitLength?.();
-    if (typeof bitLength !== "number" || bitLength < 2048) {
-      if (log) console.log("🔐 Certificate key size is too weak. Regenerating...");
-      return;
-    }
-
-    const privateKey = forge.pki.privateKeyFromPem(keyPem);
-    const certPublicKey = forge.pki.publicKeyToPem(cert.publicKey);
-    const keyPublicKey = forge.pki.publicKeyToPem(forge.pki.setRsaPublicKey(privateKey.n, privateKey.e));
-    if (certPublicKey !== keyPublicKey) {
-      if (log) console.log("🔑 Key/certificate mismatch detected. Regenerating...");
-      return;
-    }
-
-    try {
-      if (!cert.verify(cert)) {
-        if (log) console.log("🔏 Certificate self-signature is invalid. Regenerating...");
-        return;
-      }
-    } catch {
-      if (log) console.log("🔏 Certificate self-signature verification failed. Regenerating...");
-      return;
-    }
-
-    if (log) console.log("🔍 Found existing certificates for HTTPS.");
-    return { key: keyPem, cert: certPem };
-  } catch (err) {
-    const errno = (err as NodeJS.ErrnoException).code;
-    if (errno === "ENOENT") return;
-    if (errno && typeof errno === "string") {
-      throw new Error(
-        `Error checking for existing certificates: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
-    }
-    if (log) console.log("⚠️ Corrupt or unreadable certificate files. Regenerating...");
-    return;
-  }
-}
-
-function $readFile(dir: string, fileName: string) {
-  return fs.readFileSync(path.join(dir, fileName), "utf8");
+  const log = logger ?? (() => {});
+  return $withLock(certsPath, () => $reuseOrRegenerate(certsPath, log));
 }

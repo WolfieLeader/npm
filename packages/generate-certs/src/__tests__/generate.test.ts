@@ -6,7 +6,7 @@ import forge from "node-forge";
 import { afterEach, describe, expect, it } from "vitest";
 import { generateCerts } from "../index.js";
 
-const OPTS = { activateLogs: false } as const;
+const OPTS = {} as const;
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 describe("generateCerts", () => {
@@ -36,11 +36,15 @@ describe("generateCerts", () => {
     const { cert: certPem } = generateCerts({ certsPath, ...OPTS });
 
     const cert = forge.pki.certificateFromPem(certPem);
-    const cn = cert.subject.getField("CN");
-    expect(cn.value).toBe("localhost");
+    const cn: unknown = cert.subject.getField("CN");
+    expect(cn).toHaveProperty("value", "localhost");
 
     const sanExt = cert.getExtension("subjectAltName") as { altNames: { type: number; value?: string; ip?: string }[] };
-    expect(sanExt).toBeDefined();
+    expect(sanExt.altNames.map(({ type, value, ip }) => (type === 7 ? { type, ip } : { type, value }))).toStrictEqual([
+      { type: 2, value: "localhost" },
+      { type: 7, ip: "127.0.0.1" },
+      { type: 7, ip: "::1" },
+    ]);
 
     const dnsNames = sanExt.altNames.filter((a) => a.type === 2).map((a) => a.value);
     const ips = sanExt.altNames.filter((a) => a.type === 7).map((a) => a.ip);
@@ -178,7 +182,9 @@ describe("generateCerts", () => {
 
     try {
       generateCerts({ certsPath: readOnlyDir, ...OPTS });
-    } catch {}
+    } catch {
+      // Expected for most users. Root can still write here, so the outcome is not asserted.
+    }
 
     expect(fs.existsSync(path.join(readOnlyDir, ".generate-certs.lock"))).toBe(false);
 
@@ -197,7 +203,7 @@ describe("generateCerts", () => {
     expect(valid).toBe(true);
   });
 
-  it("regenerates when key.pem has insecure permissions", () => {
+  it("fixes insecure key.pem permissions instead of regenerating", () => {
     if (process.platform === "win32") return;
 
     const certsPath = makeTmpDir();
@@ -207,11 +213,10 @@ describe("generateCerts", () => {
 
     const second = generateCerts({ certsPath, ...OPTS });
 
-    expect(second.key).not.toBe(first.key);
-    expect(second.cert).not.toBe(first.cert);
-
-    const stat = fs.statSync(path.join(certsPath, "key.pem"));
-    expect(stat.mode & 0o777).toBe(0o600);
+    expect(second.key).toBe(first.key);
+    expect(second.cert).toBe(first.cert);
+    expect(fs.statSync(path.join(certsPath, "key.pem")).mode & 0o777).toBe(0o600);
+    expect(fs.readdirSync(certsPath).filter((f) => f.endsWith(".bak"))).toStrictEqual([]);
   });
 
   it("regenerates when key and cert are mismatched", () => {
@@ -259,7 +264,7 @@ describe("generateCerts", () => {
     expect(cert.validity.notBefore.getTime()).toBeLessThanOrEqual(Date.now() + 5 * 60 * 1000);
   });
 
-  it("regenerates when CN is not localhost", () => {
+  it("keeps a valid cert whose CN is not localhost", () => {
     const certsPath = makeTmpDir();
 
     const keys = forge.pki.rsa.generateKeyPair(2048);
@@ -282,12 +287,12 @@ describe("generateCerts", () => {
     ]);
     cert.sign(keys.privateKey, forge.md.sha256.create());
 
+    const certPem = forge.pki.certificateToPem(cert);
     fs.writeFileSync(path.join(certsPath, "key.pem"), forge.pki.privateKeyToPem(keys.privateKey), { mode: 0o600 });
-    fs.writeFileSync(path.join(certsPath, "cert.pem"), forge.pki.certificateToPem(cert));
+    fs.writeFileSync(path.join(certsPath, "cert.pem"), certPem);
 
     const result = generateCerts({ certsPath, ...OPTS });
-    const newCert = forge.pki.certificateFromPem(result.cert);
-    expect(newCert.subject.getField("CN").value).toBe("localhost");
+    expect(result.cert).toBe(certPem);
   });
 
   it("regenerates when SANs are missing", () => {
@@ -395,6 +400,6 @@ describe("generateCerts", () => {
     const filePath = path.join(tmpDir, "not-a-dir");
     fs.writeFileSync(filePath, "content");
 
-    expect(() => generateCerts({ certsPath: filePath, ...OPTS })).toThrow();
+    expect(() => generateCerts({ certsPath: filePath, ...OPTS })).toThrow(/EEXIST|ENOTDIR/);
   });
 });

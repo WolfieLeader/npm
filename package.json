@@ -1,21 +1,31 @@
 {
   "name": "npm-packages",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+    "build": "turbo run build",
+    "lint": "turbo run lint && oxlint --type-aware scripts",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check .",
+    "typecheck": "turbo run typecheck && tsc --noEmit -p tsconfig.json",
+    "test": "turbo run test",
+    "smoke": "bash scripts/run.sh",
+    "knip": "knip",
+    "verify": "node scripts/verify.ts"
+  },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.18.2",
-    "@biomejs/biome": "2.4.8",
-    "prettier": "^3.8.1",
-    "turbo": "^2.8.19"
+    "@types/node": "catalog:",
+    "eslint-plugin-regexp": "catalog:",
+    "knip": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@nestjs/core",
-      "esbuild",
-      "rolldown"
-    ]
-  },
-  "packageManager": "pnpm@10.30.1",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=26"
   }
 }

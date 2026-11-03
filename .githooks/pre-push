@@ -1,0 +1,43 @@
+#!/bin/sh
+# Refuse any push that creates, updates or deletes main or master: those change only through a reviewed PR.
+# Then require a clean tree and run `pnpm verify` on it, so the check sees exactly what goes out.
+# `git push --no-verify` skips this hook.
+zero=0000000000000000000000000000000000000000
+head=$(git rev-parse HEAD)
+pushes=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main | refs/heads/master)
+      echo "pre-push: $remote_ref changes only through a reviewed PR." >&2
+      exit 1
+      ;;
+  esac
+
+  if [ "$local_sha" = "$zero" ]; then
+    continue
+  fi
+
+  if [ "$local_sha" != "$head" ] && ! git merge-base --is-ancestor "$local_sha" "$head"; then
+    echo "pre-push: $local_ref is not HEAD or an ancestor of it; check it out and push from there." >&2
+    exit 1
+  fi
+
+  pushes=$((pushes + 1))
+done
+
+if [ "$pushes" -eq 0 ]; then
+  exit 0
+fi
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "pre-push: the tree has uncommitted or untracked changes; commit or stash them first." >&2
+  exit 1
+fi
+
+if ! pnpm verify </dev/null; then
+  echo "pre-push: pnpm verify failed; fix the failures above and push again." >&2
+  exit 1
+fi
+
+exit 0

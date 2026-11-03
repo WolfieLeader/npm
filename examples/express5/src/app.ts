@@ -21,7 +21,7 @@ export function createApp() {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
-      maxAge: 86400,
+      maxAge: 86_400,
       path: "/",
     });
     res.json({ message: "Cookie 'demo' set" });

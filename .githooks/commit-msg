@@ -1,0 +1,31 @@
+#!/bin/sh
+# Commit message rules: never commit on main or master, no AI attribution trailers, and
+# Conventional Commits `type(scope)?: subject` with a subject of at most 72 characters.
+# Git writes Merge, Revert, fixup!, squash! and amend! subjects itself, so those skip only the format check.
+subject=$(head -n 1 "$1")
+
+case "$(git symbolic-ref --quiet --short HEAD)" in
+  main | master)
+    echo "commit-msg: never commit on main or master; create a branch first." >&2
+    exit 1
+    ;;
+esac
+
+if grep -Eiq '^co-authored-by: .*(claude|anthropic|copilot|chatgpt|openai|gemini|cursor)|generated (with|by) \[?(claude|chatgpt|copilot|ai)' "$1"; then
+  echo "commit-msg: remove the AI attribution line." >&2
+  exit 1
+fi
+
+case "$subject" in
+  "Merge "* | "Revert \""* | "fixup! "* | "squash! "* | "amend! "*) exit 0 ;;
+esac
+
+if ! printf '%s' "$subject" | grep -Eq '^(feat|fix|docs|refactor|test|build|ci|chore|perf)(\([a-z0-9-]+(,[a-z0-9-]+)*\))?!?: [^ ]'; then
+  echo "commit-msg: use '<type>(scope): <summary>' with type feat|fix|docs|refactor|test|build|ci|chore|perf." >&2
+  exit 1
+fi
+
+if [ "${#subject}" -gt 72 ]; then
+  echo "commit-msg: keep the subject at most 72 characters; it has ${#subject}." >&2
+  exit 1
+fi

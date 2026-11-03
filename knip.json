@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.ts"],
+      "project": ["scripts/*.ts"]
+    },
+    "packages/*": {
+      "project": ["src/**/*.ts!", "!src/**/__tests__/**!"]
+    },
+    "examples/*": {
+      "project": ["src/**/*.ts"]
+    }
+  },
+  "treatConfigHintsAsErrors": true
+}

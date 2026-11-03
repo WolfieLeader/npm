@@ -14,17 +14,17 @@ export class AppController {
 
   @Get("/ip")
   getIp(@Req() req: Request) {
-    const ip = getClientIp(req as unknown as Parameters<typeof getClientIp>[0]);
+    const ip = getClientIp(req);
     return { ip };
   }
 
   @Get("/cookie")
   setCookieRoute(@Req() _req: Request, @Res({ passthrough: true }) res: Response) {
-    setCookie(res as unknown as Parameters<typeof setCookie>[0], "demo", "hello-nestjs", {
+    setCookie(res, "demo", "hello-nestjs", {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
-      maxAge: 86400,
+      maxAge: 86_400,
       path: "/",
     });
     return { message: "Cookie 'demo' set" };
@@ -32,14 +32,14 @@ export class AppController {
 
   @Get("/cookie/:name")
   getCookieRoute(@Req() req: Request, @Param("name") name: string) {
-    const value = getCookie(req as unknown as Parameters<typeof getCookie>[0], name);
+    const value = getCookie(req, name);
     return { name, value: value ?? null };
   }
 
   @Get("/certs")
   getCerts() {
     const certs = generateCerts({
-      certsPath: path.resolve(__dirname, "..", "certs"),
+      certsPath: path.resolve(import.meta.dirname, "..", "certs"),
     });
     return {
       message: "Certificates generated",

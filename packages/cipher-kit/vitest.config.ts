@@ -3,20 +3,11 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    setupFiles: ["./vitest.setup.ts"],
-    watch: false,
-    typecheck: {
-      include: ["**/*.test.ts"],
-      enabled: true,
-      ignoreSourceErrors: false,
-      checker: "tsc",
-      tsconfig: "./tsconfig.json",
-    },
-    silent: false,
+    include: ["src/**/__tests__/**/*.test.ts"],
   },
   resolve: {
     alias: {
-      "~": path.resolve(__dirname, "src"),
+      "~": path.resolve(import.meta.dirname, "src"),
     },
   },
 });

@@ -4,18 +4,19 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --type-aware -c ../../.oxlintrc.json ."
   },
   "dependencies": {
-    "express": "4.22.1",
-    "generate-certs": "3.0.0",
-    "get-client-ip": "4.0.0",
-    "modern-cookies": "2.0.0"
+    "express": "catalog:express4",
+    "generate-certs": "workspace:*",
+    "get-client-ip": "workspace:*",
+    "modern-cookies": "workspace:*"
   },
   "devDependencies": {
-    "@types/express": "4.17.25",
-    "@types/node": "^25.3.0",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "@types/express": "catalog:express4",
+    "@types/node": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

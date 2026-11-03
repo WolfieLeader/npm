@@ -4,10 +4,10 @@
 
 - `encrypt`, `decrypt`, `encryptObj` and `decryptObj` take an optional `additionalData` (a string or `Uint8Array`, at most 65,536 bytes). It binds a ciphertext to its context, such as the ID of the record it belongs to: decryption fails unless you pass the same value. It is authenticated as AES-GCM additional data and is not stored in the ciphertext. An empty value is the same as none. Without it, output and decryption are unchanged.
 - Adds `hmac` and `verifyHmac` to both kits. `hmac` computes HMAC-SHA-256, -384 or -512 with the key bytes as given, so its output matches webhook signatures and other HMAC implementations. The `length` option truncates the MAC, to no fewer than 8 bytes.
-- `verifyHmac` takes the expected MAC length from `length` (default: the full digest), never from the presented MAC, and compares in constant time. A presented MAC of any other length returns `false`.
+- `verifyHmac` takes the expected MAC length from `length` (default: the full digest), never from the presented MAC. It compares without stopping at the first difference: `crypto.timingSafeEqual` on Node, a best-effort full loop on Web. A presented MAC of any other length returns `false`.
 - Adds `randomToken(bytes, encoding)`: 8 to 1024 random bytes (default 32), encoded as base64url, base64 or hex.
 - Adds `randomCode(digits)`: a uniformly random code of 4 to 9 digits (default 6), leading zeros kept.
-- `generateUuid({ version: 7 })` returns an RFC 9562 UUIDv7, which sorts by creation time across milliseconds. `generateUuid()` still returns a v4 UUID.
+- `generateUuid({ version: 7 })` returns an RFC 9562 UUIDv7, which sorts by creation time across milliseconds. `generateUuid()` still returns a v4 UUID. It now rejects an argument that is not an options object, so pass it to `map` as `() => generateUuid()`, not as `generateUuid`.
 
 ## 4.1.0
 

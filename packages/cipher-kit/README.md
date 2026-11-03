@@ -221,7 +221,7 @@ const custom = hashPassword("user-password", {
 
 > **Note:** Node uses `crypto.timingSafeEqual` for constant-time comparison. The Web implementation uses a best-effort full-loop XOR pattern since the Web Crypto API does not expose a `timingSafeEqual` equivalent.
 >
-> **Unicode normalization:** All secret and password inputs are NFKC-normalized before processing. This means that equivalent Unicode representations (e.g., `"café"` composed vs. decomposed) produce identical keys and hashes. This is the recommended approach per NIST SP 800-63B.
+> **Unicode normalization:** Passwords and the `createSecretKey` secret, salt and info are NFKC-normalized before processing. HMAC keys and data and `additionalData` are used as given. This means that equivalent Unicode representations (e.g., `"café"` composed vs. decomposed) produce identical keys and hashes. This is the recommended approach per NIST SP 800-63B.
 
 ### `hmac` / `verifyHmac` / `tryHmac` / `tryVerifyHmac`
 

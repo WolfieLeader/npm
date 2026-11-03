@@ -61,7 +61,11 @@ describe("getCookie", () => {
   test("counts a name with spaces and tabs around it as doubled, as the parser trims them", () => {
     const logger = vi.fn<CookieLogger>();
     expect(getCookie(mockReq("s=1;\t s \t=2"), "s", { logger })).toBe("1");
-    expect(logger.mock.calls.length).toBe(1);
+    expect(logger.mock.calls).toStrictEqual([
+      [
+        'Error getting cookie "s": the Cookie header has this name more than once, so one may be planted; returned the first',
+      ],
+    ]);
   });
 
   test("reads a name sent once while another name is doubled", () => {

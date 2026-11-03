@@ -201,6 +201,14 @@ describe("verifyHmac takes the expected length from the options, never from the 
     }
   });
 
+  test("a hex MAC with a 0x prefix is false, since the presented text is length-checked before decoding", async () => {
+    const mac = nodeKit.hmac(data, key, { outputEncoding: "hex" });
+    const options = { inputEncoding: "hex" } as const;
+    expect(nodeKit.verifyHmac(data, mac, key, options)).toBe(true);
+    expect(nodeKit.verifyHmac(data, `0x${mac}`, key, options)).toBe(false);
+    expect(await webKit.verifyHmac(data, `0x${mac}`, key, options)).toBe(false);
+  });
+
   test("a different key or tampered data is false", async () => {
     const mac = nodeKit.hmac(data, key);
     expect(nodeKit.verifyHmac(data, mac, `${key}!`)).toBe(false);

@@ -27,7 +27,11 @@ function $toPem(label: string, der: Uint8Array): string {
 export function $generateCerts(dir: string): void {
   fs.mkdirSync(dir, { recursive: true });
 
-  const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: "spki", format: "der" },
+    privateKeyEncoding: { type: "pkcs1", format: "pem" },
+  });
   const notBefore = new Date(Date.now() - 5 * 60 * 1000);
   const notAfter = new Date(notBefore);
   notAfter.setUTCFullYear(notAfter.getUTCFullYear() + 1);
@@ -39,11 +43,11 @@ export function $generateCerts(dir: string): void {
     commonName: "localhost",
     dnsNames: ["localhost"],
     ipAddresses: [IPV4_LOOPBACK, IPV6_LOOPBACK],
-    subjectPublicKeyInfo: publicKey.export({ type: "spki", format: "der" }),
+    subjectPublicKeyInfo: publicKey,
   });
   const cert = $certificate(tbs, crypto.sign("sha256", tbs, privateKey));
 
-  $writeAtomic(path.join(dir, "key.pem"), privateKey.export({ type: "pkcs1", format: "pem" }), 0o600);
+  $writeAtomic(path.join(dir, "key.pem"), privateKey, 0o600);
   $writeAtomic(path.join(dir, "cert.pem"), $toPem("CERTIFICATE", cert), 0o644);
 }
 

@@ -72,8 +72,9 @@ People and agents copy what they see. The codebase and its checks carry the rule
   parse to the same value, such as PEM line endings, are not breaking.
 - The Node and Web implementations of `cipher-kit` produce identical results for the same input.
 - Every package ships dual ESM and CJS with types. The build runs publint and attw; both must pass.
-- Runtime support is `engines.node` (Node 20 and later), Bun, Deno 2 and, for cipher-kit and compress-kit, Workers.
-  `.github/workflows/ci.yml` lists the Node versions CI runs. vitest cannot start below Node 20.19, so older ones run only the smoke test.
+- Runtime support is `engines.node` (Node 20.19 and later), Bun, Deno 2 and, for cipher-kit and compress-kit, Workers.
+  `.github/workflows/ci.yml` lists the Node versions CI runs. vitest cannot start on Node 21, so it runs only the smoke test there.
+  `pnpm typecheck` also checks every package against the floor's `@types/node`.
 
 ## Upgrades
 

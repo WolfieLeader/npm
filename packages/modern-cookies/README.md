@@ -25,7 +25,7 @@
 
 ## Installation 📦
 
-Requires Node.js 20 or later. Also tested on Bun and Deno 2.
+Requires Node.js 20.19 or later. Also tested on Bun and Deno 2.
 See the [changelog](https://github.com/WolfieLeader/npm/blob/main/packages/modern-cookies/CHANGELOG.md) for what changed in each version.
 
 ```bash

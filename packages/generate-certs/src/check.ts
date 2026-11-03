@@ -23,7 +23,6 @@ function $readIfExists(filePath: string): string | undefined {
 }
 
 function $validityProblem(cert: X509Certificate, now: number): string | undefined {
-  // `validFromDate` and `validToDate` need Node 22.10. The strings exist on every supported runtime.
   const from = Date.parse(cert.validFrom);
   const to = Date.parse(cert.validTo);
   // NaN fails every comparison, so an unreadable date would otherwise pass as valid.

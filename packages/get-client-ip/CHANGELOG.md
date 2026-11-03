@@ -2,7 +2,7 @@
 
 ## 5.1.0
 
-- Supports Node.js 20 and later, and is tested on Bun and Deno 2.
+- Supports Node.js 20.19 and later, and is tested on Bun and Deno 2.
 
 ## 5.0.0
 

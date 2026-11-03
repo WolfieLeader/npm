@@ -13,7 +13,11 @@ describe("certificate DER matches node-forge byte for byte", () => {
     ["UTCTime validity", "2026-01-02T03:04:05Z", "2027-01-02T03:04:05Z"],
     ["GeneralizedTime from 2050", "2049-06-01T00:00:00Z", "2050-06-01T00:00:00Z"],
   ])("%s", (_label, from, to) => {
-    const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+    const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
+      modulusLength: 2048,
+      publicKeyEncoding: { type: "spki", format: "pem" },
+      privateKeyEncoding: { type: "pkcs1", format: "pem" },
+    });
     const serialHex = "0123456789abcdef0123456789abcdef";
     const notBefore = new Date(from);
     const notAfter = new Date(to);
@@ -25,13 +29,13 @@ describe("certificate DER matches node-forge byte for byte", () => {
       commonName: "localhost",
       dnsNames: ["localhost"],
       ipAddresses: [Uint8Array.of(127, 0, 0, 1), Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)],
-      subjectPublicKeyInfo: publicKey.export({ type: "spki", format: "der" }),
+      subjectPublicKeyInfo: crypto.createPublicKey(publicKey).export({ type: "spki", format: "der" }),
     });
     const ourCert = $certificate(ours, crypto.sign("sha256", ours, privateKey));
 
     // The certificate 4.0.0 built with node-forge, with the Common Name as a UTF8String like 4.1.0.
     const reference = forge.pki.createCertificate();
-    reference.publicKey = forge.pki.publicKeyFromPem(publicKey.export({ type: "spki", format: "pem" }));
+    reference.publicKey = forge.pki.publicKeyFromPem(publicKey);
     reference.serialNumber = serialHex;
     reference.validity.notBefore = notBefore;
     reference.validity.notAfter = notAfter;
@@ -53,7 +57,7 @@ describe("certificate DER matches node-forge byte for byte", () => {
         ],
       },
     ]);
-    const forgeKey = forge.pki.privateKeyFromPem(privateKey.export({ type: "pkcs1", format: "pem" }));
+    const forgeKey = forge.pki.privateKeyFromPem(privateKey);
     reference.sign(forgeKey, forge.md.sha256.create());
     const referenceDer = forge.asn1.toDer(forge.pki.certificateToAsn1(reference)).getBytes();
 

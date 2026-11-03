@@ -26,7 +26,7 @@
 
 ## Installation 📦
 
-Requires Node.js 20 or later. Tested on Node.js 20 to 26, Bun, Deno 2, and Cloudflare Workers (with and without `nodejs_compat`).
+Requires Node.js 20.19 or later. Tested on Node.js 20.19 to 26, Bun, Deno 2, and Cloudflare Workers (with and without `nodejs_compat`).
 Deployed Workers reject PBKDF2 above 100,000 iterations, so pass `iterations: 100_000` to `hashPassword` and `verifyPassword` there.
 On Deno, the Node kit has no AES-192-GCM, because Deno's `node:crypto` lacks it. The Web kit supports it everywhere.
 See the [changelog](https://github.com/WolfieLeader/npm/blob/main/packages/cipher-kit/CHANGELOG.md) for what changed in each version.

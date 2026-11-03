@@ -44,7 +44,7 @@ jobs:
       - run: pnpm workers
       - run: pnpm changelogs
 
-  # The published packages declare engines.node >=20.0.0. Each major's oldest release catches an API it lacks.
+  # The published packages declare engines.node >=20.19.0. Each major's oldest release catches an API it lacks.
   runtime:
     name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
@@ -54,9 +54,7 @@ jobs:
       matrix:
         node: ["20.19.0", "22.0.0", "24.0.0", "26"]
         include:
-          # vitest cannot start on Node 20.0 to 20.18 or 21, so these run only the packed-tarball smoke test.
-          - node: "20.0.0"
-            smoke-only: true
+          # vitest cannot start on Node 21, so it runs only the packed-tarball smoke test.
           - node: "21"
             smoke-only: true
     steps:
@@ -78,10 +76,7 @@ jobs:
       # Only the published packages: tools/lint-rules loads TypeScript through Node 26 type stripping.
       - if: ${{ !matrix.smoke-only }}
         run: pnpm exec turbo run test --filter "./packages/*"
-      # The Checks job resolves the types. TypeScript 7 cannot start on Node 20.0.
       - run: pnpm smoke
-        env:
-          SMOKE_TYPES: "0"
 
   # vitest runs inside Bun or Deno, so every test file executes on that runtime.
   other-runtimes:

@@ -254,6 +254,10 @@ catalogs:
     rxjs:
       specifier: 7.8.2
       version: 7.8.2
+  node-floor:
+    '@types/node':
+      specifier: 20.19.43
+      version: 20.19.43
 
 overrides:
   minimatch@<11.0.1: 11.0.3
@@ -579,6 +583,12 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 5.1.0(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  tools/node-floor:
+    devDependencies:
+      '@types/node':
+        specifier: catalog:node-floor
+        version: 20.19.43
 
 packages:
 
@@ -1618,6 +1628,9 @@ packages:
 
   '@types/node-forge@1.3.14':
     resolution: {integrity: sha512-mhVF2BnD4BO+jtOp7z1CdzaK4mbuK0LLQYAvdOLqHTavxFNq4zA1EmYkpnFjP8HOUzedfQkRnp0E2ulSAYSzAw==}
+
+  '@types/node@20.19.43':
+    resolution: {integrity: sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA==}
 
   '@types/node@26.6.6':
     resolution: {integrity: sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog==}
@@ -2901,6 +2914,9 @@ packages:
   unconfig-core@7.5.0:
     resolution: {integrity: sha512-Su3FauozOGP44ZmKdHy2oE6LPjk51M/TRRjHv2HNCWiDvfvCoxC2lno6jevMA91MYAdCdwP05QnWdWpSbncX/w==}
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
@@ -3723,6 +3739,10 @@ snapshots:
   '@types/node-forge@1.3.14':
     dependencies:
       '@types/node': 26.6.6
+
+  '@types/node@20.19.43':
+    dependencies:
+      undici-types: 6.21.0
 
   '@types/node@26.6.6':
     dependencies:
@@ -5062,6 +5082,8 @@ snapshots:
     dependencies:
       '@quansync/fs': 1.1.0
       quansync: 1.0.0
+
+  undici-types@6.21.0: {}
 
   undici-types@8.9.0: {}
 

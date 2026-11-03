@@ -8,7 +8,7 @@
     "lint": "turbo run lint && oxlint --type-aware scripts",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
-    "typecheck": "turbo run typecheck && tsc --noEmit -p tsconfig.json",
+    "typecheck": "turbo run typecheck && tsc --noEmit -p tsconfig.json && node scripts/node-floor.ts",
     "test": "turbo run test",
     "smoke": "bash scripts/run.sh",
     "workers": "node scripts/workers.ts",

@@ -3,7 +3,7 @@
 ## 3.1.0
 
 - Bundles `cookie`, so there are no runtime dependencies and the CommonJS build no longer needs `require(esm)`.
-- Supports Node.js 20 and later, and is tested on Bun and Deno 2.
+- Supports Node.js 20.19 and later, and is tested on Bun and Deno 2.
 
 ## 3.0.0
 

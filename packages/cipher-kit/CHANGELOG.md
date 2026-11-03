@@ -2,7 +2,7 @@
 
 ## 4.1.0
 
-- Supports Node.js 20 and later, and is tested on Bun, Deno 2 and Cloudflare Workers.
+- Supports Node.js 20.19 and later, and is tested on Bun, Deno 2 and Cloudflare Workers.
 - On deployed Cloudflare Workers, pass `iterations: 100_000` to `hashPassword` and `verifyPassword`. Workers reject PBKDF2 above 100,000 iterations, and the default is 320,000.
 
 ## 4.0.0

@@ -42,19 +42,19 @@ People and agents copy what they see. The codebase and its checks carry the rule
 
 ## Paved paths
 
-| Job                                | Paved path                                                           | Check                                                  |
-| ---------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
-| Report an expected failure         | Return a `Result` from `$ok` / `$err`; `try*` APIs never throw       | Property tests with hostile input; `only-throw-error`  |
-| Compare a secret, hash or tag      | A constant-time compare                                              | `local/no-plain-secret-compare`                        |
-| Make random bytes                  | `crypto.getRandomValues` or `randomBytes`                            | `no-restricted-properties` on `Math.random`            |
-| Encode or decode base64, hex, utf8 | The `@internal/helpers` codecs, shared by Node and Web               | `no-restricted-globals`; round-trip property tests     |
-| Describe an error                  | A fixed message that never echoes input, keys or plaintext           | Property tests assert a sentinel input never appears   |
-| Keep stored data readable          | Never change the ciphertext or compressed format in place            | Golden tests against output from the published release |
-| Parse a header or other text       | Read proxy-appended data from the right; reject what you can't parse | Property tests with a client-controlled prefix         |
-| Log from a library                 | An optional `logger` option                                          | `no-console`                                           |
-| Match untrusted text               | A linear regex literal                                               | `regexp/*`, including `no-super-linear-move`           |
-| Assert in a test                   | The exact expected value                                             | `vitest/no-restricted-matchers`, strict equal          |
-| Add a runtime dependency           | Ask the owner first                                                  | tsdown `deps.onlyImport`                               |
+| Job                                | Paved path                                                                        | Check                                                                        |
+| ---------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Report an expected failure         | Return a `Result` from `$ok` / `$err`; `try*` APIs never throw                    | Property tests with hostile input; `only-throw-error`                        |
+| Compare a secret, hash or tag      | A constant-time compare                                                           | `local/no-plain-secret-compare`                                              |
+| Make random bytes                  | `crypto.getRandomValues` or `randomBytes`                                         | `no-restricted-properties` on `Math.random`                                  |
+| Encode or decode base64, hex, utf8 | The `@internal/helpers` codecs, shared by Node and Web                            | `no-restricted-globals`; round-trip property tests                           |
+| Describe an error                  | A fixed message that never echoes input, keys or plaintext                        | Property tests assert a sentinel input never appears                         |
+| Keep stored data readable          | Never change a stored format in place; a writer checks its output with the reader | Golden tests against the published release; write-equals-read property tests |
+| Parse a header or other text       | Read proxy-appended data from the right; reject what you can't parse              | Property tests with a client-controlled prefix                               |
+| Log from a library                 | An optional `logger` option                                                       | `no-console`                                                                 |
+| Match untrusted text               | A linear regex literal                                                            | `regexp/*`, including `no-super-linear-move`                                 |
+| Assert in a test                   | The exact expected value                                                          | `vitest/no-restricted-matchers`, strict equal                                |
+| Add a runtime dependency           | Ask the owner first                                                               | tsdown `deps.onlyImport`                                                     |
 
 ## Proof in a PR
 

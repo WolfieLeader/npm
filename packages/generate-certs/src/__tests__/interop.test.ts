@@ -70,11 +70,12 @@ describe("generated certificates interoperate", () => {
   });
 
   it("is valid from 5 minutes ago for one year", () => {
-    const { validFromDate, validToDate } = new X509Certificate(cert);
+    const { validFrom, validTo } = new X509Certificate(cert);
+    const from = Date.parse(validFrom);
     const now = Date.now();
-    expect(validFromDate.getTime()).toBeLessThanOrEqual(now - 4 * 60 * 1000);
-    expect(validFromDate.getTime()).toBeGreaterThan(now - 6 * 60 * 1000);
-    const days = (validToDate.getTime() - validFromDate.getTime()) / 86_400_000;
+    expect(from).toBeLessThanOrEqual(now - 4 * 60 * 1000);
+    expect(from).toBeGreaterThan(now - 6 * 60 * 1000);
+    const days = (Date.parse(validTo) - from) / 86_400_000;
     expect([365, 366]).toContain(days);
   });
 

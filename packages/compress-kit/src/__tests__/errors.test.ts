@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { compress, compressObj, decompress, decompressObj, tryCompress, tryDecompress } from "~/index.js";
 import type { CompressOptions, DecompressOptions } from "~/index.js";
+import { anyString } from "./__helpers__.js";
 
 describe("Compress Error Paths", () => {
   test("rejects empty string", () => {
@@ -237,7 +238,8 @@ describe("Decompress malformed UTF-8 with maxOutputSize", () => {
       success: false,
       error: {
         message: "decompress: Failed to decode output",
-        description: "The encoded data was not valid for encoding utf-8",
+        // TextDecoder's own message, worded differently by each runtime.
+        description: anyString(),
       },
     });
   });
@@ -255,7 +257,8 @@ describe("Decompress malformed UTF-8 with maxOutputSize", () => {
       success: false,
       error: {
         message: "decompress: Failed to decode output",
-        description: "The encoded data was not valid for encoding utf-8",
+        // TextDecoder's own message, worded differently by each runtime.
+        description: anyString(),
       },
     });
     expect(result.error?.message).toContain("Failed to decode output");

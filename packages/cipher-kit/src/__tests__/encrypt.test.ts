@@ -1,6 +1,16 @@
 import { describe, expect, test } from "vitest";
 import { matchEncryptedPattern, nodeKit, webKit } from "~/export.js";
-import { cipherPattern, data, failure, largeObj, secret, smallObj, stringMatching } from "./__helpers__.js";
+import {
+  cipherPattern,
+  data,
+  failure,
+  lacksNodeAes192,
+  largeObj,
+  runtimeFailure,
+  secret,
+  smallObj,
+  stringMatching,
+} from "./__helpers__.js";
 
 /** Replaces the second character of an ASCII (base64, base64url or hex) segment with a different one. */
 function $flipByte(segment: string): string {
@@ -82,7 +92,7 @@ describe("Encryption Tests", () => {
     expect(webDec).toBe(data);
   });
 
-  test("Both: AES-192-GCM round trip", async () => {
+  test.skipIf(lacksNodeAes192)("Both: AES-192-GCM round trip", async () => {
     const nodeKey = nodeKit.createSecretKey(secret, { algorithm: "aes192gcm" });
     const webKey = await webKit.createSecretKey(secret, { algorithm: "aes192gcm" });
 
@@ -258,9 +268,7 @@ describe("Encryption Tests", () => {
     );
 
     const webDec = await webKit.tryDecrypt(webEnc, webKey2);
-    expect(webDec).toStrictEqual(
-      failure("web decrypt: Failed to decrypt data", "The operation failed for an operation-specific reason"),
-    );
+    expect(webDec).toStrictEqual(runtimeFailure("web decrypt: Failed to decrypt data"));
   });
 
   test("Fail: Decrypt with Wrong Key Algorithm", async () => {
@@ -278,9 +286,7 @@ describe("Encryption Tests", () => {
     );
 
     const webDec = await webKit.tryDecrypt(webEnc, webKey2);
-    expect(webDec).toStrictEqual(
-      failure("web decrypt: Failed to decrypt data", "The operation failed for an operation-specific reason"),
-    );
+    expect(webDec).toStrictEqual(runtimeFailure("web decrypt: Failed to decrypt data"));
   });
 
   test("Fail: Decrypt with Wrong Derived Key", async () => {
@@ -298,9 +304,7 @@ describe("Encryption Tests", () => {
     );
 
     const webDec = await webKit.tryDecrypt(webEnc, webKey2);
-    expect(webDec).toStrictEqual(
-      failure("web decrypt: Failed to decrypt data", "The operation failed for an operation-specific reason"),
-    );
+    expect(webDec).toStrictEqual(runtimeFailure("web decrypt: Failed to decrypt data"));
   });
 
   test("Cross-platform: Node encrypt → Web decrypt", async () => {
@@ -345,7 +349,8 @@ describe("Encryption Tests", () => {
   });
 
   test("Cross-platform: round trip with AES-128-GCM and AES-192-GCM", async () => {
-    for (const algorithm of ["aes128gcm", "aes192gcm"] as const) {
+    const algorithms = lacksNodeAes192 ? (["aes128gcm"] as const) : (["aes128gcm", "aes192gcm"] as const);
+    for (const algorithm of algorithms) {
       const nodeKey = nodeKit.createSecretKey(secret, { algorithm });
       const webKey = await webKit.createSecretKey(secret, { algorithm });
 

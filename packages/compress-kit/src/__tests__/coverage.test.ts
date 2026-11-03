@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { tryCompress, tryDecompress, tryDecompressObj } from "~/index.js";
+import { anyString } from "./__helpers__.js";
 
 describe("Compression strategy roundtrips", () => {
   const strategies = ["default", "filtered", "huffmanOnly", "rle", "fixed"] as const;
@@ -81,7 +82,8 @@ describe("Stored .0. path edge cases", () => {
       success: false,
       error: {
         message: "bytesToStr: Failed to convert data",
-        description: "The encoded data was not valid for encoding utf-8",
+        // TextDecoder's own message, worded differently by each runtime.
+        description: anyString(),
       },
     });
   });

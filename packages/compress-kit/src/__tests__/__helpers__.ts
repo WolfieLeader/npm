@@ -129,3 +129,8 @@ export function stored(text: string): string {
 export function stringMatching(pattern: RegExp): string {
   return expect.stringMatching(pattern) as string;
 }
+
+/** `expect.any(String)`, typed as the string it stands in for. */
+export function anyString(): string {
+  return expect.any(String) as string;
+}

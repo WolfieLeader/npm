@@ -179,6 +179,8 @@ getCookie(req, "__Host-session", { logger: console.warn }); // undefined
 
 Names compare exactly as the parser reads them: case-sensitive, with spaces and tabs around the name trimmed. `__Host-s` and `__host-s` are different names, and `s` does not match `session`. A doubled name does not affect reading a different name. Reads of that name return `undefined` until the planted cookie expires or the browser drops it, so treat `undefined` as "not signed in".
 
+If your app sets the same cookie name on more than one `Path` or `Domain`, give each cookie its own name: `getCookie` reads that name as absent whenever the browser sends both.
+
 ### Safe Error Logging
 
 Errors go only to the `logger` you pass in `options`; nothing is written to the console. Messages include only the cookie **name** and the error reason — never the cookie **value**. All logged strings are sanitized (newlines and control characters are stripped, length is capped) to prevent log injection.

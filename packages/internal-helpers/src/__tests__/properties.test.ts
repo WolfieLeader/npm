@@ -8,7 +8,10 @@ import { $parseToObj, $stringifyObj } from "~/object.js";
 const edgeChar = fc.constantFrom("\uFEFF", "\u0000", "\uFFFD", "\u{10FFFF}", "=", ".", "\r\n");
 const anyText = fc.string({ unit: fc.oneof(fc.string({ unit: "binary", minLength: 1, maxLength: 1 }), edgeChar) });
 const binaryEncoding = fc.constantFrom("base64", "base64url", "hex" as const);
-const jsonObject = fc.dictionary(fc.string(), fc.jsonValue());
+// Keys the read side rejects show up often, so the write side's agreement with it is actually exercised.
+const riskyKey = fc.oneof(fc.string(), fc.constantFrom("__proto__", "constructor", "prototype"));
+const nestedObject = fc.dictionary(riskyKey, fc.jsonValue());
+const jsonObject = fc.dictionary(riskyKey, fc.oneof(fc.jsonValue(), nestedObject));
 const anyValue = fc.anything({
   withNullPrototype: true,
   withBigInt: true,

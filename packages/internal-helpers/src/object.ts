@@ -109,12 +109,34 @@ export function $stringifyObj<T extends object = Record<string, unknown>>(obj: T
       description: "The object's toJSON method returned a value JSON cannot represent",
     });
   }
-  if ($exceedsContainerLimit(json)) return $limitErr("stringifyObj");
-  // Reject what $parseToObj rejects, so anything written can be read back.
+  // Read the output back exactly as $parseToObj will, so anything written can be read.
+  const readBack = $readJson(json, "stringifyObj");
+  return readBack.success ? $ok(json) : readBack;
+}
+
+/** Parses JSON text into a plain object, enforcing the container limit and rejecting prototype pollution vectors. */
+function $readJson<T extends object>(json: string, prefix: string): Result<{ result: T }> {
+  if ($exceedsContainerLimit(json)) return $limitErr(prefix);
+
+  let obj: unknown;
+  try {
+    obj = JSON.parse(json);
+  } catch {
+    // Engine messages quote the input, which may be decrypted plaintext, so use a fixed description.
+    return $err({ message: `${prefix}: Failed to parse JSON`, description: "The input is not valid JSON" });
+  }
+
+  if (!$isPlainObj<T>(obj)) {
+    return $err({
+      message: `${prefix}: Data is not a plain object`,
+      description: "The JSON is valid but is not a plain object (e.g. array, string, number)",
+    });
+  }
+
   const scan = $scanProtoKeys(obj);
-  if (scan === "limit") return $limitErr("stringifyObj");
-  if (scan === "polluted") return $pollutionErr("stringifyObj");
-  return $ok(json);
+  if (scan === "limit") return $limitErr(prefix);
+  if (scan === "polluted") return $pollutionErr(prefix);
+  return $ok({ result: obj });
 }
 
 export function $parseToObj<T extends object = Record<string, unknown>>(str: string): Result<{ result: T }> {
@@ -124,26 +146,5 @@ export function $parseToObj<T extends object = Record<string, unknown>>(str: str
       description: "Expected a non-empty JSON string to parse",
     });
 
-  if ($exceedsContainerLimit(str)) return $limitErr("parseToObj");
-
-  let obj: unknown;
-  try {
-    obj = JSON.parse(str);
-  } catch {
-    // Engine messages quote the input, which may be decrypted plaintext, so use a fixed description.
-    return $err({ message: "parseToObj: Failed to parse JSON", description: "The input is not valid JSON" });
-  }
-
-  if (!$isPlainObj<T>(obj)) {
-    return $err({
-      message: "parseToObj: Parsed data is not a plain object",
-      description: "JSON parsed successfully but the result is not a plain object (e.g. array, string, number)",
-    });
-  }
-
-  const scan = $scanProtoKeys(obj);
-  if (scan === "limit") return $limitErr("parseToObj");
-  if (scan === "polluted") return $pollutionErr("parseToObj");
-
-  return $ok({ result: obj });
+  return $readJson<T>(str, "parseToObj");
 }

@@ -58,6 +58,37 @@ describe("$stringifyObj", () => {
     expect($stringifyObj({ constructor: { prototype: {} } })).toStrictEqual(expected);
   });
 
+  test.each([
+    ["a root toJSON that returns an array", { toJSON: () => [1, 2] }, "stringifyObj: Data is not a plain object"],
+    [
+      "a nested toJSON that returns a __proto__ key",
+      { a: { toJSON: () => JSON.parse('{"__proto__":{"x":1}}') as unknown } },
+      "stringifyObj: Object contains a prototype pollution vector",
+    ],
+  ])("rejects %s, because the output could not be read back", (_label, obj, message) => {
+    expect($stringifyObj(obj).error?.message).toBe(message);
+  });
+
+  test("checks the JSON output, not the object graph", () => {
+    // Dates are one JSON string each, and an undefined __proto__ value is dropped from the JSON.
+    const rows = Array.from({ length: 50_000 }, () => ({ created: new Date(0), updated: new Date(0) }));
+    expect($stringifyObj({ rows }).success).toBe(true);
+    const hidden = Object.defineProperty({}, "__proto__", { value: undefined, enumerable: true });
+    expect($stringifyObj({ a: hidden })).toStrictEqual({ success: true, result: '{"a":{}}' });
+  });
+
+  test("reads each getter once, so a getter that throws on a second read cannot escape", () => {
+    let reads = 0;
+    const obj = {
+      get value(): number {
+        reads++;
+        if (reads > 1) throw new Error("read twice");
+        return 1;
+      },
+    };
+    expect($stringifyObj(obj)).toStrictEqual({ success: true, result: '{"value":1}' });
+  });
+
   test("returns an error, not a throw, when a root toJSON returns undefined", () => {
     const result = $stringifyObj({ toJSON: () => undefined });
     expect(result).toStrictEqual({
@@ -102,13 +133,13 @@ describe("$parseToObj", () => {
   test("fails for JSON array", () => {
     const result = $parseToObj("[1,2,3]");
     expect(result.success).toBe(false);
-    expect(result.error?.message).toContain("Parsed data is not a plain object");
+    expect(result.error?.message).toContain("Data is not a plain object");
   });
 
   test("fails for JSON primitive", () => {
     const result = $parseToObj('"hello"');
     expect(result.success).toBe(false);
-    expect(result.error?.message).toContain("Parsed data is not a plain object");
+    expect(result.error?.message).toContain("Data is not a plain object");
   });
 
   test("fails for malformed JSON", () => {

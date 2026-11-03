@@ -39,22 +39,48 @@ export function $isProcessAlive(pid: number): boolean {
 
 interface LockIdentity {
   ino: number;
+  mtimeMs: number;
   /** `null` when the lock exists but this user cannot read it. */
   content: string | null;
 }
 
-/** Reads the lock's inode and content, or `null` when it vanished. */
-function $identify(lockPath: string): LockIdentity | null {
-  let ino: number;
+/** Identifies a lock this user cannot open by its inode and age alone, or `null` when it vanished. */
+function $identifyUnopened(lockPath: string): LockIdentity | null {
   try {
-    ino = fs.statSync(lockPath).ino;
+    const { ino, mtimeMs } = fs.statSync(lockPath);
+    return { ino, mtimeMs, content: null };
   } catch {
     return null;
   }
+}
+
+function $identifyOpened(fd: number): LockIdentity {
+  const { ino, mtimeMs } = fs.fstatSync(fd);
   try {
-    return { ino, content: fs.readFileSync(lockPath, "utf8") };
+    return { ino, mtimeMs, content: fs.readFileSync(fd, "utf8") };
+  } catch {
+    // Open but not readable as a file, such as a directory.
+    return { ino, mtimeMs, content: null };
+  }
+}
+
+/**
+ * Reads the lock's inode, age and content through one file descriptor, so all three describe the same file even
+ * when another process replaces the lock meanwhile. Returns `null` when the lock vanished.
+ */
+function $identify(lockPath: string): LockIdentity | null {
+  let fd: number;
+  try {
+    fd = fs.openSync(lockPath, "r");
   } catch (error) {
-    return $errorCode(error) === "ENOENT" ? null : { ino, content: null };
+    return $errorCode(error) === "ENOENT" ? null : $identifyUnopened(lockPath);
+  }
+  try {
+    return $identifyOpened(fd);
+  } catch {
+    return null;
+  } finally {
+    fs.closeSync(fd);
   }
 }
 
@@ -72,12 +98,8 @@ function $isOwnerGone(content: string): boolean {
   return !$isProcessAlive(pid);
 }
 
-function $isStale(lockPath: string, lock: LockIdentity): boolean {
-  try {
-    if (Date.now() - fs.statSync(lockPath).mtimeMs > LOCK_STALE_MS) return true;
-  } catch {
-    return false;
-  }
+function $isStale(lock: LockIdentity): boolean {
+  if (Date.now() - lock.mtimeMs > LOCK_STALE_MS) return true;
   return lock.content !== null && $isOwnerGone(lock.content);
 }
 
@@ -99,7 +121,7 @@ function $unlinkQuietly(filePath: string): void {
 export function $evictStaleLock(lockPath: string): boolean {
   const lock = $identify(lockPath);
   if (!lock) return true;
-  if (!$isStale(lockPath, lock)) return false;
+  if (!$isStale(lock)) return false;
 
   const tombstone = `${lockPath}.${randomUUID()}.stale`;
   try {

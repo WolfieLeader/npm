@@ -1,0 +1,23 @@
+# Adds to gitleaks' default rules; it does not replace them.
+[extend]
+useDefault = true
+
+# Each allowlist matches one exact test-fixture value for one rule. Never allowlist a path, a line or a
+# fingerprint: that would also hide a real secret later written in the same place.
+
+[[allowlists]]
+description = "Placeholder values in the cipher-kit and compress-kit tests, current and historical"
+targetRules = ["generic-api-key"]
+regexes = [
+  '''^Secret0123456789Secret0123456789$''',
+  '''^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.\.\.$''',
+  '''^ref_123456789$''',
+]
+
+# generate-certs tests assert on the PEM header string: toContain("-----BEGIN RSA PRIVATE KEY-----").
+# The private-key rule then matches from that string to the next "KEY-----". A real PEM key never has
+# a quote and parenthesis right after its header.
+[[allowlists]]
+description = "PEM header string inside a generate-certs test assertion"
+targetRules = ["private-key"]
+regexes = ['''^-----BEGIN RSA PRIVATE KEY-----"\);''']

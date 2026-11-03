@@ -4,53 +4,133 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+
+permissions:
+  contents: read
+
+# A new push to a PR cancels the PR's older run. Runs on main never cancel each other.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Turbo sends no telemetry with either variable set.
+env:
+  DO_NOT_TRACK: "1"
+  TURBO_TELEMETRY_DISABLED: "1"
 
 jobs:
-  ci:
-    name: Lint, Build & Test
+  checks:
+    name: Checks
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18, 20,22, 24, 25]
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
+          persist-credentials: false
+      # Reads the pnpm version from packageManager in package.json.
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm fmt:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm knip
+      - run: pnpm smoke
 
-      - name: Setup just
-        uses: extractions/setup-just@v2
+  # The published packages declare engines.node >=22.12, so the floor runs the tests too.
+  runtime:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22.12.x", "24", "26"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      # Build with the dev Node: tsdown loads its TypeScript config only on Node 22.18 and later.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # Then run the tests and the packed-tarball smoke test on the runtime under test.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+      # Only the published packages: tools/lint-rules loads TypeScript through Node 26 type stripping.
+      - run: pnpm exec turbo run test --filter "./packages/*"
+      - run: pnpm smoke
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build all packages
-        run: just build
-
-      - name: Format + Lint
-        if: matrix.node-version == '25'
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # The checksum is the release's checksums.txt entry, re-hashed on 2026-11-03.
+      - name: Install gitleaks 8.30.1
+        env:
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
         run: |
-          just fmt && just lint
-          git diff --exit-code || (echo "Tree is dirty after fmt+lint. Run 'just fmt && just lint' locally." && exit 1)
+          curl -fsSLo "$RUNNER_TEMP/gitleaks.tar.gz" https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "$GITLEAKS_SHA256  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP/bin" gitleaks
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      # A PR scans only its own commits, with the base branch's allowlist, so a PR cannot allowlist its own leak.
+      # The PR's .gitleaks.toml applies only when the base branch has none.
+      - name: Scan the PR's commits
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          config="$RUNNER_TEMP/gitleaks.toml"
+          git show "$BASE_SHA:.gitleaks.toml" > "$config" 2>/dev/null || cp .gitleaks.toml "$config"
+          gitleaks git --redact --no-banner --config "$config" --log-opts="$BASE_SHA..$HEAD_SHA" .
+      - name: Scan the full history
+        if: github.event_name != 'pull_request'
+        run: gitleaks git --redact --no-banner --config .gitleaks.toml .
 
-      - name: Typecheck
-        run: just typecheck
-
-      - name: Run tests
-        run: just test
-
-      - name: Validate type exports
-        run: just attw
-
-      - name: Smoke test (pack & import)
-        run: just smoke
+  workflows:
+    name: Workflow lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Each checksum is the release's checksums file or GitHub's asset digest, re-hashed on 2026-11-03.
+      # actionlint calls the shellcheck that ships on the runner image.
+      - name: Install actionlint 1.7.12 and zizmor 1.31.1
+        env:
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+          ZIZMOR_SHA256: d185f726bdaf92df78273217dfdd24ebcd6b0ef48cf3ce776ff5762b6e138c99
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSLo actionlint.tar.gz https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          curl -fsSLo zizmor.tar.gz https://github.com/zizmorcore/zizmor/releases/download/v1.31.1/zizmor-x86_64-unknown-linux-gnu.tar.gz
+          echo "$ACTIONLINT_SHA256  actionlint.tar.gz" | sha256sum --check --strict
+          echo "$ZIZMOR_SHA256  zizmor.tar.gz" | sha256sum --check --strict
+          mkdir -p bin
+          tar -xzf actionlint.tar.gz -C bin actionlint
+          tar -xzf zizmor.tar.gz -C bin zizmor
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - run: actionlint
+      # The token lets zizmor's online audits check pinned SHAs and known-vulnerable actions.
+      - run: zizmor --min-severity medium .
+        env:
+          GH_TOKEN: ${{ github.token }}

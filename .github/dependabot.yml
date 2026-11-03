@@ -1,0 +1,37 @@
+version: 2
+
+# Weekly update PRs. The cooldown skips releases younger than 7 days, so a compromised release
+# has time to be caught and pulled before it reaches this repo.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    # Minor and patch updates share one PR. Each major gets its own PR, so one breaking upgrade cannot block the rest.
+    groups:
+      npm:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    # examples/express4 stays on Express 4 on purpose: it proves the packages still work there.
+    # Move to a new Express major by hand.
+    ignore:
+      - dependency-name: express
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/express"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: build

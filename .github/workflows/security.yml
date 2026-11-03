@@ -1,18 +1,12 @@
 name: Security
 
-# Weekly, the scan catches advisories published after a dependency landed. A PR runs it when it touches
-# dependencies, package source or this file.
+# Every PR runs it, so it can be a required check; it takes under a minute. Weekly, it catches advisories
+# published after a dependency landed.
 on:
   schedule:
     - cron: "0 5 * * 1"
   workflow_dispatch:
   pull_request:
-    paths:
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - "**/package.json"
-      - "packages/**"
-      - .github/workflows/security.yml
 
 permissions:
   contents: read

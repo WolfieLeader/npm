@@ -75,6 +75,7 @@ People and agents copy what they see. The codebase and its checks carry the rule
 
 - Dependabot opens grouped weekly PRs. pnpm's `minimumReleaseAge` holds a new version back for a day.
 - To adopt a release sooner, add its exact `name@version` to `minimumReleaseAgeExclude`; pnpm prunes the entry later.
+- Dependabot cannot update tools a workflow downloads with curl. The weekly `Tool pins` workflow (`pnpm tool-pins`) fails when one is behind; bump its URL version and SHA-256 together.
 - On an oxlint upgrade, recheck the rules marked nursery in `.oxlintrc.json`.
 
 ## Release

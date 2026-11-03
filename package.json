@@ -12,7 +12,8 @@
     "test": "turbo run test",
     "smoke": "bash scripts/run.sh",
     "knip": "knip",
-    "verify": "node scripts/verify.ts"
+    "verify": "node scripts/verify.ts",
+    "tool-pins": "bash scripts/tool-pins.sh"
   },
   "devDependencies": {
     "@types/node": "catalog:",

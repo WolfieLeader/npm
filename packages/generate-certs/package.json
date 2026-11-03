@@ -1,6 +1,6 @@
 {
   "name": "generate-certs",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "🗝️ Effortless HTTPS Certificate Generation for Local Development",
   "homepage": "https://github.com/WolfieLeader/npm/tree/main/packages/generate-certs#readme",
   "repository": {
@@ -34,13 +34,11 @@
     "lint": "oxlint --type-aware -c ../../.oxlintrc.json .",
     "prepublishOnly": "turbo run build --filter=generate-certs"
   },
-  "dependencies": {
-    "node-forge": "^1.4.2"
-  },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
     "@types/node": "catalog:",
     "@types/node-forge": "catalog:",
+    "node-forge": "^1.4.2",
     "publint": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",

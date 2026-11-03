@@ -20,6 +20,7 @@
 ## Highlights ✨
 
 - **Automatic certificate generation** — no OpenSSL needed
+- **No runtime dependencies** — Node's `crypto` makes and signs the key; a small DER encoder writes the certificate
 - **Intelligent reuse** — validates expiry, permissions, and key/cert pairing
 - **Pre-configured for localhost** — `127.0.0.1`, `::1`, and `localhost` SANs
 - **Framework-ready** — Express, NestJS, Hono, Fastify
@@ -186,7 +187,7 @@ bootstrap();
 - **Invalid files are backed up before regeneration** as `*.bak`.
 - **Existing certificates are validated with `node:crypto`** (`X509Certificate`), so EC and Ed25519 key pairs are accepted.
 - **Generated certificates carry `basicConstraints`, `keyUsage`, and `extKeyUsage`.**
-- **`node-forge` is `^1.4.2`**, which fixes the October 2026 advisories (including PEM ReDoS and signature forgery).
+- **`node-forge` is `^1.4.2`**, which fixes the October 2026 advisories (including PEM ReDoS and signature forgery). 4.1 drops `node-forge`.
 
 ## Type Exports 🏷️
 
@@ -196,7 +197,7 @@ import type { GenerateCertsOptions } from "generate-certs";
 
 ## Credits 🙏
 
-Built on [node-forge](https://www.npmjs.com/package/node-forge) for RSA key generation and X.509 certificate creation.
+Earlier versions were built on [node-forge](https://www.npmjs.com/package/node-forge). Its tests still use it to build fixtures and to parse generated certificates independently.
 
 ## Contributions 🤝
 

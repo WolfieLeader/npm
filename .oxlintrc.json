@@ -308,8 +308,8 @@
       }
     },
     {
-      // Bitwise operators are the point here: constant-time XOR compare (cipher-kit), file permission bits
-      // (generate-certs), byte and hex decoding (internal-helpers), and IP address and CIDR math (get-client-ip).
+      // Bitwise operators are the point here: constant-time XOR compare (cipher-kit), DER encoding and file permission
+      // bits (generate-certs), byte and hex decoding (internal-helpers), and IP address and CIDR math (get-client-ip).
       "files": [
         "packages/cipher-kit/src/**/*.ts",
         "packages/generate-certs/src/**/*.ts",

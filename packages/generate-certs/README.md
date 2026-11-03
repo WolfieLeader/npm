@@ -50,6 +50,8 @@ const app = express();
 https.createServer(certs, app).listen(3443);
 ```
 
+`import.meta.dirname` needs Node.js 20.11 or later. On older Node.js, use `fileURLToPath(new URL("../certs", import.meta.url))` from `node:url`.
+
 ## API Reference 📖
 
 ### `generateCerts(options): { key: string; cert: string }`

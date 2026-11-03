@@ -104,6 +104,22 @@ describe("setCookie", () => {
     expect(res._cookies).toHaveLength(0);
   });
 
+  test("returns false and undefined, not a throw, when an options getter throws", () => {
+    const options = {
+      get logger(): CookieLogger {
+        throw new Error("getter");
+      },
+    } as CookieOptions;
+    expect(setCookie(mockRes(), "test", "val", options)).toBe(false);
+    expect(deleteCookie(mockRes(), "test", options)).toBe(false);
+    const throwingReq: CookieRequest = {
+      get: () => {
+        throw new Error("header");
+      },
+    };
+    expect(getCookie(throwingReq, "test", options)).toBeUndefined();
+  });
+
   test("returns false on invalid sameSite value", () => {
     const res = mockRes();
     const result = setCookie(res, "test", "val", { sameSite: "invalid" as "strict" });

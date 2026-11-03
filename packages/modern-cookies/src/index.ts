@@ -28,9 +28,13 @@ function $sanitizeForLog(input: unknown, maxLength = 160): string {
 /** Receives one sanitized line per error. Same shape as `generate-certs`' `logger`. */
 export type CookieLogger = (message: string) => void;
 
-/** Reads `logger` from options that JS callers may pass as `null` or `undefined`. */
+/** Reads `logger` without throwing, from options that JS callers may pass as `null` or with a throwing getter. */
 function $loggerOf(options: { logger?: CookieLogger | undefined } | null | undefined): CookieLogger | undefined {
-  return options?.logger;
+  try {
+    return options?.logger;
+  } catch {
+    return undefined;
+  }
 }
 
 function $safeLogCookieError(
@@ -173,5 +177,12 @@ const UNIX_EPOCH = new Date(0);
  * @returns `true` if the deletion request was added successfully, otherwise `false`.
  */
 export function deleteCookie(res: CookieResponse, name: string, options: CookieOptions = {}): boolean {
-  return setCookie(res, name, "", { ...options, maxAge: 0, expires: UNIX_EPOCH });
+  let deleteOptions: CookieOptions;
+  try {
+    deleteOptions = { ...options, maxAge: 0, expires: UNIX_EPOCH };
+  } catch (error) {
+    $safeLogCookieError($loggerOf(options), { action: "setting", name, error });
+    return false;
+  }
+  return setCookie(res, name, "", deleteOptions);
 }

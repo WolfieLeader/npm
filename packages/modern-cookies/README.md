@@ -64,13 +64,13 @@ app.listen(3000);
 
 ### `getCookie(req, name, options?): string | undefined`
 
-Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if not found.
+Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if the name is missing, and the first value if it appears more than once (see [Doubled Cookie Names](#doubled-cookie-names)).
 
-| Parameter | Type               | Default | Description                        |
-| --------- | ------------------ | ------- | ---------------------------------- |
-| `req`     | `Request`          | —       | The Express request object         |
-| `name`    | `string`           | —       | The name of the cookie to retrieve |
-| `options` | `GetCookieOptions` | `{}`    | `logger` receives parsing errors   |
+| Parameter | Type               | Default | Description                                        |
+| --------- | ------------------ | ------- | -------------------------------------------------- |
+| `req`     | `Request`          | —       | The Express request object                         |
+| `name`    | `string`           | —       | The name of the cookie to retrieve                 |
+| `options` | `GetCookieOptions` | `{}`    | `logger` receives parsing errors and doubled names |
 
 ```typescript
 const session = getCookie(req, "session");
@@ -163,6 +163,20 @@ When `sameSite` is set to `"none"`, `secure: true` is automatically added. This 
 ```typescript
 // secure: true is added automatically
 setCookie(res, "cross-origin", value, { sameSite: "none" });
+```
+
+### Doubled Cookie Names
+
+A browser sends every cookie that matches the request, so two cookies can share a name. An attacker who controls another subdomain can set `session=attacker` for your parent domain, and the browser may send it before your real `session` cookie (cookie tossing). Reading it would let them fix the session or pass a CSRF double-submit check.
+
+Name the cookies you trust with `__Host-`. Such a cookie cannot have a `Domain`, so another subdomain cannot set one for your host. `setCookie` enforces the `__Host-` rules for you.
+
+`getCookie` returns the first value, as browsers order them and as most servers read them, and tells the `logger` when the name repeats:
+
+```typescript
+// Cookie: session=attacker; session=real
+getCookie(req, "session", { logger: console.warn }); // "attacker"
+// logs: Error getting cookie "session": the Cookie header has this name more than once, so one may be planted; returned the first
 ```
 
 ### Safe Error Logging

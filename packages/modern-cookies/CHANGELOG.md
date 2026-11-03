@@ -4,6 +4,7 @@
 
 - Bundles `cookie`, so there are no runtime dependencies and the CommonJS build no longer needs `require(esm)`.
 - Supports Node.js 20.19 and later, and is tested on Bun and Deno 2.
+- `getCookie` tells the `logger` when the `Cookie` header has the requested name more than once. It still returns the first value. Another subdomain can plant a same-name cookie that the browser sends first (cookie tossing), so name cookies you trust with `__Host-`.
 
 ## 3.0.0
 

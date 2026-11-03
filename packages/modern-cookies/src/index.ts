@@ -89,22 +89,57 @@ export interface CookieOptions {
 
 /** Options for reading a cookie. */
 export interface GetCookieOptions {
-  /** Receives parsing errors (cookie name and reason only). Silent when omitted. */
+  /** Receives parsing errors and doubled names (cookie name and reason only). Silent when omitted. */
   logger?: CookieLogger;
+}
+
+/** Trims spaces and tabs, the only whitespace `parseCookie` trims around a name. */
+function $trimSpaceTab(text: string): string {
+  let start = 0;
+  let end = text.length;
+  while (start < end && (text[start] === " " || text[start] === "\t")) start++;
+  while (end > start && (text[end - 1] === " " || text[end - 1] === "\t")) end--;
+  return text.slice(start, end);
+}
+
+/** Reports whether `name` names more than one pair in a `Cookie` header, splitting pairs as `parseCookie` does. */
+function $isDoubledName(header: string, name: string): boolean {
+  if (header.length < 2) return false;
+  let count = 0;
+  for (const pair of header.split(";")) {
+    const eq = pair.indexOf("=");
+    if (eq !== -1 && $trimSpaceTab(pair.slice(0, eq)) === name) {
+      count++;
+      if (count > 1) return true;
+    }
+  }
+  return false;
 }
 
 /**
  * Retrieves the value of a cookie from an Express request.
  *
+ * When the `Cookie` header has the name more than once, it returns the first value, as the browser sent it, and tells
+ * the `logger`. Another subdomain can plant a same-name cookie that the browser sends first (cookie tossing), so name
+ * cookies you trust with `__Host-`: another subdomain cannot set one.
+ *
  * @param req - The Express request object.
  * @param name - The name of the cookie to retrieve.
- * @param options - `logger` receives parsing errors. Silent when omitted.
- * @returns The cookie value if found, otherwise `undefined`.
+ * @param options - `logger` receives parsing errors and doubled names, never a value. Silent when omitted.
+ * @returns The cookie value (the first one if the name repeats), otherwise `undefined`.
  */
 export function getCookie(req: CookieRequest, name: string, options: GetCookieOptions = {}): string | undefined {
   try {
     const header = req.get("cookie");
     if (header === undefined || header === "") return undefined;
+
+    if ($isDoubledName(header, name)) {
+      $safeLogCookieError($loggerOf(options), {
+        action: "getting",
+        name,
+        error: "the Cookie header has this name more than once, so one may be planted; returned the first",
+      });
+    }
 
     const cookies = parseCookie(header);
     return cookies[name];

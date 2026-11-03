@@ -103,15 +103,15 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      # The latest releases, so a runtime update that breaks a package fails here first.
+      # Exact versions, so a new runtime release never blocks a PR. `pnpm tool-pins` reports newer ones weekly.
       - if: matrix.runtime == 'bun'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: latest
+          bun-version: 1.4.4
       - if: matrix.runtime == 'deno'
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
-          deno-version: 2.x
+          deno-version: 2.9.8
       - run: bash scripts/test-on.sh "$RUNTIME"
         env:
           RUNTIME: ${{ matrix.runtime }}

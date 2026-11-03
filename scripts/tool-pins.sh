@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Reports each tool a workflow downloads with curl whose pinned release is behind the latest one: `pnpm tool-pins`.
-# Dependabot updates actions and npm packages, but not these. Exits 1 when a pin is behind or cannot be checked.
+# Reports each pin in .github/workflows whose release is behind the latest one: `pnpm tool-pins`.
+# It covers tools downloaded with curl and the Bun and Deno versions. Dependabot updates neither.
+# Exits 1 when a pin is behind or cannot be checked.
 # A release counts once it is 1 day old, like `minimumReleaseAge` in pnpm-workspace.yaml.
 set -euo pipefail
 
@@ -9,14 +10,19 @@ min_age_seconds=86400
 now=$(date +%s)
 failed=0
 
-# Every pin is a release URL: https://github.com/<owner>/<repo>/releases/download/<tag>/<asset>
-pins=$({ grep -ohE 'github\.com/[^/]+/[^/]+/releases/download/[^/]+' .github/workflows/*.yml || true; } | sort -u)
+# Each pin becomes "<owner> <repo> <tag>": a release URL (github.com/<owner>/<repo>/releases/download/<tag>/<asset>),
+# or a `bun-version` or `deno-version` input, whose release tags are `bun-v<version>` and `v<version>`.
+pins=$({
+  { grep -ohE 'github\.com/[^/]+/[^/]+/releases/download/[^/]+' .github/workflows/*.yml || true; } | sed -E 's#^github\.com/([^/]+)/([^/]+)/releases/download/(.+)$#\1 \2 \3#'
+  { grep -ohE 'bun-version: [0-9.]+' .github/workflows/*.yml || true; } | awk '{ print "oven-sh bun bun-v" $2 }'
+  { grep -ohE 'deno-version: [0-9.]+' .github/workflows/*.yml || true; } | awk '{ print "denoland deno v" $2 }'
+} | sort -u)
 if [[ -z "$pins" ]]; then
   echo "No release-download pins found in .github/workflows." >&2
   exit 1
 fi
 
-while IFS=/ read -r _ owner repo _ _ tag; do
+while read -r owner repo tag; do
   if ! latest=$(gh api "repos/$owner/$repo/releases/latest" --jq '[.tag_name, (.published_at | fromdateiso8601)] | @tsv'); then
     echo "ERROR    $owner/$repo $tag: could not read its latest release"
     failed=1
@@ -34,6 +40,6 @@ while IFS=/ read -r _ owner repo _ _ tag; do
 done <<<"$pins"
 
 if ((failed)); then
-  echo "For each BEHIND line, update the version in its URL and its SHA-256 together. An ERROR line needs a look by hand." >&2
+  echo "For each BEHIND line, bump the version: a download URL together with its SHA-256. An ERROR line needs a look by hand." >&2
 fi
 exit "$failed"

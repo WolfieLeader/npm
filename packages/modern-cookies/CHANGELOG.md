@@ -1,6 +1,12 @@
 # Changelog
 
-## 3.1.0
+## 4.0.0
+
+Breaking changes:
+
+- **A doubled cookie name reads as absent.** When the `Cookie` header has the requested name more than once, `getCookie` returns `undefined` and tells the `logger`: `Error getting cookie "<name>": the Cookie header has this name more than once`. 3.x returned the first value. Another subdomain, or a cookie with a more specific `Path`, can plant a same-name cookie that the browser sends first (cookie tossing), which enables session fixation and CSRF double-submit bypass. Names compare exactly as the parser reads them: case-sensitive, with spaces and tabs trimmed. A doubled name does not affect reading a different name.
+
+Other changes:
 
 - Bundles `cookie`, so there are no runtime dependencies and the CommonJS build no longer needs `require(esm)`.
 - Supports Node.js 20.19 and later, and is tested on Bun and Deno 2.

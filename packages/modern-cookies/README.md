@@ -19,7 +19,7 @@
 
 - **Simple API** — `setCookie`, `getCookie`, and `deleteCookie`
 - **Framework compatibility** — supports Express v5/v4 and NestJS (Express adapter)
-- **Security-first enforcement** — enforces `__Secure-`/`__Host-` rules and auto-forces `secure: true` for `sameSite: "none"`
+- **Security-first enforcement** — enforces `__Secure-`/`__Host-` rules and auto-forces `secure: true` for `sameSite: "none"`, and reads a doubled cookie name as absent
 - **Graceful error handling** — returns `boolean`, never throws
 - **Built on** the RFC-compliant [`cookie`](https://www.npmjs.com/package/cookie) library, bundled, so there are no runtime dependencies
 
@@ -64,13 +64,13 @@ app.listen(3000);
 
 ### `getCookie(req, name, options?): string | undefined`
 
-Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if not found.
+Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if the name is missing or appears more than once (see [Doubled Cookie Names](#doubled-cookie-names)).
 
-| Parameter | Type               | Default | Description                        |
-| --------- | ------------------ | ------- | ---------------------------------- |
-| `req`     | `Request`          | —       | The Express request object         |
-| `name`    | `string`           | —       | The name of the cookie to retrieve |
-| `options` | `GetCookieOptions` | `{}`    | `logger` receives parsing errors   |
+| Parameter | Type               | Default | Description                                        |
+| --------- | ------------------ | ------- | -------------------------------------------------- |
+| `req`     | `Request`          | —       | The Express request object                         |
+| `name`    | `string`           | —       | The name of the cookie to retrieve                 |
+| `options` | `GetCookieOptions` | `{}`    | `logger` receives parsing errors and doubled names |
 
 ```typescript
 const session = getCookie(req, "session");
@@ -164,6 +164,20 @@ When `sameSite` is set to `"none"`, `secure: true` is automatically added. This 
 // secure: true is added automatically
 setCookie(res, "cross-origin", value, { sameSite: "none" });
 ```
+
+### Doubled Cookie Names
+
+`getCookie` returns `undefined` when the `Cookie` header has the requested name more than once.
+
+A browser sends every cookie that matches the request, so two cookies can share a name. Another subdomain can set a cookie for the parent domain, and a cookie with a more specific `Path` is sent first. An attacker who controls a subdomain can plant `session=attacker` that arrives before your real `session` cookie (cookie tossing). Reading the first value would let them fix the session or pass a CSRF double-submit check. The server cannot tell which cookie it set, so `getCookie` trusts neither.
+
+```typescript
+// Cookie: __Host-session=attacker; __Host-session=real
+getCookie(req, "__Host-session", { logger: console.warn }); // undefined
+// logs: Error getting cookie "__Host-session": the Cookie header has this name more than once
+```
+
+Names compare exactly as the parser reads them: case-sensitive, with spaces and tabs around the name trimmed. `__Host-s` and `__host-s` are different names, and `s` does not match `session`. A doubled name does not affect reading a different name. Reads of that name return `undefined` until the planted cookie expires or the browser drops it, so treat `undefined` as "not signed in".
 
 ### Safe Error Logging
 

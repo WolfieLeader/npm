@@ -179,18 +179,6 @@ bootstrap();
 
 > **Concurrency:** A lock file (`.generate-certs.lock`) serializes concurrent calls. A lock is taken over only when its owner process is gone or it is older than 60 seconds.
 
-## Breaking Changes in v4 ⚠️
-
-- **Requires Node.js >= 22.12.** 4.1 lowers this to Node.js 20.
-- **`activateLogs` is replaced by `logger`.** Logging is off by default. Pass `logger: console.log` to restore the v3 output.
-- **The Common Name is no longer checked.** Valid certificates with other CNs, or none, are kept instead of replaced.
-- **CA-issued certificates are kept.** v3 required a self-signature and replaced mkcert-style certificates.
-- **An insecure `key.pem` mode is fixed, not replaced.** The key keeps its content and gets mode `600`. If the mode cannot be changed, `generateCerts` throws.
-- **Invalid files are backed up before regeneration** as `*.bak`.
-- **Existing certificates are validated with `node:crypto`** (`X509Certificate`), so EC and Ed25519 key pairs are accepted.
-- **Generated certificates carry `basicConstraints`, `keyUsage`, and `extKeyUsage`.**
-- **`node-forge` is `^1.4.2`**, which fixes the October 2026 advisories (including PEM ReDoS and signature forgery). 4.1 drops `node-forge`.
-
 ## Type Exports 🏷️
 
 ```typescript

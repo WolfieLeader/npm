@@ -1,43 +1,20 @@
-import { $err, $fmtError, $isPlainObj, $isStr, $ok, type Result } from "@internal/helpers";
-import { CIPHER_ENCODING, DIGEST_ALGORITHMS } from "~/helpers/consts.js";
+import { $err, $fmtError, $ok } from "@internal/helpers";
+import type { Result } from "@internal/helpers";
 import type { HashOptions, HashPasswordOptions, VerifyPasswordOptions } from "~/helpers/types.js";
-import { $validateHashPasswordOptions, $validateVerifyPasswordOptions } from "~/helpers/validate.js";
+import {
+  $validateHashOptions,
+  $validateHashPasswordOptions,
+  $validateVerifyPasswordOptions,
+} from "~/helpers/validate.js";
 import { $convertBytesToStr, $convertStrToBytes, textEncoder } from "./web-encode.js";
 
 export async function $hash(data: string, options: HashOptions = {}): Promise<Result<string>> {
-  if (!$isStr(data)) {
-    return $err({
-      message: "web hash: Data must be a non-empty string",
-      description: "Received empty or non-string value",
-    });
-  }
+  const validated = $validateHashOptions(data, options, "web");
+  if (validated.error) return $err(validated.error);
+  const { digestAlgo, outputEncoding } = validated;
 
-  if (!$isPlainObj<HashOptions>(options)) {
-    return $err({
-      message: "web hash: Options must be a plain object",
-      description: 'Pass an object like { digest: "sha256" }',
-    });
-  }
-
-  const outputEncoding = options.outputEncoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(outputEncoding)) {
-    return $err({
-      message: `web hash: Unsupported output encoding: ${outputEncoding}`,
-      description: "Use base64, base64url, or hex",
-    });
-  }
-
-  const digest = options.digest ?? "sha256";
-  if (!(digest in DIGEST_ALGORITHMS)) {
-    return $err({
-      message: `web hash: Unsupported digest: ${digest}`,
-      description: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(", ")}`,
-    });
-  }
-  const digestAlgo = DIGEST_ALGORITHMS[digest];
-
-  const { result, error } = $convertStrToBytes(data, "utf8");
-  if (error) return $err(error);
+  const { result, error: encodeError } = $convertStrToBytes(data, "utf8");
+  if (encodeError) return $err(encodeError);
 
   try {
     const hashed = await globalThis.crypto.subtle.digest(digestAlgo.web, result);
@@ -56,9 +33,10 @@ export async function $hashPassword(
 
   const { digestAlgo, outputEncoding, saltLength, iterations, keyLength } = validated;
 
-  const salt = globalThis.crypto.getRandomValues(new Uint8Array(saltLength));
+  const salt = new Uint8Array(saltLength);
   let bits: ArrayBuffer | undefined;
   try {
+    globalThis.crypto.getRandomValues(salt);
     const baseKey = await globalThis.crypto.subtle.importKey(
       "raw",
       textEncoder.encode(password.normalize("NFKC")),
@@ -93,7 +71,7 @@ export async function $verifyPassword(
   salt: string,
   options: VerifyPasswordOptions,
 ): Promise<Result<boolean>> {
-  const validated = $validateVerifyPasswordOptions(password, hashedPassword, salt, options, "web");
+  const validated = $validateVerifyPasswordOptions({ password, hashedPassword, salt }, options, "web");
   if (validated.error) return $err(validated.error);
 
   const { digestAlgo, inputEncoding, iterations, keyLength } = validated;
@@ -104,7 +82,11 @@ export async function $verifyPassword(
   const hashedPasswordBytes = $convertStrToBytes(hashedPassword, inputEncoding);
   if (hashedPasswordBytes.error) return $err(hashedPasswordBytes.error);
 
-  if (hashedPasswordBytes.result.byteLength !== keyLength) return $ok(false);
+  if (hashedPasswordBytes.result.byteLength !== keyLength) {
+    saltBytes.result.fill(0);
+    hashedPasswordBytes.result.fill(0);
+    return $ok(false);
+  }
 
   try {
     const baseKey = await globalThis.crypto.subtle.importKey(
@@ -132,7 +114,7 @@ export async function $verifyPassword(
     // Best-effort constant-time comparison; JS JIT may introduce timing variation
     let diff = 0;
     for (let i = 0; i < keyLength; i++) {
-      diff |= (left[i] as number) ^ (right[i] as number);
+      diff |= (left[i] ?? 0) ^ (right[i] ?? 0);
     }
     try {
       return $ok(diff === 0);

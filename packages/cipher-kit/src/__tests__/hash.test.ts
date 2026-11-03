@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { nodeKit, webKit } from "~/export.js";
-import { data, repeated } from "./__helpers__.js";
+import { data, encodedPattern, repeated, stringMatching } from "./__helpers__.js";
 
 describe("Hashing", () => {
   test("Hash Test", async () => {
@@ -17,14 +17,19 @@ describe("Hashing", () => {
     const password = "SuperSecretPassword!";
 
     const nodeHash = nodeKit.tryHashPassword(password);
-    expect(nodeHash.success).toBe(true);
-    expect(nodeHash.result).toBeDefined();
-    expect(nodeHash.salt).toBeDefined();
+    // Defaults: a 64-byte PBKDF2 key and a 16-byte salt, both base64url.
+    expect(nodeHash).toStrictEqual({
+      success: true,
+      result: stringMatching(encodedPattern(64)),
+      salt: stringMatching(encodedPattern(16)),
+    });
 
     const webHash = await webKit.tryHashPassword(password);
-    expect(webHash.success).toBe(true);
-    expect(webHash.result).toBeDefined();
-    expect(webHash.salt).toBeDefined();
+    expect(webHash).toStrictEqual({
+      success: true,
+      result: stringMatching(encodedPattern(64)),
+      salt: stringMatching(encodedPattern(16)),
+    });
 
     expect(nodeHash.result).not.toBe(webHash.result);
     expect(nodeHash.salt).not.toBe(webHash.salt);
@@ -78,7 +83,7 @@ describe("Hashing", () => {
     const result = nodeKit.tryHashPassword("pw", {
       saltLength: 10_000,
       iterations: 20_000_000,
-      keyLength: 2_048,
+      keyLength: 2048,
     });
     expect(result.success).toBe(false);
   });
@@ -87,7 +92,7 @@ describe("Hashing", () => {
     const result = await webKit.tryHashPassword("pw", {
       saltLength: 10_000,
       iterations: 20_000_000,
-      keyLength: 2_048,
+      keyLength: 2048,
     });
     expect(result.success).toBe(false);
   });

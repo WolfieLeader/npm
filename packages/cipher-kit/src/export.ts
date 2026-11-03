@@ -2,16 +2,8 @@ import * as nodeCryptoKit from "./node/kit.js";
 import * as webCryptoKit from "./web/kit.js";
 
 export type { Result } from "@internal/helpers";
-export {
-  parseToObj,
-  stringifyObj,
-  tryParseToObj,
-  tryStringifyObj,
-} from "~/helpers/object.js";
-export {
-  ENCRYPTED_REGEX,
-  matchEncryptedPattern,
-} from "~/helpers/validate.js";
+export { parseToObj, stringifyObj, tryParseToObj, tryStringifyObj } from "~/helpers/object.js";
+export { ENCRYPTED_REGEX, matchEncryptedPattern } from "~/helpers/validate.js";
 export type {
   CipherEncoding,
   CreateSecretKeyOptions,
@@ -35,7 +27,7 @@ export type { WebSecretKey } from "./web/web-secret-key.js";
  * Synchronous API with throwing and `Result`-returning (`try*`) variants.
  * Can be imported directly from `cipher-kit/node` for a smaller bundle.
  */
-export const nodeKit = nodeCryptoKit;
+export const nodeKit: typeof nodeCryptoKit = nodeCryptoKit;
 
 /**
  * Web Crypto API kit for browsers, Deno, Bun, and Cloudflare Workers.
@@ -43,4 +35,4 @@ export const nodeKit = nodeCryptoKit;
  * Async API with throwing and `Result`-returning (`try*`) variants.
  * Can be imported directly from `cipher-kit/web-api` for a smaller bundle.
  */
-export const webKit = webCryptoKit;
+export const webKit: typeof webCryptoKit = webCryptoKit;

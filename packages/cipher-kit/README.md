@@ -26,7 +26,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 18.
+Requires Node.js >= 22.12.
 
 ```bash
 npm install cipher-kit
@@ -106,7 +106,7 @@ if (result.success) {
 | `algorithm`   | `"aes256gcm"` \| `"aes192gcm"` \| `"aes128gcm"` | `"aes256gcm"`  | Encryption algorithm                               |
 | `digest`      | `"sha256"` \| `"sha384"` \| `"sha512"`          | `"sha256"`     | HKDF digest algorithm                              |
 | `salt`        | `string`                                        | `"cipher-kit"` | HKDF salt (min 8 chars)                            |
-| `info`        | `string`                                        | `"cipher-kit"` | HKDF context info                                  |
+| `info`        | `string`                                        | `"cipher-kit"` | HKDF context info (max 1024 UTF-8 bytes)           |
 | `extractable` | `boolean`                                       | `false`        | Web CryptoKey extractable flag (no effect on Node) |
 
 > **Security:** HKDF is a key _expansion_ function — it does not provide brute-force resistance. The `secret` must be high-entropy (e.g., a 256-bit random key). For human-chosen passwords, use `hashPassword` instead.
@@ -139,10 +139,12 @@ if (result.success) {
 > **Wire format:** Both platforms output `iv.cipher.tag.` (3 dot-separated segments with trailing dot). The format is **cross-platform compatible** — data encrypted on Node can be decrypted on Web and vice versa.
 >
 > **Nonce exhaustion:** AES-GCM uses random 96-bit IVs. Rotate keys before ~2^32 encryptions with the same key to avoid nonce collision.
+>
+> **Input rules:** `encrypt` accepts any non-empty string, including whitespace-only strings. It rejects `""` and strings with lone UTF-16 surrogates. `decrypt` fails if the plaintext is not valid UTF-8.
 
 ### `encryptObj` / `decryptObj` / `tryEncryptObj` / `tryDecryptObj`
 
-Encrypts and decrypts plain objects (POJOs). Class instances, Maps, Sets, etc. are rejected.
+Encrypts and decrypts plain objects (POJOs). Class instances, Maps, Sets, etc. are rejected. Objects may contain at most 100,000 objects and arrays combined; both `encryptObj` and `decryptObj` enforce this limit.
 
 ```typescript
 import { createSecretKey, encryptObj, decryptObj } from "cipher-kit/node";
@@ -156,7 +158,7 @@ console.log(obj.user); // "Alice"
 
 ### `hash` / `tryHash`
 
-Hashes a UTF-8 string using the specified digest algorithm. Not suitable for passwords — use `hashPassword` instead.
+Hashes a UTF-8 string using the specified digest algorithm. Any well-formed string is accepted, including `""`. Not suitable for passwords — use `hashPassword` instead.
 
 ```typescript
 import { hash } from "cipher-kit/node";
@@ -221,6 +223,13 @@ const hex = convertEncoding("SGVsbG8", "base64url", "hex"); // "48656c6c6f"
 
 Supported encodings: `"utf8"`, `"base64"`, `"base64url"`, `"hex"`, `"latin1"`. Each function has a `try*` variant returning `Result<T>`.
 
+Decoding is strict and identical on Node and Web:
+
+- `base64` must be canonical, with exact padding (`"AA=="` decodes; `"AB=="` and `"AA"` are rejected).
+- `base64url` padding is optional, but must be exact when present (`"YQ"` and `"YQ=="` decode; `"YQ="` is rejected).
+- `latin1` accepts only code points up to 255.
+- `utf8` rejects lone UTF-16 surrogates when encoding, and invalid UTF-8 bytes when decoding (no U+FFFD substitution).
+
 ### Object Utilities
 
 Serialize and parse plain objects with strict validation. Available from the root export and both platform entry points.
@@ -233,7 +242,7 @@ const obj = parseToObj<{ name: string; role: string }>(json);
 console.log(obj.name); // "Alice"
 ```
 
-Each function has a `try*` variant (`tryStringifyObj`, `tryParseToObj`).
+Each function has a `try*` variant (`tryStringifyObj`, `tryParseToObj`). Both sides accept at most 100,000 objects and arrays combined.
 
 ### Type Guards
 
@@ -257,6 +266,21 @@ matchEncryptedPattern("abc.def."); // false — missing tag segment
 ```
 
 `ENCRYPTED_REGEX` exposes the underlying regex: `/^([A-Za-z0-9+/_-][A-Za-z0-9+/=_-]*)\.([A-Za-z0-9+/_-][A-Za-z0-9+/=_-]*)\.([A-Za-z0-9+/_-][A-Za-z0-9+/=_-]*)\.$/`.
+
+## Upgrading to 4.0 ⬆️
+
+Breaking changes:
+
+- **Node.js >= 22.12** is required.
+- **Lone UTF-16 surrogates are rejected.** 3.x replaced them with U+FFFD. This applies to `encrypt`, `hash`, `hashPassword`, `verifyPassword`, the secret and salt of `createSecretKey`, and UTF-8 encoding. A 3.x password hash made from a password with a lone surrogate no longer verifies.
+- **Decoding is strict.** Non-canonical base64 (such as `AB==`), partial base64url padding (such as `YQ=`), invalid UTF-8, and latin1 above U+00FF now fail. 3.x accepted them on some platforms.
+- **Objects hold at most 100,000 objects and arrays combined.** `encryptObj`, `decryptObj`, `stringifyObj`, and `parseToObj` enforce it.
+- **`encryptObj` and `stringifyObj` reject `__proto__` and `constructor.prototype` keys.** 3.x wrote them, then refused to read them back.
+- **Empty and whitespace-only input is accepted** by `hash`, `encrypt` (whitespace-only), and `convertEncoding`. 3.x rejected it.
+- **Web keeps a leading U+FEFF** when it decrypts or decodes UTF-8. 3.x dropped it.
+- **Error messages changed.** They no longer echo the rejected value, so code that matches message text must change.
+
+Compatibility: the ciphertext format, key derivation, defaults, and password hash format are unchanged. 4.x decrypts and verifies everything 3.x wrote. 3.x decrypts what 4.x writes, within 3.x's own Web limits: it drops a leading U+FEFF and fails on payloads above about 4 MB. A test pins this against output from the published 3.0.0.
 
 ## The Result Pattern 🎯
 

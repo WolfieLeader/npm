@@ -1,45 +1,22 @@
 import { Buffer } from "node:buffer";
 import nodeCrypto from "node:crypto";
-import { $err, $fmtError, $isPlainObj, $isStr, $ok, type Result } from "@internal/helpers";
-import { CIPHER_ENCODING, DIGEST_ALGORITHMS } from "~/helpers/consts.js";
+import { $err, $fmtError, $ok } from "@internal/helpers";
+import type { Result } from "@internal/helpers";
 import type { HashOptions, HashPasswordOptions, VerifyPasswordOptions } from "~/helpers/types.js";
-import { $validateHashPasswordOptions, $validateVerifyPasswordOptions } from "~/helpers/validate.js";
+import {
+  $validateHashOptions,
+  $validateHashPasswordOptions,
+  $validateVerifyPasswordOptions,
+} from "~/helpers/validate.js";
 import { $convertBytesToStr, $convertStrToBytes } from "./node-encode.js";
 
 export function $hash(data: string, options: HashOptions = {}): Result<string> {
-  if (!$isStr(data)) {
-    return $err({
-      message: "node hash: Data must be a non-empty string",
-      description: "Received empty or non-string value",
-    });
-  }
+  const validated = $validateHashOptions(data, options, "node");
+  if (validated.error) return $err(validated.error);
+  const { digestAlgo, outputEncoding } = validated;
 
-  if (!$isPlainObj<HashOptions>(options)) {
-    return $err({
-      message: "node hash: Options must be a plain object",
-      description: 'Pass an object like { digest: "sha256" }',
-    });
-  }
-
-  const outputEncoding = options.outputEncoding ?? "base64url";
-  if (!CIPHER_ENCODING.includes(outputEncoding)) {
-    return $err({
-      message: `node hash: Unsupported output encoding: ${outputEncoding}`,
-      description: "Use base64, base64url, or hex",
-    });
-  }
-
-  const digest = options.digest ?? "sha256";
-  if (!(digest in DIGEST_ALGORITHMS)) {
-    return $err({
-      message: `node hash: Unsupported digest: ${digest}`,
-      description: `Supported digests are: ${Object.keys(DIGEST_ALGORITHMS).join(", ")}`,
-    });
-  }
-  const digestAlgo = DIGEST_ALGORITHMS[digest];
-
-  const { result, error } = $convertStrToBytes(data, "utf8");
-  if (error) return $err(error);
+  const { result, error: encodeError } = $convertStrToBytes(data, "utf8");
+  if (encodeError) return $err(encodeError);
 
   try {
     const hashed = nodeCrypto.createHash(digestAlgo.node).update(result).digest();
@@ -58,22 +35,17 @@ export function $hashPassword(
 
   const { digestAlgo, outputEncoding, saltLength, iterations, keyLength } = validated;
 
-  const salt = nodeCrypto.randomBytes(saltLength);
-  const hash = nodeCrypto.pbkdf2Sync(password.normalize("NFKC"), salt, iterations, keyLength, digestAlgo.node);
-
+  let salt: Buffer | undefined;
+  let hash: Buffer | undefined;
   try {
-    const saltStr = $convertBytesToStr(salt, outputEncoding);
-    if (saltStr.error) return $err(saltStr.error);
-
-    const hashStr = $convertBytesToStr(hash, outputEncoding);
-    if (hashStr.error) return $err(hashStr.error);
-
-    return $ok({ result: hashStr.result, salt: saltStr.result });
+    salt = nodeCrypto.randomBytes(saltLength);
+    hash = nodeCrypto.pbkdf2Sync(password.normalize("NFKC"), salt, iterations, keyLength, digestAlgo.node);
+    return $ok({ result: hash.toString(outputEncoding), salt: salt.toString(outputEncoding) });
   } catch (error) {
     return $err({ message: "node hashPassword: Failed to hash password", description: $fmtError(error) });
   } finally {
-    salt.fill(0);
-    hash.fill(0);
+    salt?.fill(0);
+    hash?.fill(0);
   }
 }
 
@@ -83,7 +55,7 @@ export function $verifyPassword(
   salt: string,
   options: VerifyPasswordOptions,
 ): Result<boolean> {
-  const validated = $validateVerifyPasswordOptions(password, hashedPassword, salt, options, "node");
+  const validated = $validateVerifyPasswordOptions({ password, hashedPassword, salt }, options, "node");
   if (validated.error) return $err(validated.error);
 
   const { digestAlgo, inputEncoding, iterations, keyLength } = validated;
@@ -94,7 +66,11 @@ export function $verifyPassword(
   const hashedPasswordBytes = $convertStrToBytes(hashedPassword, inputEncoding);
   if (hashedPasswordBytes.error) return $err(hashedPasswordBytes.error);
 
-  if (hashedPasswordBytes.result.byteLength !== keyLength) return $ok(false);
+  if (hashedPasswordBytes.result.byteLength !== keyLength) {
+    saltBytes.result.fill(0);
+    hashedPasswordBytes.result.fill(0);
+    return $ok(false);
+  }
 
   try {
     const derived = nodeCrypto.pbkdf2Sync(

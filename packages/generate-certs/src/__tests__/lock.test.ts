@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { threadId } from "node:worker_threads";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { $evictStaleLock, $isProcessAlive, $withLock } from "../lock.js";
+import { $evictStaleLock, $isProcessAlive, $pidNamespace, $withLock } from "../lock.js";
 
 function errno(code: string) {
   return Object.assign(new Error(code), { code });
@@ -57,13 +57,13 @@ describe("lock", () => {
   });
 
   it("evicts a fresh lock naming this PID and thread, left by an earlier process with the same PID", () => {
-    const lockPath = lockWith(`${process.pid}:${threadId}:old-token`);
+    const lockPath = lockWith(`${process.pid}:${threadId}:${$pidNamespace()}:old-token`);
     expect($evictStaleLock(lockPath)).toBe(true);
     expect(fs.existsSync(lockPath)).toBe(false);
   });
 
   it("keeps a fresh lock held by another thread of this process", () => {
-    const lockPath = lockWith(`${process.pid}:${threadId + 1}:token`);
+    const lockPath = lockWith(`${process.pid}:${threadId + 1}:${$pidNamespace()}:token`);
     expect($evictStaleLock(lockPath)).toBe(false);
     expect(fs.existsSync(lockPath)).toBe(true);
   });
@@ -77,6 +77,13 @@ describe("lock", () => {
       expect(fs.existsSync(lockPath)).toBe(true);
     },
   );
+
+  it("keeps a fresh lock from another PID namespace, whose PID means nothing here", () => {
+    // PID 999999999 does not exist here, but it may be alive in the other container.
+    const lockPath = lockWith(`999999999:0:${$pidNamespace()}1:token`);
+    expect($evictStaleLock(lockPath)).toBe(false);
+    expect(fs.existsSync(lockPath)).toBe(true);
+  });
 
   it("evicts a lock whose owner is gone (ESRCH)", () => {
     const lockPath = lockWith("999999999:token");

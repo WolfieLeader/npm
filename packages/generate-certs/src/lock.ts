@@ -15,6 +15,18 @@ function $syncSleep(ms: number): void {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
+/**
+ * The PID namespace on Linux (`pid:[4026531836]` becomes `4026531836`), or `""` where there is none to read.
+ * A PID is only meaningful inside its namespace, so a lock from another container is never judged by its PID.
+ */
+export function $pidNamespace(): string {
+  try {
+    return fs.readlinkSync("/proc/self/ns/pid").replaceAll(/\D/g, "");
+  } catch {
+    return "";
+  }
+}
+
 /** Reports whether `pid` is alive. Only `ESRCH` means dead; `EPERM` means alive but owned by another user. */
 export function $isProcessAlive(pid: number): boolean {
   try {
@@ -46,20 +58,27 @@ function $identify(lockPath: string): LockIdentity | null {
   }
 }
 
+/** True when the owner named in `content` (`pid:thread:namespace:token`) is known to be gone. */
+function $isOwnerGone(content: string): boolean {
+  const [pidText = "", threadText = "", namespace = ""] = content.split(":");
+  const pid = Number.parseInt(pidText, 10);
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  // Another PID namespace (another container on a shared volume): its PID says nothing here, so wait for the stale age.
+  // A lock without a namespace field (written by 3.x) is judged by its PID, as before.
+  if (namespace !== "" && namespace !== $pidNamespace()) return false;
+  // This thread holds no lock while it waits for one, so a lock naming this PID and thread was left by an
+  // earlier process that had the same PID, such as a restarted container's PID 1.
+  if (pid === process.pid && threadText === String(threadId)) return true;
+  return !$isProcessAlive(pid);
+}
+
 function $isStale(lockPath: string, lock: LockIdentity): boolean {
   try {
     if (Date.now() - fs.statSync(lockPath).mtimeMs > LOCK_STALE_MS) return true;
   } catch {
     return false;
   }
-  if (lock.content === null) return false;
-  const [pidText = "", threadText = ""] = lock.content.split(":");
-  const pid = Number.parseInt(pidText, 10);
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  // This thread holds no lock while it waits for one, so a lock naming this PID and thread was left by an
-  // earlier process that had the same PID, such as a restarted container's PID 1.
-  if (pid === process.pid && threadText === String(threadId)) return true;
-  return !$isProcessAlive(pid);
+  return lock.content !== null && $isOwnerGone(lock.content);
 }
 
 function $unlinkQuietly(filePath: string): void {
@@ -123,8 +142,8 @@ function $release(lockPath: string, owner: string): void {
 /** Runs `fn` while holding an exclusive lock file in `dir`. Throws when the lock cannot be acquired. */
 export function $withLock<T>(dir: string, fn: () => T): T {
   const lockPath = path.join(dir, LOCK_FILE);
-  // The PID and thread come first so other callers can check whether the owner is alive.
-  const owner = `${process.pid}:${threadId}:${randomUUID()}`;
+  // PID, thread and PID namespace come first so other callers can check whether the owner is alive.
+  const owner = `${process.pid}:${threadId}:${$pidNamespace()}:${randomUUID()}`;
 
   for (let attempt = 0; attempt < LOCK_MAX_RETRIES; attempt++) {
     if ($tryAcquire(lockPath, owner)) {

@@ -2,7 +2,7 @@
 // The Node version matrix and the scheduled security scans run only in CI.
 import { spawnSync } from "node:child_process";
 
-const steps = ["fmt:check", "lint", "typecheck", "test", "build", "smoke", "knip"] as const;
+const steps = ["fmt:check", "lint", "typecheck", "test", "build", "smoke", "workers", "knip"] as const;
 
 // CI runs these binaries too. Running them here catches most of what those CI jobs catch; zizmor's online
 // audits and the security workflow run only in CI.

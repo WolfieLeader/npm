@@ -158,7 +158,8 @@ describe("generated certificate", () => {
     const parsed = forge.pki.certificateFromPem(cert);
 
     expect(x509.ca).toBe(false);
-    expect(x509.keyUsage).toStrictEqual(["1.3.6.1.5.5.7.3.1"]);
+    // Read extendedKeyUsage with forge: Deno's X509Certificate.keyUsage returns keyUsage names instead of OIDs.
+    expect(parsed.getExtension("extKeyUsage")).toMatchObject({ serverAuth: true });
     expect(parsed.getExtension("basicConstraints")).toMatchObject({ cA: false, critical: true });
     expect(parsed.getExtension("keyUsage")).toMatchObject({
       digitalSignature: true,

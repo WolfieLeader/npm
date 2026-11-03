@@ -21,11 +21,11 @@
 - **Framework compatibility** — supports Express v5/v4 and NestJS (Express adapter)
 - **Security-first enforcement** — enforces `__Secure-`/`__Host-` rules and auto-forces `secure: true` for `sameSite: "none"`
 - **Graceful error handling** — returns `boolean`, never throws
-- **Built on** the RFC-compliant [`cookie`](https://www.npmjs.com/package/cookie) library
+- **Built on** the RFC-compliant [`cookie`](https://www.npmjs.com/package/cookie) library, bundled, so there are no runtime dependencies
 
 ## Installation 📦
 
-Requires Node.js >= 22.12.
+Requires Node.js 20 or later. Also tested on Bun and Deno 2.
 
 ```bash
 npm install modern-cookies
@@ -170,7 +170,7 @@ Errors go only to the `logger` you pass in `options`; nothing is written to the 
 
 ## Breaking Changes in v3 ⚠️
 
-- **Requires Node.js >= 22.12.** The `cookie` dependency is now v2, which is ESM-only. The CommonJS build loads it through `require(esm)`.
+- **Requires Node.js >= 22.12.** The `cookie` dependency is now v2, which is ESM-only. The CommonJS build loads it through `require(esm)`. 3.1 bundles `cookie` instead, so it has no runtime dependencies and supports Node.js 20 and later.
 - **`logError` is replaced by a `logger` option.** The positional boolean is gone from `getCookie`, `setCookie`, and `deleteCookie`. Pass `{ logger: console.error }` in the options object instead: `getCookie(req, name, { logger })`, `setCookie(res, name, value, { ...attributes, logger })`. Without a `logger`, nothing is logged. The logger gets one string: `Error setting cookie "<name>": <reason>`.
 - **Values are percent-encoded only where needed.** cookie v2 leaves characters that are legal in a cookie value as-is, so `setCookie(res, "t", "ab+/c==")` writes `t=ab+/c==` where v2 wrote `t=ab%2B%2Fc%3D%3D`. `getCookie` reads both. A reader that form-decodes cookies turns `+` into a space, so give it encoded values yourself.
 - **Cookie prefixes match case-insensitively.** `__host-`, `__HOST-`, `__secure-`, and other spellings now get the `__Host-` and `__Secure-` rules. Browsers reject such cookies without those attributes, so v2 produced cookies browsers dropped.
@@ -208,7 +208,7 @@ export class AuthController {
 
 ## Credits 🙏
 
-Built on the [cookie](https://www.npmjs.com/package/cookie) package for RFC-compliant parsing and serialization.
+Built on the [cookie](https://www.npmjs.com/package/cookie) package for RFC-compliant parsing and serialization. It is bundled into the build, with its MIT license notice at the top of each file.
 
 ## Contributions 🤝
 

@@ -23,8 +23,13 @@ function $readIfExists(filePath: string): string | undefined {
 }
 
 function $validityProblem(cert: X509Certificate, now: number): string | undefined {
-  if (cert.validToDate.getTime() <= now + CLOCK_SKEW_MS) return "Existing certificate has expired";
-  if (cert.validFromDate.getTime() > now + CLOCK_SKEW_MS) return "Existing certificate is not valid yet";
+  // `validFromDate` and `validToDate` need Node 22.10. The strings exist on every supported runtime.
+  const from = Date.parse(cert.validFrom);
+  const to = Date.parse(cert.validTo);
+  // NaN fails every comparison, so an unreadable date would otherwise pass as valid.
+  if (Number.isNaN(from) || Number.isNaN(to)) return "Existing certificate has an unreadable validity period";
+  if (to <= now + CLOCK_SKEW_MS) return "Existing certificate has expired";
+  if (from > now + CLOCK_SKEW_MS) return "Existing certificate is not valid yet";
   return undefined;
 }
 

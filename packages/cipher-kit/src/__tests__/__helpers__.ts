@@ -127,6 +127,17 @@ export function failure(
   return { success: false, error: { message, description } };
 }
 
+/**
+ * A failed result whose description comes from the runtime's own error. Its wording differs between Node, Bun,
+ * and Deno, so only the message is pinned.
+ */
+export function runtimeFailure(message: string): { success: false; error: { message: string; description: string } } {
+  return failure(message, expect.any(String) as string);
+}
+
+/** Deno's `node:crypto` has no AES-192-GCM. Its Web Crypto and every other runtime do. */
+export const lacksNodeAes192: boolean = "Deno" in globalThis;
+
 /** `expect.stringMatching(pattern)`, typed as the string it stands in for. */
 export function stringMatching(pattern: RegExp): string {
   return expect.stringMatching(pattern) as string;

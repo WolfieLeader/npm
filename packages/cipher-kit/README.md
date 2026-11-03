@@ -26,7 +26,8 @@
 
 ## Installation 📦
 
-Requires Node.js >= 22.12.
+Requires Node.js 20 or later. Tested on Node.js 20 to 26, Bun, Deno 2, and Cloudflare Workers (with and without `nodejs_compat`).
+On Deno, the Node kit has no AES-192-GCM, because Deno's `node:crypto` lacks it. The Web kit supports it everywhere.
 
 ```bash
 npm install cipher-kit
@@ -271,7 +272,7 @@ matchEncryptedPattern("abc.def."); // false — missing tag segment
 
 Breaking changes:
 
-- **Node.js >= 22.12** is required.
+- **Node.js >= 22.12** is required. 4.1 lowers this to Node.js 20.
 - **Lone UTF-16 surrogates are rejected.** 3.x replaced them with U+FFFD. This applies to `encrypt`, `hash`, `hashPassword`, `verifyPassword`, the secret and salt of `createSecretKey`, and UTF-8 encoding. A 3.x password hash made from a password with a lone surrogate no longer verifies.
 - **Decoding is strict.** Non-canonical base64 (such as `AB==`), partial base64url padding (such as `YQ=`), invalid UTF-8, and latin1 above U+00FF now fail. 3.x accepted them on some platforms.
 - **Objects hold at most 100,000 objects and arrays combined.** `encryptObj`, `decryptObj`, `stringifyObj`, and `parseToObj` enforce it.

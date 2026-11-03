@@ -26,7 +26,7 @@
 
 ## Installation 📦
 
-Requires Node.js >= 22.12.
+Requires Node.js 20 or later. Tested on Node.js 20 to 26, Bun, Deno 2, and Cloudflare Workers.
 
 ```bash
 npm install compress-kit
@@ -195,7 +195,7 @@ Breaking changes:
 - **Decoding is strict.** Non-canonical base64 and whitespace now fail. Strings that compress-kit wrote are always canonical.
 - **`compressObj` rejects `__proto__` and `constructor.prototype` keys.** 3.x wrote them, then `decompressObj` refused to read them back.
 - **Error messages no longer echo the rejected option value.** Code that matches message text must change.
-- **Node.js >= 22.12** is required.
+- **Node.js >= 22.12** is required. 4.1 lowers this to Node.js 20.
 - **pako 3.** Compressed bytes can differ from 3.x for the same input.
 
 Compatibility: 4.x decompresses every string produced by 2.x and 3.x, and 3.x decompresses strings produced by 4.x. The tagged format (`.0.` / `.1.` + zlib stream) is unchanged.

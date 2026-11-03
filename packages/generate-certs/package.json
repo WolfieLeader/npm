@@ -45,7 +45,7 @@
     "vitest": "catalog:"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=20.0.0"
   },
   "author": "WolfieLeader",
   "license": "MIT",

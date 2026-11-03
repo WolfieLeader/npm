@@ -141,6 +141,24 @@ describe("generateCerts preserves user files", () => {
     expect(() => generateCerts({ certsPath: dir })).toThrow("disk full");
     expect(fs.readFileSync(path.join(dir, "cert.pem"), "utf8")).toBe(expired.certPem);
   });
+
+  it("refuses to regenerate when all 100 backup names are taken, and overwrites none of them", () => {
+    const expired = makeCert({
+      subject: [{ name: "commonName", value: "localhost" }],
+      notAfter: new Date(Date.now() - 60_000),
+    });
+    const dir = writePair(expired.keyPem, expired.certPem);
+    const backupNames = Array.from({ length: 100 }, (_, i) => (i === 0 ? "key.pem.bak" : `key.pem.${i}.bak`));
+    for (const name of backupNames) fs.writeFileSync(path.join(dir, name), name);
+
+    expect(() => generateCerts({ certsPath: dir })).toThrow(
+      new Error(`Error backing up ${path.join(dir, "key.pem")}: too many existing backups`),
+    );
+    expect(fs.readFileSync(path.join(dir, "key.pem"), "utf8")).toBe(expired.keyPem);
+    expect(fs.readFileSync(path.join(dir, "cert.pem"), "utf8")).toBe(expired.certPem);
+    expect(backupNames.map((name) => fs.readFileSync(path.join(dir, name), "utf8"))).toStrictEqual(backupNames);
+    expect(fs.existsSync(path.join(dir, "key.pem.100.bak"))).toBe(false);
+  });
 });
 
 describe("generated certificate", () => {

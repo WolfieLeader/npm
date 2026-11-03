@@ -14,6 +14,8 @@ export const MAX_RANDOM_CODE_DIGITS = 9;
 
 /** HKDF `info` limit in UTF-8 bytes (Node enforces it; enforced upfront on both platforms). */
 export const MAX_HKDF_INFO_BYTES = 1024;
+/** AES-GCM `additionalData` limit in bytes (strings measured in UTF-8), enforced on both platforms. */
+export const MAX_ADDITIONAL_DATA_BYTES = 65_536;
 
 export const DIGEST_ALGORITHMS = {
   sha256: { node: "sha256", web: "SHA-256", bytes: 32 },

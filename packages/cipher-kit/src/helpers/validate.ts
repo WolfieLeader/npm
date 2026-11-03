@@ -5,6 +5,7 @@ import {
   DIGEST_ALGORITHMS,
   ENCODING,
   ENCRYPTION_ALGORITHMS,
+  MAX_ADDITIONAL_DATA_BYTES,
   MAX_HKDF_INFO_BYTES,
   MAX_PBKDF2_ITERATIONS,
   MAX_PBKDF2_KEY_LENGTH,
@@ -92,6 +93,36 @@ export function $validateSecretKeyBase(
   const algorithm = ENCRYPTION_ALGORITHMS[x["algorithm"]];
   if (!$matchesAlgorithm(x["injected"], algorithm)) return null;
   return { obj: x, algorithm };
+}
+
+/**
+ * Resolves the `additionalData` option to a private copy of its bytes.
+ * Omitted and empty both resolve to `undefined`, because AES-GCM authenticates them identically.
+ */
+export function $resolveAdditionalData(
+  value: unknown,
+  ctx: string,
+): Result<{ aad: Uint8Array<ArrayBuffer> | undefined }> {
+  if (value === undefined) return $ok({ aad: undefined });
+  const tooLong = $err({
+    message: `${ctx}: Additional data must be at most ${MAX_ADDITIONAL_DATA_BYTES} bytes`,
+    description: `Strings are measured in UTF-8 bytes; use at most ${MAX_ADDITIONAL_DATA_BYTES}`,
+  });
+  let bytes: Uint8Array<ArrayBuffer>;
+  if ($isWellFormedStr(value)) {
+    if (value.length > MAX_ADDITIONAL_DATA_BYTES) return tooLong;
+    bytes = textEncoder.encode(value);
+  } else if (value instanceof Uint8Array) {
+    if (value.byteLength > MAX_ADDITIONAL_DATA_BYTES) return tooLong;
+    bytes = new Uint8Array(value);
+  } else {
+    return $err({
+      message: `${ctx}: Additional data must be a string or Uint8Array`,
+      description: "Received another type, or a string with lone UTF-16 surrogates",
+    });
+  }
+  if (bytes.byteLength > MAX_ADDITIONAL_DATA_BYTES) return tooLong;
+  return $ok({ aad: bytes.byteLength === 0 ? undefined : bytes });
 }
 
 /** Matches the `"iv.cipher.tag."` encrypted payload format. */

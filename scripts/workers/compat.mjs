@@ -1,7 +1,7 @@
 // Runs inside workerd with nodejs_compat, which provides node:crypto. Adds the root entry and the Node kit.
 // nodejs_compat is the default from compatibility date 2026-08-04, so no flag is needed.
 import { nodeKit, webKit } from "cipher-kit";
-import { NODE_CIPHERTEXT, SECRET, run } from "./checks.mjs";
+import { AAD, NODE_AAD_CIPHERTEXT, NODE_CIPHERTEXT, SECRET, run } from "./checks.mjs";
 
 export default {
   test() {
@@ -25,6 +25,14 @@ export default {
         /^[\w-]{43}$/.test(nodeKit.randomToken()) &&
         /^\d{6}$/.test(nodeKit.randomCode()) &&
         /^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/.test(nodeKit.generateUuid({ version: 7 })),
+      "nodeKit decrypts a Node ciphertext made with additional data": () =>
+        nodeKit.decrypt(NODE_AAD_CIPHERTEXT, nodeKit.createSecretKey(SECRET), { additionalData: AAD }) ===
+        "héllo 🌍 from Node",
+      "webKit decrypts nodeKit output made with additional data": async () => {
+        const ciphertext = nodeKit.encrypt("cross", nodeKit.createSecretKey(SECRET), { additionalData: AAD });
+        const key = await webKit.createSecretKey(SECRET);
+        return (await webKit.decrypt(ciphertext, key, { additionalData: AAD })) === "cross";
+      },
       "webKit decrypts nodeKit output": async () => {
         const ciphertext = nodeKit.encrypt("cross", nodeKit.createSecretKey(SECRET));
         return (await webKit.decrypt(ciphertext, await webKit.createSecretKey(SECRET))) === "cross";

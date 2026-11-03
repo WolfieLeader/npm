@@ -12,10 +12,25 @@ import {
 import type { Result } from "@internal/helpers";
 import { GCM_IV_LENGTH, GCM_TAG_BYTES } from "~/helpers/consts.js";
 import type { CipherEncoding, DecryptOptions, EncryptOptions } from "~/helpers/types.js";
-import { $cipherEncodingErr, $isCipherEncoding, matchEncryptedPattern } from "~/helpers/validate.js";
+import {
+  $cipherEncodingErr,
+  $isCipherEncoding,
+  $resolveAdditionalData,
+  matchEncryptedPattern,
+} from "~/helpers/validate.js";
 import { $convertBytesToStr, $convertStrToBytes } from "./web-encode.js";
 import { $isWebSecretKey } from "./web-secret-key.js";
 import type { WebSecretKey } from "./web-secret-key.js";
+
+/** AES-GCM parameters, with `additionalData` only when there is some. */
+function $gcmParams(
+  injectedKey: WebSecretKey,
+  iv: Uint8Array<ArrayBuffer>,
+  aad: Uint8Array<ArrayBuffer> | undefined,
+): { name: "AES-GCM"; iv: Uint8Array<ArrayBuffer>; additionalData?: Uint8Array<ArrayBuffer> } {
+  const name = injectedKey.injected.web;
+  return aad ? { name, iv, additionalData: aad } : { name, iv };
+}
 
 export async function $encrypt(
   data: string,
@@ -40,6 +55,8 @@ export async function $encrypt(
 
   const outputEncoding = options.outputEncoding ?? "base64url";
   if (!$isCipherEncoding(outputEncoding)) return $cipherEncodingErr("web encrypt", "output");
+  const { aad, error: aadError } = $resolveAdditionalData(options.additionalData, "web encrypt");
+  if (aadError) return $err(aadError);
 
   const injectedKey = $isWebSecretKey(secretKey);
   if (!injectedKey) {
@@ -55,7 +72,7 @@ export async function $encrypt(
   try {
     const iv = globalThis.crypto.getRandomValues(new Uint8Array(GCM_IV_LENGTH));
     const cipherWithTag = await globalThis.crypto.subtle.encrypt(
-      { name: injectedKey.injected.web, iv },
+      $gcmParams(injectedKey, iv, aad),
       injectedKey.key,
       result,
     );
@@ -94,6 +111,8 @@ export async function $decrypt(
 
   const inputEncoding = options.inputEncoding ?? "base64url";
   if (!$isCipherEncoding(inputEncoding)) return $cipherEncodingErr("web decrypt", "input");
+  const { aad, error: aadError } = $resolveAdditionalData(options.additionalData, "web decrypt");
+  if (aadError) return $err(aadError);
 
   const injectedKey = $isWebSecretKey(secretKey);
   if (!injectedKey) {
@@ -105,7 +124,7 @@ export async function $decrypt(
 
   const parts = $decodeParts(encrypted, inputEncoding);
   if (parts.error) return $err(parts.error);
-  return $decipher(parts.result, injectedKey);
+  return $decipher(parts.result, injectedKey, aad);
 }
 
 interface DecodedParts {
@@ -159,12 +178,16 @@ function $decodeParts(encrypted: string, inputEncoding: CipherEncoding): Result<
   return $ok({ result: { iv: ivB, cipherWithTag } });
 }
 
-async function $decipher(parts: DecodedParts, injectedKey: WebSecretKey): Promise<Result<string>> {
+async function $decipher(
+  parts: DecodedParts,
+  injectedKey: WebSecretKey,
+  aad: Uint8Array<ArrayBuffer> | undefined,
+): Promise<Result<string>> {
   let decrypted: Uint8Array | undefined;
   try {
     decrypted = new Uint8Array(
       await globalThis.crypto.subtle.decrypt(
-        { name: injectedKey.injected.web, iv: parts.iv },
+        $gcmParams(injectedKey, parts.iv, aad),
         injectedKey.key,
         parts.cipherWithTag,
       ),

@@ -95,8 +95,9 @@ describe("generated certificates interoperate", () => {
     const text = execFileSync("openssl", ["x509", "-noout", "-text"], { input: cert }).toString();
     expect(text).toContain("Version: 3 (0x2)");
     expect(text).toContain("Signature Algorithm: sha256WithRSAEncryption");
-    expect(text).toContain("Subject: CN=localhost");
-    expect(text).toContain("Issuer: CN=localhost");
+    // OpenSSL 3 prints "CN = localhost"; OpenSSL 4 prints "CN=localhost".
+    expect(text).toMatch(/Subject: CN ?= ?localhost/);
+    expect(text).toMatch(/Issuer: CN ?= ?localhost/);
     expect(text).toContain("Public-Key: (2048 bit)");
     expect(text).toMatch(/Basic Constraints: critical\s+CA:FALSE/);
     expect(text).toMatch(/Key Usage: critical\s+Digital Signature, Key Encipherment/);

@@ -4,7 +4,8 @@ import { spawnSync } from "node:child_process";
 
 const steps = ["fmt:check", "lint", "typecheck", "test", "build", "smoke", "knip"] as const;
 
-// CI runs these binaries too. Running them here keeps a green verify from turning into a red CI run.
+// CI runs these binaries too. Running them here catches most of what those CI jobs catch; zizmor's online
+// audits and the security workflow run only in CI.
 const tools: readonly (readonly [name: string, args: readonly string[]])[] = [
   ["gitleaks", ["git", "--redact", "--no-banner", "--config", ".gitleaks.toml", "."]],
   ["actionlint", []],

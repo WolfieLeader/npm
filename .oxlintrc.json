@@ -383,6 +383,48 @@
             "message": "Use $fromBase64 or $fromBase64Url from @internal/helpers: atob is lenient and overflows on large input."
           },
           { "name": "btoa", "message": "Use $toBase64 or $toBase64Url from @internal/helpers." }
+        ],
+        // The same names through globalThis or node:util. This list replaces the library-wide one here,
+        // so it repeats Math.random.
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "Use crypto.getRandomValues / crypto.randomBytes; Math.random is not cryptographically secure."
+          },
+          {
+            "object": "globalThis",
+            "property": "TextDecoder",
+            "message": "Use $newStrictUtf8Decoder or the codecs in @internal/helpers."
+          },
+          {
+            "object": "globalThis",
+            "property": "TextEncoder",
+            "message": "Use textEncoder or $fromUtf8 from @internal/helpers."
+          },
+          {
+            "object": "globalThis",
+            "property": "atob",
+            "message": "Use $fromBase64 or $fromBase64Url from @internal/helpers."
+          },
+          {
+            "object": "globalThis",
+            "property": "btoa",
+            "message": "Use $toBase64 or $toBase64Url from @internal/helpers."
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "node:util",
+                "importNames": ["TextDecoder", "TextEncoder"],
+                "message": "Use the codecs in @internal/helpers."
+              }
+            ]
+          }
         ]
       }
     },

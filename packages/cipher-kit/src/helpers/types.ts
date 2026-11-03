@@ -40,12 +40,37 @@ export interface CreateSecretKeyOptions {
 export interface EncryptOptions {
   /** Encoding format for the output ciphertext (default: `'base64url'`). */
   outputEncoding?: CipherEncoding;
+  /**
+   * AES-GCM additional authenticated data (AAD): context the ciphertext is bound to, such as the ID of the record
+   * or user it belongs to. It is authenticated but neither encrypted nor stored in the ciphertext.
+   *
+   * Pass the same value to `decrypt`. A missing or different value fails decryption, so a ciphertext copied into
+   * another record does not decrypt there.
+   *
+   * A string is encoded as UTF-8 without Unicode normalization, so `"user:42"` and its UTF-8 bytes are the same
+   * value. An empty string or empty `Uint8Array` is the same as omitting the option: AES-GCM authenticates them
+   * identically. At most 65,536 bytes.
+   *
+   * @example
+   * ```ts
+   * const encrypted = encrypt(ssn, secretKey, { additionalData: `user:${user.id}` });
+   * const ssnBack = decrypt(encrypted, secretKey, { additionalData: `user:${user.id}` });
+   * ```
+   */
+  additionalData?: string | Uint8Array;
 }
 
 /** Options for decryption. */
 export interface DecryptOptions {
   /** Encoding format for the input ciphertext (default: `'base64url'`). */
   inputEncoding?: CipherEncoding;
+  /**
+   * The AES-GCM additional authenticated data passed to `encrypt`. Decryption fails unless it matches exactly.
+   * Omit it for data encrypted without one. An empty string or empty `Uint8Array` is the same as omitting it.
+   *
+   * @see {@link EncryptOptions.additionalData}
+   */
+  additionalData?: string | Uint8Array;
 }
 
 /** Options for hashing arbitrary data. */

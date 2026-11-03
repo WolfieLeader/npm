@@ -7,12 +7,29 @@ export const SECRET = "workers-check-secret-0123456789";
 const TEXT = "héllo 🌍 from Node";
 // cipher-kit's Node kit made these with SECRET and TEXT. Matching them proves the formats agree across runtimes.
 export const NODE_CIPHERTEXT = "LfauPBFy-U14u66O.dIrFjLnSPvrcVyC2ermqVr1JlWom.BMJqOuarcnSrMRdFX0zH3A.";
+export const AAD = "record:42";
+export const NODE_AAD_CIPHERTEXT = "bwFDMDrmXpcBI2WI.at7iOXFB2oE2Uc0f1RrYWHZXc-IV.sVlIpXfACZNedZIUviGrpA.";
 const NODE_SHA256_OF_ABC = "ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0";
 
 /** @type {Record<string, () => boolean | Promise<boolean>>} */
 const checks = {
   "decrypts a Node ciphertext": async () =>
     (await web.decrypt(NODE_CIPHERTEXT, await web.createSecretKey(SECRET))) === TEXT,
+  "decrypts a Node ciphertext made with additional data, and only with it": async () => {
+    const key = await web.createSecretKey(SECRET);
+    const right = await web.decrypt(NODE_AAD_CIPHERTEXT, key, { additionalData: AAD });
+    const wrong = await web.tryDecrypt(NODE_AAD_CIPHERTEXT, key, { additionalData: "record:43" });
+    const missing = await web.tryDecrypt(NODE_AAD_CIPHERTEXT, key);
+    return right === TEXT && !wrong.success && !missing.success;
+  },
+  "additional data round trip, as a string and as bytes": async () => {
+    const key = await web.createSecretKey(SECRET);
+    const bytes = new TextEncoder().encode(AAD);
+    return (
+      (await web.decrypt(await web.encrypt(TEXT, key, { additionalData: AAD }), key, { additionalData: bytes })) ===
+      TEXT
+    );
+  },
   "hash matches Node": async () => (await web.hash("abc")) === NODE_SHA256_OF_ABC,
   "AES-128, AES-192 and AES-256 GCM round trips": async () => {
     const algorithms = /** @type {const} */ (["aes128gcm", "aes192gcm", "aes256gcm"]);

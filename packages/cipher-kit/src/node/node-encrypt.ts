@@ -13,7 +13,12 @@ import {
 import type { Result } from "@internal/helpers";
 import { GCM_IV_LENGTH, GCM_TAG_BYTES } from "~/helpers/consts.js";
 import type { CipherEncoding, DecryptOptions, EncryptOptions } from "~/helpers/types.js";
-import { $cipherEncodingErr, $isCipherEncoding, matchEncryptedPattern } from "~/helpers/validate.js";
+import {
+  $cipherEncodingErr,
+  $isCipherEncoding,
+  $resolveAdditionalData,
+  matchEncryptedPattern,
+} from "~/helpers/validate.js";
 import { $convertBytesToStr, $convertStrToBytes } from "./node-encode.js";
 import { $isNodeSecretKey } from "./node-secret-key.js";
 import type { NodeSecretKey } from "./node-secret-key.js";
@@ -37,6 +42,8 @@ export function $encrypt(data: string, secretKey: NodeSecretKey, options: Encryp
   }
   const outputEncoding = options.outputEncoding ?? "base64url";
   if (!$isCipherEncoding(outputEncoding)) return $cipherEncodingErr("node encrypt", "output");
+  const { aad, error: aadError } = $resolveAdditionalData(options.additionalData, "node encrypt");
+  if (aadError) return $err(aadError);
 
   const injectedKey = $isNodeSecretKey(secretKey);
   if (!injectedKey) return $err({ message: "node encrypt: Invalid secret key", description: INVALID_KEY });
@@ -47,6 +54,7 @@ export function $encrypt(data: string, secretKey: NodeSecretKey, options: Encryp
   try {
     const iv = nodeCrypto.randomBytes(GCM_IV_LENGTH);
     const cipher = nodeCrypto.createCipheriv(injectedKey.injected.node, injectedKey.key, iv);
+    if (aad) cipher.setAAD(aad);
     const encrypted = Buffer.concat([cipher.update(result), cipher.final()]);
     const tag = cipher.getAuthTag();
     const enc = outputEncoding;
@@ -100,11 +108,12 @@ function $decodeParts(encrypted: string, inputEncoding: CipherEncoding): Result<
   return $ok({ result: parts });
 }
 
-function $decipher(parts: DecodedParts, injectedKey: NodeSecretKey): Result<string> {
+function $decipher(parts: DecodedParts, injectedKey: NodeSecretKey, aad: Uint8Array | undefined): Result<string> {
   let decrypted: Buffer | undefined;
   try {
     const decipher = nodeCrypto.createDecipheriv(injectedKey.injected.node, injectedKey.key, parts.iv);
     decipher.setAuthTag(parts.tag);
+    if (aad) decipher.setAAD(aad);
     decrypted = Buffer.concat([decipher.update(parts.cipher), decipher.final()]);
   } catch (error) {
     return $err({ message: "node decrypt: Failed to decrypt data", description: $fmtError(error) });
@@ -132,13 +141,15 @@ export function $decrypt(encrypted: string, secretKey: NodeSecretKey, options: D
   }
   const inputEncoding = options.inputEncoding ?? "base64url";
   if (!$isCipherEncoding(inputEncoding)) return $cipherEncodingErr("node decrypt", "input");
+  const { aad, error: aadError } = $resolveAdditionalData(options.additionalData, "node decrypt");
+  if (aadError) return $err(aadError);
 
   const injectedKey = $isNodeSecretKey(secretKey);
   if (!injectedKey) return $err({ message: "node decrypt: Invalid secret key", description: INVALID_KEY });
 
   const parts = $decodeParts(encrypted, inputEncoding);
   if (parts.error) return $err(parts.error);
-  return $decipher(parts.result, injectedKey);
+  return $decipher(parts.result, injectedKey, aad);
 }
 
 export function $encryptObj<T extends object = Record<string, unknown>>(

@@ -145,6 +145,23 @@ if (result.success) {
 >
 > **Input rules:** `encrypt` accepts any non-empty string, including whitespace-only strings. It rejects `""` and strings with lone UTF-16 surrogates. `decrypt` fails if the plaintext is not valid UTF-8.
 
+#### Additional data
+
+Pass `additionalData` to bind a ciphertext to its context, such as the ID of the record or user it belongs to. `decrypt` fails unless it gets the same value, so a ciphertext copied into another record does not decrypt there.
+
+```typescript
+const encrypted = encrypt("123-45-6789", secretKey, { additionalData: `user:${userId}` });
+
+decrypt(encrypted, secretKey, { additionalData: `user:${userId}` }); // "123-45-6789"
+decrypt(encrypted, secretKey, { additionalData: `user:${otherUserId}` }); // throws
+decrypt(encrypted, secretKey); // throws
+```
+
+- It is authenticated (AES-GCM additional data) but not encrypted, and not stored in the ciphertext. Store or derive it yourself.
+- It is a string (encoded as UTF-8, not normalized) or a `Uint8Array`, at most 65,536 bytes. A string and its UTF-8 bytes are the same value.
+- An empty string or empty `Uint8Array` is the same as omitting it.
+- `encryptObj` and `decryptObj` take it too.
+
 ### `encryptObj` / `decryptObj` / `tryEncryptObj` / `tryDecryptObj`
 
 Encrypts and decrypts plain objects (POJOs). Class instances, Maps, Sets, etc. are rejected. Objects may contain at most 100,000 objects and arrays combined; both `encryptObj` and `decryptObj` enforce this limit.

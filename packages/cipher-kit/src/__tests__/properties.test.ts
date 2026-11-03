@@ -1,7 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { nodeKit, tryParseToObj, tryStringifyObj, webKit } from "~/export.js";
-import { secret } from "./__helpers__.js";
+import { failure, runtimeFailure, secret } from "./__helpers__.js";
 
 // Any code point, without lone surrogates, with half the characters drawn from known edge cases.
 const edgeChar = fc.constantFrom("\uFEFF", "\u0000", "\uFFFD", "\u{10FFFF}", " ", ".", "\r\n");
@@ -14,8 +14,15 @@ const anyValue = fc.anything({
   withDate: true,
 });
 const SENTINEL = "SENTINEL-7f3a";
-const hostile = fc.oneof(anyValue, fc.constant(SENTINEL), fc.constant(Object.create(null) as unknown));
+const hostile = fc.oneof(
+  anyValue,
+  fc.constant(SENTINEL),
+  fc.constant(`${SENTINEL}\uD800`),
+  fc.constant([SENTINEL]),
+  fc.constant(Object.create(null) as unknown),
+);
 const optionKeys = fc.constantFrom(
+  "additionalData",
   "algorithm",
   "digest",
   "salt",
@@ -26,6 +33,45 @@ const optionKeys = fc.constantFrom(
   "keyLength",
   "saltLength",
 );
+
+// Additional data as a caller passes it: omitted, a string or bytes, half of them known edge cases.
+type Aad = string | Uint8Array | undefined;
+const edgeAad = fc.constantFrom<Aad>(
+  undefined,
+  "",
+  new Uint8Array(0),
+  "\u0000",
+  new Uint8Array([0]),
+  ".",
+  "user:1",
+  "ｕｓｅｒ:1",
+  "\u{10FFFF}",
+  new Uint8Array([0xff, 0xfe]),
+);
+const anyAad = fc.oneof(edgeAad, anyText, fc.uint8Array({ maxLength: 64 }));
+/** Two AAD values, often the same bytes in another form, so equal and different pairs both come up. */
+const aadPair = fc.oneof(
+  fc.tuple(anyAad, anyAad),
+  anyAad.map((a): [Aad, Aad] => [a, a]),
+  anyText.map((t): [Aad, Aad] => [t, new TextEncoder().encode(t)]),
+  fc.constantFrom<[Aad, Aad]>(
+    ["ｕｓｅｒ:1", "user:1"],
+    ["ｕｓｅｒ:1", new TextEncoder().encode("ｕｓｅｒ:1")],
+    ["", undefined],
+  ),
+);
+
+function $aadBytes(a: Aad): Uint8Array {
+  return typeof a === "string" ? new TextEncoder().encode(a) : (a ?? new Uint8Array(0));
+}
+
+function $sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+  return a.byteLength === b.byteLength && a.every((byte, i) => byte === b[i]);
+}
+
+function $withAad(a: Aad): { additionalData?: string | Uint8Array } {
+  return a === undefined ? {} : { additionalData: a };
+}
 
 type AnyFn = (...args: never[]) => unknown;
 const call = (fn: AnyFn, ...args: unknown[]): unknown => (fn as (...a: unknown[]) => unknown)(...args);
@@ -53,6 +99,33 @@ describe("cipher-kit properties", () => {
           expect(await webKit.decrypt(fromNode, web)).toBe(text);
           expect(await webKit.decrypt(fromWeb, web)).toBe(text);
           expect(nodeKit.hash(text)).toBe(await webKit.hash(text));
+        },
+      ),
+    );
+  });
+
+  test("decrypt with additional data returns the data when its bytes equal encrypt's, and fails otherwise", async () => {
+    const web = await webKey;
+    const nodeAuthFailure = failure(
+      "node decrypt: Failed to decrypt data",
+      "Unsupported state or unable to authenticate data",
+    );
+    const webAuthFailure = runtimeFailure("web decrypt: Failed to decrypt data");
+    await fc.assert(
+      fc.asyncProperty(
+        anyText.filter((t) => t !== ""),
+        aadPair,
+        async (text, [encryptAad, decryptAad]) => {
+          const same = $sameBytes($aadBytes(encryptAad), $aadBytes(decryptAad));
+          const nodeExpected = same ? { success: true, result: text } : nodeAuthFailure;
+          const webExpected = same ? { success: true, result: text } : webAuthFailure;
+          for (const encrypted of [
+            nodeKit.encrypt(text, nodeKey, $withAad(encryptAad)),
+            await webKit.encrypt(text, web, $withAad(encryptAad)),
+          ]) {
+            expect(nodeKit.tryDecrypt(encrypted, nodeKey, $withAad(decryptAad))).toStrictEqual(nodeExpected);
+            expect(await webKit.tryDecrypt(encrypted, web, $withAad(decryptAad))).toStrictEqual(webExpected);
+          }
         },
       ),
     );

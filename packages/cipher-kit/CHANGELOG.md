@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.2.0
+
+- `encrypt`, `decrypt`, `encryptObj` and `decryptObj` take an optional `additionalData` (a string or `Uint8Array`, at most 65,536 bytes). It binds a ciphertext to its context, such as the ID of the record it belongs to: decryption fails unless you pass the same value. It is authenticated as AES-GCM additional data and is not stored in the ciphertext. An empty value is the same as none. Without it, output and decryption are unchanged.
+
 ## 4.1.0
 
 - Supports Node.js 20.19 and later, and is tested on Bun, Deno 2 and Cloudflare Workers.

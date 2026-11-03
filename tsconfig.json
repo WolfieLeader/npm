@@ -3,9 +3,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "isolatedDeclarations": false,
-    "declaration": false,
-    // miniflare 4 ships declarations that import modules it does not depend on. The packages keep checking theirs.
-    "skipLibCheck": true
+    "declaration": false
   },
   "include": ["scripts/*.ts", "packages/*/*.config.ts", "tools/*/*.config.ts"]
 }

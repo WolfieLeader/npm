@@ -39,10 +39,10 @@ const checks = {
 };
 
 /**
- * Runs `checks` plus `extra` and answers with one line per check: status 200 when all pass, 500 otherwise.
+ * Runs `checks` plus `extra`, prints one line per check, and throws when any fails, so `workerd test` fails.
  * @param {Record<string, () => boolean | Promise<boolean>>} extra
  */
-export async function respond(extra = {}) {
+export async function run(extra = {}) {
   const lines = await Promise.all(
     Object.entries({ ...checks, ...extra }).map(async ([name, check]) => {
       try {
@@ -52,6 +52,6 @@ export async function respond(extra = {}) {
       }
     }),
   );
-  const failed = lines.some((line) => line.startsWith("✖"));
-  return new Response(lines.join("\n"), { status: failed ? 500 : 200 });
+  console.log(lines.join("\n"));
+  if (lines.some((line) => line.startsWith("✖"))) throw new Error("A Workers check failed");
 }

@@ -1,8 +1,11 @@
 // Runs inside workerd without nodejs_compat, like a Worker that uses only web standards.
-import { respond } from "./checks.mjs";
+import { run } from "./checks.mjs";
 
 export default {
-  fetch() {
-    return respond();
+  test() {
+    return run({
+      // Proves the flags took effect: with nodejs_compat, both globals exist.
+      "runs without Node.js globals": () => !("Buffer" in globalThis) && !("process" in globalThis),
+    });
   },
 };

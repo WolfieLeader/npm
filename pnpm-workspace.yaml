@@ -17,7 +17,6 @@ catalog:
   eslint-plugin-regexp: 3.3.3
   fast-check: 4.10.2
   knip: 6.44.1
-  miniflare: 4.20260730.0
   oxfmt: 0.76.0
   oxlint: 1.90.0
   oxlint-tsgolint: 7.0.2005
@@ -27,6 +26,7 @@ catalog:
   turbo: 2.11.10
   typescript: 7.0.2
   vitest: 5.1.0
+  workerd: 1.20261102.1
 
 # Example apps only. express4 keeps Express 4 to show the library still works with it.
 catalogs:

@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/knip/schema.json",
+  // generate-certs' interop test runs the system openssl when it exists. No package provides it.
   "ignoreBinaries": ["openssl"],
   "workspaces": {
     ".": {

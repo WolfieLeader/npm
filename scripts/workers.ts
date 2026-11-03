@@ -13,6 +13,12 @@ const workers = [
   { name: "nodejs-compat", entry: "scripts/workers/compat.mjs", flags: [] },
 ] as const;
 
+// The pinned workerd's build date, so Dependabot's workerd bumps also move the compatibility date forward.
+const compatibilityDate = /\d{4}-\d{2}-\d{2}/.exec(
+  spawnSync("workerd", ["--version"], { encoding: "utf8" }).stdout,
+)?.[0];
+if (compatibilityDate === undefined) throw new Error("Could not read the workerd version");
+
 const dir = mkdtempSync(path.join(tmpdir(), "workers-check-"));
 try {
   await build({
@@ -34,7 +40,7 @@ try {
     ({ name, flags }) =>
       `const ${name.replace("-", "")} :Workerd.Worker = (\n` +
       `  modules = [(name = "worker", esModule = embed "${name}.js")],\n` +
-      `  compatibilityDate = "2026-11-01",\n` +
+      `  compatibilityDate = "${compatibilityDate}",\n` +
       `  compatibilityFlags = [${flags.map((flag) => `"${flag}"`).join(", ")}],\n);`,
   );
   const config = [

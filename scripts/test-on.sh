@@ -13,7 +13,13 @@ case "${1:-}" in
     ;;
 esac
 
+failed=()
 for dir in packages/*/; do
   echo "==> $1: $dir"
-  (cd "$dir" && "${run[@]}" ./node_modules/vitest/vitest.mjs run)
+  (cd "$dir" && "${run[@]}" ./node_modules/vitest/vitest.mjs run) || failed+=("$dir")
 done
+
+if ((${#failed[@]} > 0)); then
+  echo "Failed on $1: ${failed[*]}" >&2
+  exit 1
+fi

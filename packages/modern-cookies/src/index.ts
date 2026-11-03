@@ -119,15 +119,14 @@ function $isDoubledName(header: string, name: string): boolean {
 /**
  * Retrieves the value of a cookie from an Express request.
  *
- * Returns `undefined` when the `Cookie` header has the name more than once. Another subdomain, or a cookie with a
- * more specific `Path`, can plant a same-name cookie that the browser sends first (cookie tossing). The server cannot
- * tell which one it set, so it trusts neither. Names compare exactly and case-sensitively, after trimming spaces and
- * tabs, so `__Host-s` and `__host-s` are different names.
+ * When the `Cookie` header has the name more than once, it returns the first value, as the browser sent it, and tells
+ * the `logger`. Another subdomain can plant a same-name cookie that the browser sends first (cookie tossing), so name
+ * cookies you trust with `__Host-`: another subdomain cannot set one.
  *
  * @param req - The Express request object.
  * @param name - The name of the cookie to retrieve.
  * @param options - `logger` receives parsing errors and doubled names, never a value. Silent when omitted.
- * @returns The cookie value if the name appears exactly once, otherwise `undefined`.
+ * @returns The cookie value (the first one if the name repeats), otherwise `undefined`.
  */
 export function getCookie(req: CookieRequest, name: string, options: GetCookieOptions = {}): string | undefined {
   try {
@@ -138,9 +137,8 @@ export function getCookie(req: CookieRequest, name: string, options: GetCookieOp
       $safeLogCookieError($loggerOf(options), {
         action: "getting",
         name,
-        error: "the Cookie header has this name more than once",
+        error: "the Cookie header has this name more than once, so one may be planted; returned the first",
       });
-      return undefined;
     }
 
     const cookies = parseCookie(header);

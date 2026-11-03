@@ -29,7 +29,7 @@ const pairSeparator = fc.constantFrom(";", "; ", " ;", " ; ", ";\t", "\t;  ", ";
 /** The logged line for a doubled name, with control characters in the name shown as spaces, as the logger gets it. */
 function doubledMessage(name: string): string {
   const shown = Array.from(name, (char) => (char < " " || char === "\u007F" ? " " : char)).join("");
-  return `Error getting cookie "${shown}": the Cookie header has this name more than once`;
+  return `Error getting cookie "${shown}": the Cookie header has this name more than once, so one may be planted; returned the first`;
 }
 
 /** Names that differ from `target` yet share most of its characters: prefixes, extensions, other casings. */
@@ -130,12 +130,12 @@ describe("modern-cookies properties", () => {
     );
   });
 
-  test("a client-planted twin of a cookie name reads as absent, so cookie tossing cannot pick the value", () => {
+  test("a client-planted twin of a cookie name is logged, and the first value is returned as the parser reads it", () => {
     const tossed = cookieName.chain((name) => fc.tuple(fc.constant(name), tossedHeader(name)));
     fc.assert(
       fc.property(tossed, ([name, header]) => {
         const logger = vi.fn<CookieLogger>();
-        expect(getCookie(requestWith(header), name, { logger })).toBe(undefined);
+        expect(getCookie(requestWith(header), name, { logger })).toBe(parseCookie(header)[name]);
         expect(logger.mock.calls).toStrictEqual([[doubledMessage(name)]]);
       }),
     );
@@ -152,7 +152,7 @@ describe("modern-cookies properties", () => {
     );
   });
 
-  test("any header reads a name as the parser does when it names one pair, and as absent when it names more", () => {
+  test("any header reads a name as the parser does, and logs it exactly when it names more than one pair", () => {
     const header = fc.subarray(KNOWN_NAMES, { minLength: 1, maxLength: 3 }).chain(hostileHeader);
     fc.assert(
       fc.property(header, fc.constantFrom(...KNOWN_NAMES), (text, extraName) => {
@@ -160,9 +160,8 @@ describe("modern-cookies properties", () => {
         const parsed = parseCookie(text);
         for (const name of [...names, extraName]) {
           const count = names.filter((other) => other === name).length;
-          const expected = count === 1 ? parsed[name] : undefined;
           const logger = vi.fn<CookieLogger>();
-          expect(getCookie(requestWith(text), name, { logger })).toBe(expected);
+          expect(getCookie(requestWith(text), name, { logger })).toBe(parsed[name]);
           expect(logger.mock.calls).toStrictEqual(count > 1 ? [[doubledMessage(name)]] : []);
         }
       }),

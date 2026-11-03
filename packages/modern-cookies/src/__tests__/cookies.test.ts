@@ -48,16 +48,20 @@ describe("getCookie", () => {
     expect(getCookie(req, "token")).toBe("a b=c");
   });
 
-  test("returns undefined for a doubled name, since a planted twin is sent first (cookie tossing)", () => {
+  test("returns the first value of a doubled name and logs it, since a planted twin may be sent first", () => {
     const logger = vi.fn<CookieLogger>();
-    expect(getCookie(mockReq("__Host-s=attacker; __Host-s=real"), "__Host-s", { logger })).toBe(undefined);
+    expect(getCookie(mockReq("s=attacker; s=real"), "s", { logger })).toBe("attacker");
     expect(logger.mock.calls).toStrictEqual([
-      ['Error getting cookie "__Host-s": the Cookie header has this name more than once'],
+      [
+        'Error getting cookie "s": the Cookie header has this name more than once, so one may be planted; returned the first',
+      ],
     ]);
   });
 
-  test("returns undefined for a doubled name with spaces and tabs around it, as the parser trims them", () => {
-    expect(getCookie(mockReq("s=1;\t s \t=2"), "s")).toBe(undefined);
+  test("counts a name with spaces and tabs around it as doubled, as the parser trims them", () => {
+    const logger = vi.fn<CookieLogger>();
+    expect(getCookie(mockReq("s=1;\t s \t=2"), "s", { logger })).toBe("1");
+    expect(logger.mock.calls.length).toBe(1);
   });
 
   test("reads a name sent once while another name is doubled", () => {

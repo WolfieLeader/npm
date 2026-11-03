@@ -19,7 +19,7 @@
 
 - **Simple API** — `setCookie`, `getCookie`, and `deleteCookie`
 - **Framework compatibility** — supports Express v5/v4 and NestJS (Express adapter)
-- **Security-first enforcement** — enforces `__Secure-`/`__Host-` rules and auto-forces `secure: true` for `sameSite: "none"`, and reads a doubled cookie name as absent
+- **Security-first enforcement** — enforces `__Secure-`/`__Host-` rules and auto-forces `secure: true` for `sameSite: "none"`
 - **Graceful error handling** — returns `boolean`, never throws
 - **Built on** the RFC-compliant [`cookie`](https://www.npmjs.com/package/cookie) library, bundled, so there are no runtime dependencies
 
@@ -64,7 +64,7 @@ app.listen(3000);
 
 ### `getCookie(req, name, options?): string | undefined`
 
-Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if the name is missing or appears more than once (see [Doubled Cookie Names](#doubled-cookie-names)).
+Retrieves a cookie value from the request's `Cookie` header. Returns `undefined` if the name is missing, and the first value if it appears more than once (see [Doubled Cookie Names](#doubled-cookie-names)).
 
 | Parameter | Type               | Default | Description                                        |
 | --------- | ------------------ | ------- | -------------------------------------------------- |
@@ -167,19 +167,17 @@ setCookie(res, "cross-origin", value, { sameSite: "none" });
 
 ### Doubled Cookie Names
 
-`getCookie` returns `undefined` when the `Cookie` header has the requested name more than once.
+A browser sends every cookie that matches the request, so two cookies can share a name. An attacker who controls another subdomain can set `session=attacker` for your parent domain, and the browser may send it before your real `session` cookie (cookie tossing). Reading it would let them fix the session or pass a CSRF double-submit check.
 
-A browser sends every cookie that matches the request, so two cookies can share a name. Another subdomain can set a cookie for the parent domain, and a cookie with a more specific `Path` is sent first. An attacker who controls a subdomain can plant `session=attacker` that arrives before your real `session` cookie (cookie tossing). Reading the first value would let them fix the session or pass a CSRF double-submit check. The server cannot tell which cookie it set, so `getCookie` trusts neither.
+Name the cookies you trust with `__Host-`. Such a cookie cannot have a `Domain`, so another subdomain cannot set one for your host. `setCookie` enforces the `__Host-` rules for you.
+
+`getCookie` returns the first value, as browsers order them and as most servers read them, and tells the `logger` when the name repeats:
 
 ```typescript
-// Cookie: __Host-session=attacker; __Host-session=real
-getCookie(req, "__Host-session", { logger: console.warn }); // undefined
-// logs: Error getting cookie "__Host-session": the Cookie header has this name more than once
+// Cookie: session=attacker; session=real
+getCookie(req, "session", { logger: console.warn }); // "attacker"
+// logs: Error getting cookie "session": the Cookie header has this name more than once, so one may be planted; returned the first
 ```
-
-Names compare exactly as the parser reads them: case-sensitive, with spaces and tabs around the name trimmed. `__Host-s` and `__host-s` are different names, and `s` does not match `session`. A doubled name does not affect reading a different name. Reads of that name return `undefined` until the planted cookie expires or the browser drops it, so treat `undefined` as "not signed in".
-
-If your app sets the same cookie name on more than one `Path` or `Domain`, give each cookie its own name: `getCookie` reads that name as absent whenever the browser sends both.
 
 ### Safe Error Logging
 

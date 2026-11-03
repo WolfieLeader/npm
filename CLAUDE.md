@@ -53,7 +53,6 @@ People and agents copy what they see. The codebase and its checks carry the rule
 | Describe an error                  | A fixed message that never echoes input, keys or plaintext                        | Property tests assert a sentinel input never appears                         |
 | Keep stored data readable          | Never change a stored format in place; a writer checks its output with the reader | Golden tests against the published release; write-equals-read property tests |
 | Parse a header or other text       | Read proxy-appended data from the right; reject what you can't parse              | Property tests with a client-controlled prefix                               |
-| Read a cookie                      | modern-cookies `getCookie`; a doubled name reads as absent                        | Property tests with a client-controlled prefix                               |
 | Log from a library                 | An optional `logger` option                                                       | `no-console`                                                                 |
 | Match untrusted text               | A linear regex literal                                                            | `regexp/*`, including `no-super-linear-move`                                 |
 | Assert in a test                   | The exact expected value                                                          | `vitest/no-restricted-matchers`, strict equal                                |

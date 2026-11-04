@@ -296,6 +296,54 @@ describe("$timingSafeEqual", () => {
   });
 });
 
+/** Gives `crypto.subtle` a recording `timingSafeEqual` that answers `answer`, as Cloudflare Workers has, for `fn`. */
+async function withNative<T>(answer: boolean, fn: () => T | Promise<T>): Promise<{ result: T; calls: number[][][] }> {
+  const calls: number[][][] = [];
+  const subtle = globalThis.crypto.subtle;
+  expect("timingSafeEqual" in subtle).toBe(false);
+  Object.defineProperty(subtle, "timingSafeEqual", {
+    configurable: true,
+    value: (a: Uint8Array, b: Uint8Array) => {
+      calls.push([[...a], [...b]]);
+      return answer;
+    },
+  });
+  try {
+    return { result: await fn(), calls };
+  } finally {
+    Reflect.deleteProperty(subtle, "timingSafeEqual");
+  }
+}
+
+describe("native compare", () => {
+  const key = "webhook-signing-key";
+  const data = '{"event":"payment.succeeded"}';
+
+  test("web verifyHmac uses the runtime's crypto.subtle.timingSafeEqual when it has one, with both MACs", async () => {
+    const mac = nodeKit.hmac(data, key, { length: 16, outputEncoding: "hex" });
+    const options = { length: 16, inputEncoding: "hex" } as const;
+    const accepted = await withNative(true, () => webKit.verifyHmac(data, mac, key, options));
+    expect(accepted.result).toBe(true);
+    expect(accepted.calls).toStrictEqual([[[...hex(mac)], [...hex(mac)]]]);
+    const refused = await withNative(false, () => webKit.verifyHmac(data, mac, key, options));
+    expect(refused.result).toBe(false);
+  });
+
+  test("web verifyPassword uses the runtime's crypto.subtle.timingSafeEqual when it has one", async () => {
+    const { result, salt } = await webKit.hashPassword("correct horse", { iterations: 100_000 });
+    const refused = await withNative(false, () =>
+      webKit.verifyPassword("correct horse", result, salt, { iterations: 100_000 }),
+    );
+    expect(refused.result).toBe(false);
+    expect(refused.calls.length).toBe(1);
+  });
+
+  test("a different length never reaches the native compare, which throws on unequal lengths in Workers", async () => {
+    const calls = await withNative(true, () => $timingSafeEqual(new Uint8Array([1, 2]), new Uint8Array([1])));
+    expect(calls).toStrictEqual({ result: false, calls: [] });
+  });
+});
+
 describe("caller's bytes", () => {
   test("hmac and verifyHmac leave the caller's key and data unchanged, since they wipe only their own copies", async () => {
     const key = Uint8Array.from({ length: 32 }, (_, i) => i + 1);

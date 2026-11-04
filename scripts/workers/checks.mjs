@@ -12,6 +12,12 @@ export const NODE_AAD_CIPHERTEXT = "bwFDMDrmXpcBI2WI.at7iOXFB2oE2Uc0f1RrYWHZXc-I
 const NODE_SHA256_OF_ABC = "ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0";
 const RFC_4231_CASE_2_SHA256 = "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843";
 
+/** Lowercase hex of a byte view, for comparing what the native compare receives. */
+const toHex = (bytes) =>
+  Array.from(new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
+
 /** @type {Record<string, () => boolean | Promise<boolean>>} */
 const checks = {
   "decrypts a Node ciphertext": async () =>
@@ -66,6 +72,27 @@ const checks = {
     !(await web.verifyHmac("data", (await web.hmac("data", "key", { outputEncoding: "hex" })).slice(0, 2), "key", {
       inputEncoding: "hex",
     })),
+  "verifyHmac compares with workerd's native crypto.subtle.timingSafeEqual": async () => {
+    const subtle = globalThis.crypto.subtle;
+    const native = subtle.timingSafeEqual;
+    const own = Object.getOwnPropertyDescriptor(subtle, "timingSafeEqual");
+    if (typeof native !== "function") return false;
+    const mac = await web.hmac("native compare", "key", { outputEncoding: "hex" });
+    let seen = false;
+    Object.defineProperty(subtle, "timingSafeEqual", {
+      configurable: true,
+      value: (a, b) => {
+        if (toHex(a) === mac) seen = true;
+        return native.call(subtle, a, b);
+      },
+    });
+    try {
+      return (await web.verifyHmac("native compare", mac, "key", { inputEncoding: "hex" })) && seen;
+    } finally {
+      if (own) Object.defineProperty(subtle, "timingSafeEqual", own);
+      else delete subtle.timingSafeEqual;
+    }
+  },
   randomToken: () => /^[\w-]{43}$/.test(web.randomToken()) && /^[\da-f]{16}$/.test(web.randomToken(8, "hex")),
   randomCode: () => /^\d{6}$/.test(web.randomCode()) && /^\d{9}$/.test(web.randomCode(9)),
   "compress round trip": () => decompress(compress(TEXT.repeat(50))) === TEXT.repeat(50),

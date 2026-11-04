@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest";
 import { nodeKit, webKit } from "~/export.js";
 import { $timingSafeEqual } from "~/helpers/compare.js";
 import type { CipherEncoding, DigestAlgorithm } from "~/helpers/types.js";
-import { anyText, failure } from "./__helpers__.js";
+import { anyText, failure, withNative } from "./__helpers__.js";
 
 const hex = (value: string): Uint8Array => Buffer.from(value, "hex");
 
@@ -293,6 +293,26 @@ describe("$timingSafeEqual", () => {
     expect($timingSafeEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 2]))).toBe(false);
     expect($timingSafeEqual(new Uint8Array([0x80, 2, 3]), new Uint8Array([0, 2, 3]))).toBe(false);
     expect($timingSafeEqual(new Uint8Array([1, 2]), new Uint8Array([1, 2, 3]))).toBe(false);
+  });
+});
+
+describe("native compare", () => {
+  const key = "webhook-signing-key";
+  const data = '{"event":"payment.succeeded"}';
+
+  test("web verifyHmac uses the runtime's crypto.subtle.timingSafeEqual when it has one, with both MACs", async () => {
+    const mac = nodeKit.hmac(data, key, { length: 16, outputEncoding: "hex" });
+    const options = { length: 16, inputEncoding: "hex" } as const;
+    const accepted = await withNative(true, () => webKit.verifyHmac(data, mac, key, options));
+    expect(accepted.result).toBe(true);
+    expect(accepted.calls).toStrictEqual([[[...hex(mac)], [...hex(mac)]]]);
+    const refused = await withNative(false, () => webKit.verifyHmac(data, mac, key, options));
+    expect(refused.result).toBe(false);
+  });
+
+  test("a different length never reaches the native compare, which throws on unequal lengths in Workers", async () => {
+    const calls = await withNative(true, () => $timingSafeEqual(new Uint8Array([1, 2]), new Uint8Array([1])));
+    expect(calls).toStrictEqual({ result: false, calls: [] });
   });
 });
 

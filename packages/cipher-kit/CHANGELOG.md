@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.2.1
+
+- The Web kit's `verifyHmac` and `verifyPassword` compare with the runtime's `crypto.subtle.timingSafeEqual` where one exists, as on Cloudflare Workers, instead of a best-effort JavaScript loop. Results are unchanged.
+
 ## 4.2.0
 
 - `encrypt`, `decrypt`, `encryptObj` and `decryptObj` take an optional `additionalData` (a string or `Uint8Array`, at most 65,536 bytes). It binds a ciphertext to its context, such as the ID of the record it belongs to: decryption fails unless you pass the same value. It is authenticated as AES-GCM additional data and is not stored in the ciphertext. An empty value is the same as none. Without it, output and decryption are unchanged.

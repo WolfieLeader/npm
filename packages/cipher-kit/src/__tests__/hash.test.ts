@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { nodeKit, webKit } from "~/export.js";
-import { data, encodedPattern, repeated, stringMatching } from "./__helpers__.js";
+import { Buffer } from "node:buffer";
+import { data, encodedPattern, repeated, stringMatching, withNative } from "./__helpers__.js";
 
 describe("Hashing", () => {
   test("Hash Test", async () => {
@@ -232,5 +233,16 @@ describe("Hashing", () => {
     const webHash1 = await webKit.hashPassword(composed);
     const webVerify = await webKit.verifyPassword(decomposed, webHash1.result, webHash1.salt);
     expect(webVerify).toBe(true);
+  });
+});
+
+describe("native compare", () => {
+  test("web verifyPassword passes the derived and stored hash to the runtime's crypto.subtle.timingSafeEqual", async () => {
+    const { result, salt } = await webKit.hashPassword("correct horse", { iterations: 100_000 });
+    const stored = [...Buffer.from(result, "base64url")];
+    const refused = await withNative(false, () =>
+      webKit.verifyPassword("correct horse", result, salt, { iterations: 100_000 }),
+    );
+    expect(refused).toStrictEqual({ result: false, calls: [[stored, stored]] });
   });
 });

@@ -72,7 +72,8 @@ export async function tryVerifyHmac(
  * @remarks
  * The expected MAC length is `options.length` (default: the full digest length), never the presented MAC's length.
  * A presented MAC that does not decode, or decodes to any other length, returns `false`.
- * Comparison is a best-effort constant-time loop over every byte, since Web Crypto exposes no `timingSafeEqual`.
+ * Comparison uses the runtime's `crypto.subtle.timingSafeEqual` where one exists (Cloudflare Workers), and otherwise a
+ * best-effort constant-time loop over every byte, since standard Web Crypto has no `timingSafeEqual`.
  *
  * @param data - The message: a well-formed string (hashed as UTF-8) or bytes.
  * @param mac - The presented MAC, encoded with `options.inputEncoding`.

@@ -95,10 +95,10 @@ export async function tryVerifyPassword(
  * Verifies a password against a stored PBKDF2 hash.
  *
  * @remarks
- * Re-derives the key with the same parameters and compares using a full-loop XOR pattern.
- * This is best-effort constant-time; JS JIT optimization may introduce timing variation.
- * The Web Crypto API does not expose a `timingSafeEqual` equivalent.
- * For timing-critical deployments, prefer the Node implementation which uses `crypto.timingSafeEqual`.
+ * Re-derives the key with the same parameters and compares it with the stored hash.
+ * Comparison uses the runtime's `crypto.subtle.timingSafeEqual` where one exists (Cloudflare Workers). Elsewhere it is
+ * a best-effort constant-time loop; JS JIT optimization may introduce timing variation, since standard Web Crypto has no
+ * `timingSafeEqual`. For timing-critical deployments elsewhere, prefer the Node kit, which uses `crypto.timingSafeEqual`.
  * Throws for invalid inputs/options (bad encoding, wrong parameters, non-decodable salt/hash).
  * Returns `false` for password mismatch or length-mismatched hash.
  *

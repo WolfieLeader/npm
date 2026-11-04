@@ -219,7 +219,7 @@ const custom = hashPassword("user-password", {
 
 > **Cloudflare Workers:** deployed Workers reject PBKDF2 above 100,000 iterations, in both kits. Pass `iterations: 100_000` to `hashPassword` and `verifyPassword`. Local workerd does not enforce it.
 
-> **Note:** Node uses `crypto.timingSafeEqual` for constant-time comparison. The Web implementation uses a best-effort full-loop XOR pattern since the Web Crypto API does not expose a `timingSafeEqual` equivalent.
+> **Note:** Node uses `crypto.timingSafeEqual` for constant-time comparison. The Web kit uses the runtime's `crypto.subtle.timingSafeEqual` where one exists (Cloudflare Workers), and otherwise a best-effort full-loop XOR compare, since standard Web Crypto has no `timingSafeEqual`.
 >
 > **Unicode normalization:** Passwords and the `createSecretKey` secret, salt and info are NFKC-normalized before processing. HMAC keys and data and `additionalData` are used as given. This means that equivalent Unicode representations (e.g., `"café"` composed vs. decomposed) produce identical keys and hashes. This is the recommended approach per NIST SP 800-63B.
 
@@ -246,7 +246,7 @@ verifyHmac("message", short, "my-signing-key", { length: 16 }); // true
 
 **`verifyHmac` options:** `digest` (default `"sha256"`), `inputEncoding` (default `"base64url"`), `length` (default: the full digest). Must match the values used to compute the MAC.
 
-> **Security:** `verifyHmac` expects exactly `length` bytes, taken from your options. A presented MAC that does not decode, or decodes to any other length, returns `false`, so a forger cannot pass a 1-byte tag. Node compares with `crypto.timingSafeEqual`; Web uses a best-effort full-loop XOR compare. HMAC adds no brute-force resistance, so use a high-entropy key.
+> **Security:** `verifyHmac` expects exactly `length` bytes, taken from your options. A presented MAC that does not decode, or decodes to any other length, returns `false`, so a forger cannot pass a 1-byte tag. Node compares with `crypto.timingSafeEqual`; Web uses `crypto.subtle.timingSafeEqual` where the runtime has it (Cloudflare Workers), and otherwise a best-effort full-loop XOR compare. HMAC adds no brute-force resistance, so use a high-entropy key.
 
 ### `randomToken` / `randomCode` / `tryRandomToken` / `tryRandomCode`
 

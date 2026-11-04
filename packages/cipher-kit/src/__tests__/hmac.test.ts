@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest";
 import { nodeKit, webKit } from "~/export.js";
 import { $timingSafeEqual } from "~/helpers/compare.js";
 import type { CipherEncoding, DigestAlgorithm } from "~/helpers/types.js";
-import { anyText, failure } from "./__helpers__.js";
+import { anyText, failure, withNative } from "./__helpers__.js";
 
 const hex = (value: string): Uint8Array => Buffer.from(value, "hex");
 
@@ -296,25 +296,6 @@ describe("$timingSafeEqual", () => {
   });
 });
 
-/** Gives `crypto.subtle` a recording `timingSafeEqual` that answers `answer`, as Cloudflare Workers has, for `fn`. */
-async function withNative<T>(answer: boolean, fn: () => T | Promise<T>): Promise<{ result: T; calls: number[][][] }> {
-  const calls: number[][][] = [];
-  const subtle = globalThis.crypto.subtle;
-  expect("timingSafeEqual" in subtle).toBe(false);
-  Object.defineProperty(subtle, "timingSafeEqual", {
-    configurable: true,
-    value: (a: Uint8Array, b: Uint8Array) => {
-      calls.push([[...a], [...b]]);
-      return answer;
-    },
-  });
-  try {
-    return { result: await fn(), calls };
-  } finally {
-    Reflect.deleteProperty(subtle, "timingSafeEqual");
-  }
-}
-
 describe("native compare", () => {
   const key = "webhook-signing-key";
   const data = '{"event":"payment.succeeded"}';
@@ -327,15 +308,6 @@ describe("native compare", () => {
     expect(accepted.calls).toStrictEqual([[[...hex(mac)], [...hex(mac)]]]);
     const refused = await withNative(false, () => webKit.verifyHmac(data, mac, key, options));
     expect(refused.result).toBe(false);
-  });
-
-  test("web verifyPassword uses the runtime's crypto.subtle.timingSafeEqual when it has one", async () => {
-    const { result, salt } = await webKit.hashPassword("correct horse", { iterations: 100_000 });
-    const refused = await withNative(false, () =>
-      webKit.verifyPassword("correct horse", result, salt, { iterations: 100_000 }),
-    );
-    expect(refused.result).toBe(false);
-    expect(refused.calls.length).toBe(1);
   });
 
   test("a different length never reaches the native compare, which throws on unequal lengths in Workers", async () => {

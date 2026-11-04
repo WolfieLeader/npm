@@ -180,3 +180,22 @@ export function cipherPattern(plaintext: string, encoding: CipherEncoding = "bas
 
   return new RegExp(`^${segments.join("\\.")}\\.$`);
 }
+
+export /** Gives `crypto.subtle` a recording `timingSafeEqual` that answers `answer`, as Cloudflare Workers has, for `fn`. */
+async function withNative<T>(answer: boolean, fn: () => T | Promise<T>): Promise<{ result: T; calls: number[][][] }> {
+  const calls: number[][][] = [];
+  const subtle = globalThis.crypto.subtle;
+  expect("timingSafeEqual" in subtle).toBe(false);
+  Object.defineProperty(subtle, "timingSafeEqual", {
+    configurable: true,
+    value: (a: Uint8Array, b: Uint8Array) => {
+      calls.push([[...a], [...b]]);
+      return answer;
+    },
+  });
+  try {
+    return { result: await fn(), calls };
+  } finally {
+    Reflect.deleteProperty(subtle, "timingSafeEqual");
+  }
+}

@@ -12,11 +12,8 @@ export const NODE_AAD_CIPHERTEXT = "bwFDMDrmXpcBI2WI.at7iOXFB2oE2Uc0f1RrYWHZXc-I
 const NODE_SHA256_OF_ABC = "ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0";
 const RFC_4231_CASE_2_SHA256 = "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843";
 
-/** Lowercase hex of a byte view, for comparing what the native compare receives. */
-const toHex = (bytes) =>
-  Array.from(new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength), (b) =>
-    b.toString(16).padStart(2, "0"),
-  ).join("");
+/** Lowercase hex of a `Uint8Array`, for comparing what the native compare receives. */
+const toHex = (bytes) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 
 /** @type {Record<string, () => boolean | Promise<boolean>>} */
 const checks = {
@@ -72,7 +69,7 @@ const checks = {
     !(await web.verifyHmac("data", (await web.hmac("data", "key", { outputEncoding: "hex" })).slice(0, 2), "key", {
       inputEncoding: "hex",
     })),
-  "verifyHmac compares with workerd's native crypto.subtle.timingSafeEqual": async () => {
+  "verifyHmac accepts and rejects through workerd's native crypto.subtle.timingSafeEqual": async () => {
     const subtle = globalThis.crypto.subtle;
     const native = subtle.timingSafeEqual;
     const own = Object.getOwnPropertyDescriptor(subtle, "timingSafeEqual");
@@ -87,7 +84,12 @@ const checks = {
       },
     });
     try {
-      return (await web.verifyHmac("native compare", mac, "key", { inputEncoding: "hex" })) && seen;
+      const accepted = await web.verifyHmac("native compare", mac, "key", { inputEncoding: "hex" });
+      const acceptedSeen = seen;
+      seen = false;
+      const tampered = `${mac.slice(0, -1)}${mac.endsWith("0") ? "1" : "0"}`;
+      const refused = await web.verifyHmac("native compare", tampered, "key", { inputEncoding: "hex" });
+      return accepted && acceptedSeen && !refused && seen;
     } finally {
       if (own) Object.defineProperty(subtle, "timingSafeEqual", own);
       else delete subtle.timingSafeEqual;

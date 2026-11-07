@@ -53,10 +53,21 @@ jobs:
         run: |
           pnpm exec turbo run build test --filter "$PACKAGE"
           pnpm smoke "$PACKAGE"
+      # The version picks the npm tag: x.y.z goes to `latest`, x.y.z-beta.N to `beta`, anything else fails.
+      # npm refuses a prerelease without --tag, and a beta must never become what `npm install` picks.
       # pnpm pack rewrites catalog: and workspace: specifiers; npm publish then handles OIDC and provenance.
       - name: Publish
         env:
           PACKAGE: ${{ inputs.package }}
         run: |
+          version=$(jq -r .version "packages/$PACKAGE/package.json")
+          if [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            tag=latest
+          elif [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]]; then
+            tag=beta
+          else
+            echo "::error::$PACKAGE $version is neither x.y.z nor x.y.z-beta.N"
+            exit 1
+          fi
           tarball=$(pnpm --filter "$PACKAGE" pack --pack-destination "$RUNNER_TEMP" | tail -n 1)
-          npm publish "$tarball" --access public
+          npm publish "$tarball" --access public --tag "$tag"

@@ -90,6 +90,7 @@ People and agents copy what they see. The codebase and its checks carry the rule
 - Bump the package version and add its `CHANGELOG.md` entry in a PR.
 - After the merge, the owner runs Actions → Release and picks the package. It publishes from `main` through npm
   trusted publishing, so no npm token exists.
+- The version picks the npm tag: `x.y.z` publishes as `latest`, `x.y.z-beta.N` as `beta`. Release fails on any other version.
 
 ## Never
 

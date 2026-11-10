@@ -27,7 +27,7 @@ catalog:
   turbo: 2.11.10
   typescript: 7.0.2
   vitest: 5.1.0
-  workerd: 1.20261102.1
+  workerd: 1.20261103.1
 
 catalogs:
   # The Node.js types of engines.node's floor. `pnpm typecheck` checks every package against them.

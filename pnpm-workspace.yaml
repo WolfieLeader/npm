@@ -9,25 +9,25 @@ catalogMode: strict
 
 catalog:
   "@arethetypeswrong/core": 0.18.5
-  "@oxlint/plugins": 1.90.0
+  "@oxlint/plugins": 1.93.0
   "@types/node": 26.6.6
   "@types/node-forge": 1.3.14
-  cookie: 2.0.1
+  cookie: 2.0.2
   esbuild: 0.28.2
   eslint-plugin-regexp: 3.3.3
   fast-check: 4.10.2
-  knip: 6.44.1
-  node-forge: 1.4.2
-  oxfmt: 0.76.0
-  oxlint: 1.90.0
-  oxlint-tsgolint: 7.0.2005
+  knip: 6.44.2
+  node-forge: 1.4.3
+  oxfmt: 0.78.0
+  oxlint: 1.93.0
+  oxlint-tsgolint: 7.0.2006
   publint: 0.3.25
-  tsdown: 0.23.4
+  tsdown: 0.23.7
   tsx: 4.23.15
   turbo: 2.11.10
   typescript: 7.0.2
   vitest: 5.1.0
-  workerd: 1.20261102.1
+  workerd: 1.20261110.1
 
 catalogs:
   # The Node.js types of engines.node's floor. `pnpm typecheck` checks every package against them.
@@ -41,9 +41,9 @@ catalogs:
     express: 5.3.0
     "@types/express": 5.0.6
   nestjs:
-    "@nestjs/common": 12.3.2
-    "@nestjs/core": 12.3.2
-    "@nestjs/platform-express": 12.3.2
+    "@nestjs/common": 12.4.2
+    "@nestjs/core": 12.4.2
+    "@nestjs/platform-express": 12.4.2
     reflect-metadata: 0.2.2
     rxjs: 7.8.2
 
